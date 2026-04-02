@@ -1,0 +1,23 @@
+{
+    "name": "redipe",
+    "version": "1.0.0",
+    "description": "Recipe scraper and parser using OpenRouter + Claude",
+    "main": "dist/index.js",
+    "scripts": {
+        "start": "tsx src/index.ts",
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc"
+    },
+    "dependencies": {
+        "axios": "^1.7.0",
+        "cheerio": "^1.0.0",
+        "dotenv": "^16.4.0",
+        "openai": "^4.52.0",
+        "zod": "^3.23.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.14.0",
+        "tsx": "^4.16.0",
+        "typescript": "^5.5.0"
+    }
+}

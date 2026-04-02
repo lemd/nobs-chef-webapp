@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Redipe</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Della+Respira&family=Montserrat:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet" />
+        <link rel="stylesheet" href="/style.css" />
+    </head>
+    <body>
+        <div class="mosaic-strip">
+            <span style="background: #e63946"></span>
+            <span style="background: #f4a261"></span>
+            <span style="background: #e9c46a"></span>
+            <span style="background: #2a9d8f"></span>
+            <span style="background: #457b9d"></span>
+            <span style="background: #6a4c93"></span>
+            <span style="background: #ff595e"></span>
+            <span style="background: #ffca3a"></span>
+            <span style="background: #8ac926"></span>
+            <span style="background: #1982c4"></span>
+            <span style="background: #c8902d"></span>
+            <span style="background: #e63946"></span>
+            <span style="background: #f4a261"></span>
+            <span style="background: #2a9d8f"></span>
+            <span style="background: #6a4c93"></span>
+            <span style="background: #ffca3a"></span>
+            <span style="background: #8ac926"></span>
+            <span style="background: #457b9d"></span>
+            <span style="background: #ff595e"></span>
+            <span style="background: #c8902d"></span>
+        </div>
+
+        <div class="drawer" id="drawer">
+            <div class="drawer-header">
+                <span class="sidebar-label">Saved</span>
+                <button class="drawer-close" id="drawerClose" aria-label="Close"
+                    >✕</button
+                >
+            </div>
+            <ul class="history-list" id="historyList">
+                <li><span class="sidebar-empty">None yet</span></li>
+            </ul>
+        </div>
+        <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+        <div class="guide-backdrop" id="guideBackdrop">
+            <div
+                class="guide-modal"
+                id="guideModal"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Ingredient Guide">
+                <div class="guide-modal-header">
+                    <span class="guide-modal-title">Ingredient Guide</span>
+                    <button
+                        class="guide-modal-close"
+                        id="guideClose"
+                        aria-label="Close"
+                        >&#x2715;</button
+                    >
+                </div>
+                <div class="guide-modal-body" id="guideModalBody"></div>
+            </div>
+        </div>
+
+        <header style="padding-top: 3rem">
+            <h1>Redipe</h1>
+            <button
+                class="drawer-toggle"
+                id="drawerToggle"
+                aria-label="Saved recipes">
+                <svg
+                    width="16"
+                    height="12"
+                    viewBox="0 0 16 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <rect
+                        width="16"
+                        height="1.5"
+                        rx="0.75"
+                        fill="currentColor" />
+                    <rect
+                        y="5.25"
+                        width="16"
+                        height="1.5"
+                        rx="0.75"
+                        fill="currentColor" />
+                    <rect
+                        y="10.5"
+                        width="16"
+                        height="1.5"
+                        rx="0.75"
+                        fill="currentColor" />
+                </svg>
+                Saved
+            </button>
+        </header>
+
+        <form class="url-form" id="scrapeForm">
+            <input
+                type="url"
+                id="urlInput"
+                placeholder="Paste a recipe URL…"
+                value="https://twokooksinthekitchen.com/maple-balsamic-rainbow-trout/"
+                required />
+            <button type="submit" id="scrapeBtn">Extract</button>
+        </form>
+
+        <div id="status"></div>
+
+        <div class="layout">
+            <main>
+                <div id="recipe"></div>
+                <div class="empty" id="empty">
+                    Paste a recipe URL above and press <strong>Extract</strong>.
+                </div>
+            </main>
+        </div>
+
+        <script>
+            // ── Replace with your Supabase project URL before deploying ──────────────
+            const API_BASE = 'https://YOUR_PROJECT_ID.supabase.co/functions/v1';
+
+            const form = document.getElementById('scrapeForm');
+            const urlInput = document.getElementById('urlInput');
+            const btn = document.getElementById('scrapeBtn');
+            const status = document.getElementById('status');
+            const recipeEl = document.getElementById('recipe');
+            const emptyEl = document.getElementById('empty');
+            const historyEl = document.getElementById('historyList');
+
+            let activeFile = null;
+            let currentSourceUrl = null;
+
+            const drawer = document.getElementById('drawer');
+            const backdrop = document.getElementById('drawerBackdrop');
+            document
+                .getElementById('drawerToggle')
+                .addEventListener('click', () => {
+                    drawer.classList.add('open');
+                    backdrop.classList.add('open');
+                });
+            document
+                .getElementById('drawerClose')
+                .addEventListener('click', closeDrawer);
+            backdrop.addEventListener('click', closeDrawer);
+            function closeDrawer() {
+                drawer.classList.remove('open');
+                backdrop.classList.remove('open');
+            }
+
+            async function loadHistory() {
+                const res = await fetch(`${API_BASE}/recipes`).catch(
+                    () => null,
+                );
+                if (!res || !res.ok) return;
+                const list = await res.json();
+                if (!list.length) return;
+                historyEl.innerHTML = list
+                    .map(
+                        (item) => `
+                    <li>
+                        <button onclick="loadFile('${esc(item.filename)}')"
+                                class="${item.filename === activeFile ? 'active' : ''}"
+                                id="hist-${esc(item.filename)}">
+                            ${esc(item.title)}
+                            <span class="hist-date">${new Date(item.savedAt).toLocaleDateString()}</span>
+                        </button>
+                    </li>`,
+                    )
+                    .join('');
+            }
+
+            async function loadFile(filename) {
+                activeFile = filename;
+                const res = await fetch(
+                    `${API_BASE}/recipe?file=${encodeURIComponent(filename)}`,
+                );
+                const data = await res.json();
+                if (!res.ok) {
+                    setStatus(data.error, true);
+                    return;
+                }
+                renderRecipe(data);
+                loadHistory();
+                closeDrawer();
+            }
+
+            fetch(`${API_BASE}/recipe`)
+                .then((r) => (r.ok ? r.json() : null))
+                .then((data) => {
+                    if (data) renderRecipe(data);
+                })
+                .catch(() => {});
+            loadHistory();
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const url = urlInput.value.trim();
+                if (!url) return;
+                setStatus('Extracting…', false, true);
+                try {
+                    const res = await fetch(`${API_BASE}/scrape`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error ?? 'Unknown error');
+                    const cached = data._cached;
+                    delete data._cached;
+                    setStatus(cached ? 'Loaded from cache.' : '');
+                    renderRecipe(data);
+                    loadHistory();
+                } catch (err) {
+                    setStatus(err.message, true);
+                }
+            });
+
+            function setStatus(msg, isError = false, loading = false) {
+                btn.disabled = loading;
+                status.className = isError ? 'error' : '';
+                status.innerHTML = loading
+                    ? `<span class="spinner"></span>${msg}`
+                    : isError
+                      ? `${msg}`
+                      : msg;
+            }
+
+            async function refetchRecipe() {
+                if (!currentSourceUrl) return;
+                setStatus('Re-fetching…', false, true);
+                try {
+                    const res = await fetch(`${API_BASE}/scrape`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url: currentSourceUrl,
+                            force: true,
+                        }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error ?? 'Unknown error');
+                    delete data._cached;
+                    setStatus('');
+                    renderRecipe(data);
+                    loadHistory();
+                } catch (err) {
+                    setStatus(err.message, true);
+                }
+            }
+
+            function renderRecipe(r) {
+                emptyEl.style.display = 'none';
+                recipeEl.style.display = 'block';
+                currentSourceUrl = r.sourceUrl ?? null;
+
+                const meta = [
+                    r.prepTime && { label: 'Prep', value: r.prepTime },
+                    r.cookTime && { label: 'Cook', value: r.cookTime },
+                    r.totalTime && { label: 'Total', value: r.totalTime },
+                    r.servings && { label: 'Serves', value: r.servings },
+                ].filter(Boolean);
+
+                const hasConversions =
+                    (r.ingredientGroups ?? []).some((g) =>
+                        (g.items ?? []).some((i) => i.conversion),
+                    ) || (r.steps ?? []).some((s) => s.temperatureConversion);
+
+                const hasHints = (r.ingredientGroups ?? []).some((g) =>
+                    (g.items ?? []).some((i) => i.hint),
+                );
+
+                currentRecipe = r;
+
+                recipeEl.innerHTML = `
+                    <h1 class="recipe-title">${esc(r.title)}</h1>
+                    <div class="recipe-source-row">
+                        ${r.sourceUrl ? `<a class="recipe-source" href="${esc(r.sourceUrl)}" target="_blank" rel="noopener">source ↗</a>` : ''}
+                        ${r.sourceUrl ? `<button class="refetch-btn" onclick="refetchRecipe()">Re-fetch</button>` : ''}
+                    </div>
+                    ${r.description ? `<p class="recipe-description">${esc(r.description)}</p>` : ''}
+
+                    ${
+                        meta.length
+                            ? `
+                    <div class="meta-row">
+                        ${meta
+                            .map(
+                                (m) => `
+                        <div class="meta-pill">
+                            <span class="label">${esc(m.label)}</span>
+                            <span class="value">${esc(m.value)}</span>
+                        </div>`,
+                            )
+                            .join('')}
+                    </div>`
+                            : ''
+                    }
+
+                    <div class="recipe-body">
+                        <div>
+                            <div class="section-label">Method</div>
+                            <ol class="steps-list">
+                                ${(r.steps ?? [])
+                                    .map(
+                                        (s) => `
+                                <li class="step">
+                                    <span class="step-num">${s.stepNumber}</span>
+                                    <div class="step-body">
+                                        ${renderStepInstruction(s.instruction)}
+                                        ${s.temperatureConversion ? `<span class="conv step-temp-conv" style="display:none">→ ${esc(s.temperatureConversion)}</span>` : ''}
+                                        ${s.timingInterval ? `<span class="step-timing">${esc(s.timingInterval)}</span>` : ''}
+                                    </div>
+                                </li>`,
+                                    )
+                                    .join('')}
+                            </ol>
+                        </div>
+                        <div class="ing-sidebar">
+                            ${
+                                hasConversions
+                                    ? `
+                            <div class="unit-toggle">
+                                <button id="btnOriginal" class="active" onclick="setUnits('original')">Original</button>
+                                <button id="btnConverted" onclick="setUnits('converted')">Converted</button>
+                            </div>`
+                                    : ''
+                            }
+                            <div class="ing-header-row">
+                                <div class="section-label">Ingredients</div>
+                                ${hasHints ? '<button class="guide-btn" onclick="openGuide()">Guide</button>' : ''}
+                            </div>
+                            ${renderIngredientGroups(r.ingredientGroups)}
+                        </div>
+                    </div>`;
+            }
+
+            let currentUnits = 'original';
+            let currentRecipe = null;
+            function setUnits(mode) {
+                currentUnits = mode;
+                document.querySelectorAll('.ing-qty-original').forEach((el) => {
+                    el.style.display = mode === 'original' ? '' : 'none';
+                });
+                document
+                    .querySelectorAll('.ing-qty-converted')
+                    .forEach((el) => {
+                        el.style.display = mode === 'converted' ? '' : 'none';
+                    });
+                document.querySelectorAll('.step-temp-conv').forEach((el) => {
+                    el.style.display = mode === 'converted' ? '' : 'none';
+                });
+                const btnO = document.getElementById('btnOriginal');
+                const btnC = document.getElementById('btnConverted');
+                if (btnO) btnO.className = mode === 'original' ? 'active' : '';
+                if (btnC) btnC.className = mode === 'converted' ? 'active' : '';
+            }
+
+            function renderIngredientGroups(groups) {
+                return (groups ?? [])
+                    .map(
+                        (g) => `
+                    <div class="ing-group">
+                        ${g.group ? `<div class="ing-group-name">${esc(g.group)}</div>` : ''}
+                        <ul class="ing-list">
+                            ${(g.items ?? [])
+                                .map((i) => {
+                                    const orig =
+                                        [i.quantity, i.unit]
+                                            .filter(Boolean)
+                                            .join(' ') || '—';
+                                    const conv = i.conversion
+                                        ? [
+                                              i.conversion.quantity,
+                                              i.conversion.unit,
+                                          ]
+                                              .filter(Boolean)
+                                              .join(' ')
+                                        : null;
+                                    const origClass = conv
+                                        ? 'ing-qty ing-qty-original'
+                                        : 'ing-qty';
+                                    return `
+                                <li>
+                                    <span class="${origClass}">${orig}</span>
+                                    ${conv ? `<span class="ing-qty ing-qty-converted conv" style="display:none">${conv}</span>` : ''}
+                                    <span class="ing-name">
+                                        ${esc(i.name)}${i.notes ? ` <span class="ing-notes">(${esc(i.notes)})</span>` : ''}
+                                        ${i.hint ? `<span class="ing-hint">${esc(i.hint)}</span>` : ''}
+                                    </span>
+                                </li>`;
+                                })
+                                .join('')}
+                        </ul>
+                    </div>`,
+                    )
+                    .join('');
+            }
+
+            function openGuide() {
+                if (!currentRecipe) return;
+                const body = document.getElementById('guideModalBody');
+                body.innerHTML = renderGuideGroups(
+                    currentRecipe.ingredientGroups,
+                );
+                document.getElementById('guideBackdrop').classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeGuide() {
+                document
+                    .getElementById('guideBackdrop')
+                    .classList.remove('open');
+                document.body.style.overflow = '';
+            }
+
+            document
+                .getElementById('guideClose')
+                .addEventListener('click', closeGuide);
+            document
+                .getElementById('guideBackdrop')
+                .addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('guideBackdrop'))
+                        closeGuide();
+                });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeGuide();
+            });
+
+            function renderGuideGroups(groups) {
+                return (groups ?? [])
+                    .map(
+                        (g) => `
+                    <div class="guide-group">
+                        ${g.group ? `<div class="guide-group-name">${esc(g.group)}</div>` : ''}
+                        ${(g.items ?? [])
+                            .map((i) => {
+                                const qty =
+                                    [i.quantity, i.unit]
+                                        .filter(Boolean)
+                                        .join('\u00a0') || '—';
+                                return `
+                        <div class="guide-row">
+                            <span class="guide-qty">${qty}</span>
+                            <span class="guide-name">${esc(i.name)}${i.notes ? ` <span class="guide-notes">(${esc(i.notes)})</span>` : ''}</span>
+                            <span class="guide-hint-cell">${i.hint ? esc(i.hint) : ''}</span>
+                        </div>`;
+                            })
+                            .join('')}
+                    </div>`,
+                    )
+                    .join('');
+            }
+
+            function renderStepInstruction(instruction) {
+                if (!instruction) return '';
+                // Split on \n if Claude provided them, then also split on sentence
+                // boundaries (punctuation followed by space + capital letter)
+                const lines = instruction
+                    .split('\n')
+                    .flatMap((line) =>
+                        line.trim().split(/(?<=[.!?])\s+(?=[A-Z])/),
+                    )
+                    .map((l) => l.trim())
+                    .filter(Boolean);
+                if (lines.length <= 1) {
+                    return `<span class="step-instruction">${esc(instruction)}</span>`;
+                }
+                return `<ul class="step-bullets">${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+            }
+
+            function esc(str) {
+                if (!str) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+        </script>
+    </body>
+</html>

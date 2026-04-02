@@ -1,0 +1,131 @@
+{
+  "title": "Seared Steak and Bacon Roasted Potatoes",
+  "description": "Pan-seared sirloin steak topped with garlic-parsley butter, served alongside bacon-roasted potatoes and snap peas with toasted almonds. A hearty meal with rich, savoury flavours.",
+  "totalTime": "35 minutes",
+  "servings": "2",
+  "ingredientGroups": [
+    {
+      "items": [
+        {
+          "quantity": "2",
+          "unit": "bulbs",
+          "name": "garlic"
+        },
+        {
+          "quantity": "285",
+          "unit": "g",
+          "name": "top sirloin steak",
+          "conversion": {
+            "quantity": "10",
+            "unit": "oz"
+          }
+        },
+        {
+          "quantity": "100",
+          "unit": "g",
+          "name": "bacon strips",
+          "conversion": {
+            "quantity": "3.5",
+            "unit": "oz"
+          }
+        },
+        {
+          "quantity": "2",
+          "name": "russet potato"
+        },
+        {
+          "quantity": "227",
+          "unit": "g",
+          "name": "sugar snap peas",
+          "conversion": {
+            "quantity": "8",
+            "unit": "oz"
+          },
+          "hint": "~2 cups"
+        },
+        {
+          "quantity": "28",
+          "unit": "g",
+          "name": "almonds",
+          "notes": "sliced",
+          "conversion": {
+            "quantity": "1",
+            "unit": "oz"
+          }
+        },
+        {
+          "quantity": "7",
+          "unit": "g",
+          "name": "parsley"
+        },
+        {
+          "quantity": "2",
+          "unit": "tbsp",
+          "name": "butter"
+        },
+        {
+          "quantity": "1.33",
+          "unit": "tbsp",
+          "name": "oil"
+        },
+        {
+          "name": "salt and pepper"
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "stepNumber": 1,
+      "instruction": "Remove 2 tbsp butter from the fridge and set aside to come up to room temperature.\nPreheat the oven to 450°F.\nWash and dry all produce.",
+      "temperatureConversion": "230°C"
+    },
+    {
+      "stepNumber": 2,
+      "instruction": "Remove any brown spots from potatoes and cut into 1-inch pieces.\nOn a separate cutting board, cut bacon into 1-inch pieces.\nOn a parchment-lined baking sheet, add potatoes, bacon and 1 tsp oil.\nSeason with salt and pepper, then toss to combine."
+    },
+    {
+      "stepNumber": 3,
+      "instruction": "Roast in the middle of the oven, stirring halfway through, until tender and golden.",
+      "timingInterval": "22–25 minutes"
+    },
+    {
+      "stepNumber": 4,
+      "instruction": "Finely chop parsley.\nTrim snap peas.\nPeel, then mince or grate garlic.\nTo a small bowl, add garlic, half the parsley, and half the room-temperature butter.\nSeason with salt and pepper, then stir to combine."
+    },
+    {
+      "stepNumber": 5,
+      "instruction": "Heat a large non-stick pan over medium.\nWhen hot, add almonds to the dry pan.\nToast, stirring often, until golden.\nTransfer to a plate.",
+      "timingInterval": "4–6 minutes"
+    },
+    {
+      "stepNumber": 6,
+      "instruction": "Pat steak dry with paper towels, then season with salt and pepper."
+    },
+    {
+      "stepNumber": 7,
+      "instruction": "Reheat the same pan over medium-high.\nWhen hot, add 1 tbsp oil, then steak.\nCook until browned.",
+      "timingInterval": "1–2 minutes per side"
+    },
+    {
+      "stepNumber": 8,
+      "instruction": "Remove from heat, then transfer steak to an unlined baking sheet.\nRoast in the top of the oven until cooked to desired doneness.",
+      "timingInterval": "4–8 minutes"
+    },
+    {
+      "stepNumber": 9,
+      "instruction": "When steak is done, remove from heat and transfer to a plate.\nLoosely cover with foil and set aside to rest.\nWipe out the pan.",
+      "timingInterval": "2–3 minutes"
+    },
+    {
+      "stepNumber": 10,
+      "instruction": "Reheat the same pan over medium.\nWhen hot, add remaining butter and snap peas.\nSeason with salt and pepper.\nCook, stirring occasionally, until tender-crisp.\nRemove pan from heat and stir in almonds.",
+      "timingInterval": "2–4 minutes"
+    },
+    {
+      "stepNumber": 11,
+      "instruction": "Thinly slice steak.\nDivide steak, potatoes and snap peas between plates.\nTop steak with herb butter.\nSprinkle remaining parsley over top."
+    }
+  ],
+  "sourceUrl": "https://www.hellofresh.ca/recipes/seared-steak-and-bacon-roasted-potatoes-686edbf85a587f17f457eef7"
+}

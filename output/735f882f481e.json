@@ -1,0 +1,101 @@
+{
+  "title": "Maple-Balsamic Rainbow Trout",
+  "description": "Moist, flaky rainbow trout fillets are baked with a sweet and tangy maple-balsamic glaze. This simple recipe comes together in just 20 minutes.",
+  "prepTime": "10 minutes",
+  "cookTime": "10 minutes",
+  "totalTime": "20 minutes",
+  "servings": "3",
+  "ingredientGroups": [
+    {
+      "group": "For the trout",
+      "items": [
+        {
+          "quantity": "1.5",
+          "unit": "lb",
+          "name": "rainbow trout fillets",
+          "notes": "2 large or 3–4 smaller",
+          "conversion": {
+            "quantity": "680",
+            "unit": "g"
+          }
+        },
+        {
+          "name": "kosher salt and black pepper"
+        },
+        {
+          "quantity": "2",
+          "name": "green onions",
+          "notes": "finely chopped"
+        },
+        {
+          "quantity": "2",
+          "unit": "tablespoon",
+          "name": "fresh parsley",
+          "notes": "chopped, for garnish, optional"
+        }
+      ]
+    },
+    {
+      "group": "For the glaze",
+      "items": [
+        {
+          "quantity": "1 1/2",
+          "unit": "tablespoon",
+          "name": "balsamic vinegar",
+          "notes": "good quality"
+        },
+        {
+          "quantity": "1 1/2",
+          "unit": "tablespoon",
+          "name": "maple syrup",
+          "notes": "or honey or brown sugar"
+        },
+        {
+          "quantity": "1 1/2",
+          "unit": "tablespoon",
+          "name": "fresh lemon juice",
+          "notes": "or lime juice"
+        },
+        {
+          "quantity": "1/2",
+          "unit": "teaspoon",
+          "name": "sriracha",
+          "notes": "or more to taste, optional; or use a pinch of red pepper flakes"
+        },
+        {
+          "quantity": "2",
+          "unit": "teaspoon",
+          "name": "olive oil or vegetable oil"
+        },
+        {
+          "quantity": "1",
+          "unit": "teaspoon",
+          "name": "cornstarch",
+          "notes": "optional for a slightly thicker glaze"
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "stepNumber": 1,
+      "instruction": "Heat oven to 400°F. Line a baking sheet large enough to fit the trout with parchment or foil, sprayed with cooking oil.",
+      "temperatureConversion": "200°C"
+    },
+    {
+      "stepNumber": 2,
+      "instruction": "Make the glaze: Whisk together balsamic vinegar, maple syrup, lemon juice, sriracha, and oil in a small bowl. If you want a slightly thicker glaze, whisk in the cornstarch and microwave for 45–60 seconds. For a thin glaze, omit the cornstarch.",
+      "timingInterval": "45–60 seconds"
+    },
+    {
+      "stepNumber": 3,
+      "instruction": "Prepare the trout: Generously sprinkle trout with salt and pepper. Sprinkle chopped green onions over the fish. Drizzle about half the glaze over the fish to cover it, reserving the rest for serving. Place fish, skin side down, on the prepared pan."
+    },
+    {
+      "stepNumber": 4,
+      "instruction": "Roast the trout for 8–11 minutes depending on the thickness of the fish. Remove from oven to a large flat dish and cut into portions. To remove skin, slip a spatula between the flesh and skin, then lift trout off. Drizzle with the remaining glaze and sprinkle with parsley, green onions, or other fresh herbs if desired.",
+      "timingInterval": "8–11 minutes"
+    }
+  ],
+  "sourceUrl": "https://twokooksinthekitchen.com/maple-balsamic-rainbow-trout/"
+}

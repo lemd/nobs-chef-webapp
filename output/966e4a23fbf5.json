@@ -1,0 +1,139 @@
+{
+  "title": "Open-Faced Steak Sandwich with Caramelized Onion and Tomato Caprese Salad",
+  "description": "This open-faced sandwich features pan-fried steak topped with sweet caramelized onions and garlic mayo on toasted ciabatta. A fresh Caprese salad with marinated tomatoes, oregano, and bocconcini provides a light accompaniment.",
+  "totalTime": "30 minutes",
+  "servings": "2",
+  "ingredientGroups": [
+    {
+      "items": [
+        {
+          "quantity": "285",
+          "unit": "g",
+          "name": "beef steak",
+          "conversion": {
+            "quantity": "10",
+            "unit": "oz"
+          }
+        },
+        {
+          "quantity": "227",
+          "unit": "g",
+          "name": "onion",
+          "notes": "sliced",
+          "conversion": {
+            "quantity": "8",
+            "unit": "oz"
+          },
+          "hint": "~1 large onion"
+        },
+        {
+          "quantity": "2",
+          "unit": "unit",
+          "name": "ciabatta roll"
+        },
+        {
+          "quantity": "227",
+          "unit": "g",
+          "name": "grape tomatoes",
+          "conversion": {
+            "quantity": "8",
+            "unit": "oz"
+          },
+          "hint": "~1½ cups"
+        },
+        {
+          "quantity": "7",
+          "unit": "g",
+          "name": "oregano",
+          "hint": "~¼ cup fresh"
+        },
+        {
+          "quantity": "100",
+          "unit": "g",
+          "name": "bocconcini cheese",
+          "conversion": {
+            "quantity": "3.5",
+            "unit": "oz"
+          }
+        },
+        {
+          "quantity": "2",
+          "unit": "tbsp",
+          "name": "balsamic vinegar"
+        },
+        {
+          "quantity": "1",
+          "unit": "clove",
+          "name": "garlic"
+        },
+        {
+          "quantity": "4",
+          "unit": "tbsp",
+          "name": "mayonnaise"
+        },
+        {
+          "quantity": "1",
+          "unit": "tsp",
+          "name": "sugar"
+        },
+        {
+          "quantity": "4",
+          "unit": "tbsp",
+          "name": "oil"
+        },
+        {
+          "name": "salt and pepper"
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "stepNumber": 1,
+      "instruction": "Preheat your broiler to high.\nWash and dry all produce.\nHalve the tomatoes.\nRoughly chop 1 tbsp oregano.\nPat steak dry with paper towel, then season with salt and pepper."
+    },
+    {
+      "stepNumber": 2,
+      "instruction": "Heat a large non-stick pan over medium heat.\nAdd 1 tbsp oil, then add the sliced onions.\nCook, stirring occasionally, until slightly softened.",
+      "timingInterval": "3–4 minutes"
+    },
+    {
+      "stepNumber": 3,
+      "instruction": "Add 1 tsp sugar to the onions and season with salt.\nCook, stirring occasionally, until onions are golden-brown.",
+      "timingInterval": "6–8 minutes"
+    },
+    {
+      "stepNumber": 4,
+      "instruction": "Remove the pan from heat.\nStir in 1 tbsp vinegar until onions are coated.\nTransfer caramelized onions to a small bowl and set aside.\nCarefully wipe the pan clean.",
+      "timingInterval": "1 minute"
+    },
+    {
+      "stepNumber": 5,
+      "instruction": "Heat the same pan over medium-high heat.\nAdd 1 tbsp oil, then add the steak.\nPan-fry until cooked to desired doneness.",
+      "timingInterval": "4–6 minutes per side"
+    },
+    {
+      "stepNumber": 6,
+      "instruction": "Remove pan from heat.\nTransfer steak to a plate and loosely cover with foil.\nSet aside to rest.",
+      "timingInterval": "3–5 minutes"
+    },
+    {
+      "stepNumber": 7,
+      "instruction": "Toss together tomatoes, oregano, remaining 1 tbsp vinegar, and 1 tbsp oil in a large bowl.\nSeason with salt and pepper.\nSet aside."
+    },
+    {
+      "stepNumber": 8,
+      "instruction": "Peel, then mince or grate the garlic.\nStir together mayo and ¼ tsp minced garlic in a small bowl.\nSet aside."
+    },
+    {
+      "stepNumber": 9,
+      "instruction": "Halve ciabatta buns.\nOn a baking sheet, arrange ciabatta halves cut side up and brush each half with 1 tsp oil.\nToast in middle of oven until golden-brown.",
+      "timingInterval": "2–3 minutes"
+    },
+    {
+      "stepNumber": 10,
+      "instruction": "Thinly slice the steak.\nSpread garlic-mayo over toasted ciabatta halves, then top with steak and caramelized onions.\nDivide open-faced sandwiches between plates.\nTear bocconcini into bite-sized pieces over the marinated tomatoes.\nSeason tomatoes with salt and pepper and serve on the side."
+    }
+  ],
+  "sourceUrl": "https://www.hellofresh.ca/recipes/open-faced-steak-sandwich-5b3e7ae730006c76b63f44b2"
+}

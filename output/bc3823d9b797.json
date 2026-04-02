@@ -1,0 +1,118 @@
+{
+  "title": "Moo Shu-Inspired Pork Tacos with Mushrooms and Slaw",
+  "description": "These pork tacos feature Moo Shu-spiced ground pork, sautéed mushrooms, and a tangy sesame slaw wrapped in soft tortillas. The combination of savoury hoisin sauce, fresh cilantro, and crunchy coleslaw creates a satisfying fusion of flavours and textures.",
+  "totalTime": "20 minutes",
+  "servings": "2",
+  "ingredientGroups": [
+    {
+      "items": [
+        {
+          "quantity": "250",
+          "unit": "g",
+          "name": "ground pork",
+          "conversion": {
+            "quantity": "9",
+            "unit": "oz"
+          }
+        },
+        {
+          "quantity": "6",
+          "name": "flour tortillas"
+        },
+        {
+          "quantity": "170",
+          "unit": "g",
+          "name": "coleslaw mix",
+          "conversion": {
+            "quantity": "6",
+            "unit": "oz"
+          }
+        },
+        {
+          "quantity": "113",
+          "unit": "g",
+          "name": "mushrooms",
+          "notes": "sliced into 1/4-inch slices",
+          "conversion": {
+            "quantity": "4",
+            "unit": "oz"
+          }
+        },
+        {
+          "quantity": "1",
+          "unit": "tbsp",
+          "name": "garlic puree"
+        },
+        {
+          "quantity": "9",
+          "unit": "g",
+          "name": "moo shu spice blend"
+        },
+        {
+          "quantity": "1",
+          "unit": "tbsp",
+          "name": "sesame oil"
+        },
+        {
+          "quantity": "4",
+          "unit": "tbsp",
+          "name": "hoisin sauce"
+        },
+        {
+          "quantity": "1",
+          "unit": "tbsp",
+          "name": "soy sauce"
+        },
+        {
+          "quantity": "7",
+          "unit": "g",
+          "name": "cilantro",
+          "notes": "roughly chopped"
+        },
+        {
+          "quantity": "1",
+          "unit": "tbsp",
+          "name": "rice vinegar"
+        },
+        {
+          "name": "salt and pepper"
+        },
+        {
+          "quantity": "1/4",
+          "unit": "tsp",
+          "name": "sugar"
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "stepNumber": 1,
+      "instruction": "Cut mushrooms into 1/4-inch slices. Roughly chop cilantro."
+    },
+    {
+      "stepNumber": 2,
+      "instruction": "Heat a large non-stick pan over medium-high. When hot, add half the sesame oil, then mushrooms. Cook, stirring occasionally, until mushrooms soften slightly. Season with salt and pepper.",
+      "timingInterval": "2–3 minutes"
+    },
+    {
+      "stepNumber": 3,
+      "instruction": "Add pork to the pan with mushrooms. Cook, breaking up pork into smaller pieces, until no pink remains. Add Moo Shu Spice Blend and garlic puree. Cook, stirring often, until fragrant. Season with salt and pepper. Add hoisin, soy sauce and half the coleslaw mix. Cook, stirring often, until cabbage wilts. Take the pan off heat.",
+      "timingInterval": "4–5 minutes for pork, 1 minute for spices, 2–3 minutes for cabbage"
+    },
+    {
+      "stepNumber": 4,
+      "instruction": "Wrap tortillas in paper towels. Microwave until tortillas are warm and flexible.",
+      "timingInterval": "1 minute"
+    },
+    {
+      "stepNumber": 5,
+      "instruction": "In a medium bowl, whisk together rice vinegar, 1/4 tsp sugar and remaining sesame oil. Season with salt and pepper. Add remaining coleslaw mix and cilantro, then toss to combine."
+    },
+    {
+      "stepNumber": 6,
+      "instruction": "Divide pork mixture and slaw between tortillas. Divide tacos between plates."
+    }
+  ],
+  "sourceUrl": "https://www.hellofresh.ca/recipes/moo-shu-inspired-pork-tacos-65ef9b47a66a6a1427fc3636"
+}
