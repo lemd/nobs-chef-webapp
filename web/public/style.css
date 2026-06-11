@@ -7,8 +7,6 @@
     --line: #e2d8cc;
     --amber: #c8902d;
     --panel: #1c1917;
-    --panel-height: 40vh;
-    --panel-pad: 42vh;
     --font-body: 'Montserrat', system-ui, sans-serif;
     --font-display: 'Della Respira', Georgia, serif;
 }
@@ -16,9 +14,16 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 /* Full-viewport fixed layout — body does NOT scroll */
-body {
-    height: 100dvh;
+html {
+    height: 100%;
     overflow: hidden;
+    overscroll-behavior: none;
+}
+
+body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
     display: flex;
     flex-direction: column;
 }
@@ -28,6 +33,7 @@ body {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding-left: max(2rem, env(safe-area-inset-left));
     padding-right: max(2rem, env(safe-area-inset-right));
     padding-bottom: max(3rem, env(safe-area-inset-bottom));

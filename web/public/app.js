@@ -40,6 +40,42 @@ let timerCarouselIndex = 0;
 
 const PANEL_TAB_CONFIG = {}; // kept for safety, no longer used
 
+function initTimers(steps) {
+    // Clear any running timers
+    activeTimers.forEach((t) => clearInterval(t.interval));
+    activeTimers.length = 0;
+    timerIdCounter = 0;
+    timerCarouselIndex = 0;
+    (steps ?? []).forEach((s) => {
+        const secs = parseTimingToSeconds(s.timingInterval);
+        if (!secs) return;
+        activeTimers.push({
+            id: ++timerIdCounter,
+            stepNum: s.stepNumber,
+            label: `Step ${s.stepNumber}`,
+            sublabel: s.timingInterval,
+            total: secs,
+            remaining: secs,
+            running: false,
+            interval: null,
+        });
+    });
+    renderTimers();
+}
+
+function tapTimerBtn(stepNum) {
+    const idx = activeTimers.findIndex((t) => t.stepNum === stepNum);
+    if (idx === -1) return;
+    timerCarouselIndex = idx;
+    const panel = document.getElementById('ingPanel');
+    if (!panel.classList.contains('open')) {
+        panel.classList.add('open');
+        document.body.classList.add('ing-open');
+    }
+    switchPanelTab('timers');
+    startTimer(activeTimers[idx].id);
+}
+
 const drawer = document.getElementById('drawer');
 const backdrop = document.getElementById('drawerBackdrop');
 document.getElementById('drawerToggle').addEventListener('click', () => {
@@ -110,25 +146,8 @@ function formatTime(secs) {
 }
 
 function addTimer(stepNum, seconds) {
-    const step = currentRecipe?.steps?.find((s) => s.stepNumber === stepNum);
-    const t = {
-        id: ++timerIdCounter,
-        label: `Step ${stepNum}`,
-        sublabel: step?.timingInterval ?? '',
-        total: seconds,
-        remaining: seconds,
-        running: false,
-        interval: null,
-    };
-    activeTimers.push(t);
-    timerCarouselIndex = activeTimers.length - 1;
-    const panel = document.getElementById('ingPanel');
-    if (!panel.classList.contains('open')) {
-        panel.classList.add('open');
-        document.body.classList.add('ing-open');
-    }
-    switchPanelTab('timers');
-    startTimer(t.id);
+    // Legacy shim — just call tapTimerBtn if the timer already exists
+    tapTimerBtn(stepNum);
 }
 
 function startTimer(id) {
@@ -201,7 +220,6 @@ function renderTimers() {
                     <div class="timer-card-controls">
                         ${!done ? `<button onclick="${toggleFn}" aria-label="${t.running ? 'Pause' : 'Start'}">${toggleIcon}</button>` : ''}
                         <button onclick="resetTimer(${t.id})" aria-label="Reset">&#8635;</button>
-                        <button onclick="removeTimer(${t.id})" aria-label="Remove">&#x2715;</button>
                     </div>
                 </div>`;
             }).join('')}
@@ -603,7 +621,7 @@ function renderStepTiming(stepNum, interval) {
     if (!interval) return '';
     const secs = parseTimingToSeconds(interval);
     const btn = secs
-        ? ` <button class="timer-start-btn" onclick="addTimer(${stepNum}, ${secs})" aria-label="Start timer">⏱</button>`
+        ? ` <button class="timer-start-btn" onclick="tapTimerBtn(${stepNum})" aria-label="Start timer">⏱</button>`
         : '';
     return `<span class="step-timing">${esc(interval)}${btn}</span>`;
 }
@@ -675,6 +693,9 @@ function populateIngPanel(r, hasConversions, hasHints) {
     headEl.style.display = headContent.trim() ? '' : 'none';
 
     bodyEl.innerHTML = renderIngredientGroupsScaled(r.ingredientGroups, 1);
+
+    // Pre-load timers for all timed steps
+    initTimers(r.steps);
 }
 
 // ── Servings scaler ──────────────────────────────────────────────────────────
