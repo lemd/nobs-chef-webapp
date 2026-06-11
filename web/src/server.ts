@@ -92,6 +92,11 @@ app.post("/api/scrape", async (req, res) => {
   }
 });
 
+// ── SPA fallback: serve index.html for /r/:slug routes ───────────────────────
+app.get("/r/:slug", (_req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"));
+});
+
 app.listen(PORT, () => {
-  console.log(`\nRedipe web server running → http://localhost:${PORT}\n`);
+  console.log(`\nNobs web server running → http://localhost:${PORT}\n`);
 });
