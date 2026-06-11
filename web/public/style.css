@@ -142,12 +142,12 @@ body {
 /* ── Mobile: bottom sheet (≤760px) ── */
 @media (max-width: 760px) {
     body { transition: padding-bottom 0.28s cubic-bezier(0.32,0.72,0,1); }
-    body.ing-open { padding-right: 0; padding-bottom: 52vh; }
+    body.ing-open { padding-right: 0; padding-bottom: 42vh; }
 
     #ingPanel {
         position: fixed;
         top: auto; left: 0; right: 0; bottom: 0;
-        width: 100%; height: 50vh;
+        width: 100%; height: 40vh;
         border-left: none;
         border-top: 1px solid var(--line);
         border-radius: 16px 16px 0 0;
@@ -179,7 +179,7 @@ body {
     .tab-chevron { color: #fff; transform: rotate(-90deg); }
     #ingPanel.open .tab-chevron { transform: rotate(90deg); }
 
-    .ing-panel-inner { flex: 1; overflow-y: auto; padding: 1rem 1.25rem 2rem; scrollbar-width: none; }
+    .ing-panel-inner { flex: 1; overflow-y: auto; padding: 1rem 1.25rem 2rem; scrollbar-width: none; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
     .ing-panel-inner::-webkit-scrollbar { display: none; }
     .ing-panel-head { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.25); }
     .ing-panel-title-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.75rem; }
