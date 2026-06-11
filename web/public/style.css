@@ -391,6 +391,7 @@ header h1 {
 /* ── Ingredient panel (desktop right panel) ── */
 @media (min-width: 761px) {
     .ing-sidebar { display: none !important; }
+    .recipe-ing-mobile { display: none !important; }
 
     body.ing-open {
         padding-right: calc(2rem + 400px);
@@ -541,28 +542,24 @@ header h1 {
     /* Tab on top-left of sheet to toggle */
     .mob-ing-tab {
         position: absolute;
-        top: -30px;
+        top: -36px;
         left: 50%;
         transform: translateX(-50%);
         background: var(--bg);
         border: 1px solid var(--line);
         border-bottom: none;
         border-radius: 8px 8px 0 0;
-        padding: 0.3rem 1.1rem 0;
-        font-size: 0.62rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--dim);
+        padding: 0.3rem 0.75rem;
+        font-size: 1.1rem;
         cursor: pointer;
         font-family: inherit;
         display: flex;
         align-items: center;
-        gap: 0.4rem;
-        white-space: nowrap;
+        justify-content: center;
+        line-height: 1;
     }
-    .mob-ing-tab svg { transition: transform 0.25s ease; }
-    .mob-ing-sheet.open .mob-ing-tab svg { transform: rotate(180deg); }
+    .mob-ing-tab svg { display: none; }
+    .mob-ing-sheet.open .mob-ing-tab svg { display: none; }
 
     .mob-ing-sheet-handle { display: none; }
     .mob-ing-sheet-inner {
