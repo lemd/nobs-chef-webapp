@@ -208,7 +208,9 @@ function renderTimers() {
     const timerTabBtn = document.getElementById('otab-timers');
     if (timerTabBtn) {
         const running = activeTimers.find((t) => t.running);
-        timerTabBtn.textContent = running ? formatTime(running.remaining) : 'Timers';
+        timerTabBtn.innerHTML = running
+            ? `<i class="fa-solid fa-stopwatch"></i><span style="font-size:0.6rem;font-weight:700;letter-spacing:0.04em;margin-top:0.1rem">${formatTime(running.remaining)}</span>`
+            : '<i class="fa-solid fa-stopwatch"></i>';
     }
 
     // Clamp carousel index
