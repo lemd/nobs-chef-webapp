@@ -53,6 +53,7 @@ function showView(view) {
     const isNew = view === 'new';
     newViewEl.classList.toggle('hidden', !isNew);
     recipeLayoutEl.classList.toggle('hidden', isNew);
+    document.body.classList.toggle('new-view', isNew);
     const panel = document.getElementById('ingPanel');
     if (isNew) {
         panel.classList.remove('open');

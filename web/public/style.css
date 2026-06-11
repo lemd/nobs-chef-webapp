@@ -6,6 +6,7 @@
     --dim: #8a7d72;
     --line: #e2d8cc;
     --amber: #c8902d;
+    --panel: #a87228;
     --font-body: 'Montserrat', system-ui, sans-serif;
     --font-display: 'Della Respira', Georgia, serif;
 }
@@ -27,7 +28,7 @@ body {
     display: flex;
     gap: 3px;
     padding: 4px;
-    background: var(--bg);
+    background: transparent;
     transition: right 0.25s ease;
 }
 .mosaic-strip span { flex: 1; height: 7px; border-radius: 2px; }
@@ -38,6 +39,9 @@ body {
 
 /* ── Guide backdrop open state ── */
 #guideBackdrop.open { display: flex !important; }
+
+/* ── Hide panel on new-view ── */
+body.new-view #ingPanel { display: none !important; }
 
 /* ── Status error ── */
 #status.error { color: #c0392b; }
@@ -59,7 +63,7 @@ body {
 /* ═══════════════════════════════════════════════
    Ingredient panel — shared
    ═══════════════════════════════════════════════ */
-#ingPanel { background: var(--amber); }
+#ingPanel { background: var(--panel); }
 
 /* ── Desktop: right slide-in (≥761px) ── */
 @media (min-width: 761px) {
@@ -86,7 +90,7 @@ body {
         left: -28px; top: 50%;
         transform: translateY(-50%);
         width: 28px; height: 64px;
-        background: var(--amber);
+        background: var(--panel);
         border: 1px solid var(--line);
         border-right: none;
         border-radius: 6px 0 0 6px;
@@ -164,7 +168,7 @@ body {
         top: -36px; left: 50%;
         transform: translateX(-50%);
         width: auto; height: auto; min-width: 90px;
-        background: var(--amber);
+        background: var(--panel);
         border: 1px solid var(--line); border-bottom: none;
         border-radius: 8px 8px 0 0;
         padding: 0.35rem 0.85rem;

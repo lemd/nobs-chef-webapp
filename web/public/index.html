@@ -120,14 +120,6 @@
         <!-- Header -->
         <header
             class="max-w-[1080px] mx-auto mt-12 mb-12 flex items-center gap-4">
-            <a href="/" class="font-display text-2xl font-normal tracking-wide text-[#111] no-underline mr-auto">Nobs</a>
-            <button
-                id="newBtn"
-                aria-label="Add recipe"
-                class="flex items-center gap-1.5 bg-amber text-white border-0 rounded-full text-[0.7rem] font-bold tracking-[0.1em] uppercase cursor-pointer px-3 py-[0.35rem] font-body transition-opacity duration-150 hover:opacity-80">
-                <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M4.5 1v7M1 4.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                New
-            </button>
             <button
                 id="drawerToggle"
                 aria-label="Saved recipes"
@@ -153,6 +145,19 @@
                 </svg>
                 Saved
             </button>
+            <button
+                id="newBtn"
+                aria-label="Add recipe"
+                class="flex items-center gap-1.5 bg-amber text-white border-0 rounded-full text-[0.7rem] font-bold tracking-[0.1em] uppercase cursor-pointer px-3 py-[0.35rem] font-body transition-opacity duration-150 hover:opacity-80">
+                <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M4.5 1v7M1 4.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                New
+            </button>
+            <a
+                href="/"
+                aria-label="Home"
+                class="ml-auto flex items-center justify-center w-9 h-9 bg-amber rounded-[8px] text-white no-underline font-display text-xl leading-none select-none"
+                >N</a
+            >
         </header>
 
         <!-- New recipe view -->
