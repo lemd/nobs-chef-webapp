@@ -120,8 +120,8 @@ function buildClient(): OpenAI {
     apiKey,
     baseURL: "https://openrouter.ai/api/v1",
     defaultHeaders: {
-      "HTTP-Referer": "https://github.com/redipe",
-      "X-Title": "Redipe",
+      "HTTP-Referer": "https://nobs.mcdon.co",
+      "X-Title": "Nobs",
     },
   });
 }
