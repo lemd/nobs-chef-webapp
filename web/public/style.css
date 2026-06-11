@@ -6,7 +6,7 @@
     --dim: #8a7d72;
     --line: #e2d8cc;
     --amber: #c8902d;
-    --panel: #3d2408;
+    --panel: #faf6ef;
     --font-body: 'Montserrat', system-ui, sans-serif;
     --font-display: 'Della Respira', Georgia, serif;
 }
@@ -123,18 +123,18 @@ body.dash-view #ingPanel { display: none !important; }
 .timer-nav-btn {
     flex-shrink: 0;
     width: 36px; height: 36px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.06);
     border: none; border-radius: 50%;
-    color: rgba(255,255,255,0.75);
+    color: var(--dim);
     font-size: 1.5rem; line-height: 1;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     padding: 0; transition: background 0.12s;
     font-family: inherit;
 }
-.timer-nav-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+.timer-nav-btn:hover { background: rgba(0,0,0,0.12); color: var(--text); }
 @media (max-width: 760px) { .timer-nav-btn { display: none; } }
-.panel-empty-hint { font-size: 0.78rem; color: rgba(255,255,255,0.55); font-style: italic; margin: 0 0 0.75rem; line-height: 1.5; }
+.panel-empty-hint { font-size: 0.78rem; color: var(--dim); font-style: italic; margin: 0 0 0.75rem; line-height: 1.5; }
 
 /* ── Timers ── */
 .timer-item {
@@ -142,29 +142,29 @@ body.dash-view #ingPanel { display: none !important; }
     align-items: center;
     gap: 0.6rem;
     padding: 0.55rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.15);
+    border-bottom: 1px solid var(--line);
 }
 .timer-item:last-child { border-bottom: none; }
 .timer-item.timer-done { opacity: 0.55; }
 .timer-info { flex: 1; min-width: 0; }
-.timer-label { font-size: 0.82rem; font-weight: 600; color: #fff; }
-.timer-sublabel { font-size: 0.7rem; color: rgba(255,255,255,0.6); margin-top: 0.1rem; }
+.timer-label { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+.timer-sublabel { font-size: 0.7rem; color: var(--dim); margin-top: 0.1rem; }
 .timer-display {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text);
     font-variant-numeric: tabular-nums;
     min-width: 3rem;
     text-align: right;
     flex-shrink: 0;
 }
-.timer-done .timer-display { color: rgba(255,255,255,0.55); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.timer-done .timer-display { color: var(--dim); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 .timer-controls { display: flex; gap: 0.35rem; flex-shrink: 0; }
 .timer-controls button {
-    background: rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.06);
     border: none;
     border-radius: 8px;
-    color: #fff;
+    color: var(--text);
     cursor: pointer;
     font-size: 0.9rem;
     min-width: 44px;
@@ -178,7 +178,7 @@ body.dash-view #ingPanel { display: none !important; }
     padding: 0;
     font-family: inherit;
 }
-.timer-controls button:hover { background: rgba(255,255,255,0.22); }
+.timer-controls button:hover { background: rgba(0,0,0,0.12); }
 
 /* ── Timer carousel (mobile) ── */
 .timer-carousel {
@@ -203,27 +203,27 @@ body.dash-view #ingPanel { display: none !important; }
     padding: 0.5rem 1rem 0.75rem;
     min-height: 0;
 }
-.timer-card-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
-.timer-card-sublabel { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: -0.25rem; }
+.timer-card-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+.timer-card-sublabel { font-size: 0.72rem; color: var(--dim); margin-top: -0.25rem; }
 .timer-card-display {
     font-size: 3rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text);
     font-variant-numeric: tabular-nums;
     line-height: 1;
 }
-.timer-card.timer-done .timer-card-display { font-size: 1.6rem; color: rgba(255,255,255,0.5); }
+.timer-card.timer-done .timer-card-display { font-size: 1.6rem; color: var(--dim); }
 .timer-card-controls { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
 .timer-card-controls button {
     min-width: 52px; min-height: 52px; width: 52px; height: 52px;
-    background: rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.06);
     border: none; border-radius: 50%;
-    color: #fff; font-size: 1.3rem;
+    color: var(--text); font-size: 1.3rem;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: background 0.12s; padding: 0;
     font-family: inherit;
 }
-.timer-card-controls button:hover { background: rgba(255,255,255,0.22); }
+.timer-card-controls button:hover { background: rgba(0,0,0,0.12); }
 .timer-dots {
     display: flex;
     gap: 5px;
@@ -233,10 +233,10 @@ body.dash-view #ingPanel { display: none !important; }
 .timer-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.25);
+    background: var(--line);
     transition: background 0.2s;
 }
-.timer-dot.active { background: #fff; }
+.timer-dot.active { background: var(--text); }
 
 /* Step timing start button */
 .timer-start-btn {
@@ -271,12 +271,12 @@ body.dash-view #ingPanel { display: none !important; }
 }
 .servings-card-label {
     font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; color: var(--dim);
 }
 .servings-card-display {
     font-size: 3.5rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text);
     font-variant-numeric: tabular-nums;
     line-height: 1;
     min-width: 4rem;
@@ -284,22 +284,22 @@ body.dash-view #ingPanel { display: none !important; }
 }
 .servings-card-unit {
     font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em;
-    text-transform: uppercase; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; color: var(--dim);
     margin-top: -0.25rem;
 }
 .servings-card-controls { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 .servings-card-controls button {
     min-width: 52px; min-height: 52px; width: 52px; height: 52px;
-    background: rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.06);
     border: none; border-radius: 50%;
-    color: #fff; font-size: 1.6rem; font-weight: 300;
+    color: var(--text); font-size: 1.6rem; font-weight: 300;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: background 0.12s; padding: 0;
     font-family: inherit; line-height: 1;
 }
-.servings-card-controls button:hover { background: rgba(255,255,255,0.22); }
+.servings-card-controls button:hover { background: rgba(0,0,0,0.12); }
 .servings-card-hint {
-    font-size: 0.7rem; color: rgba(255,255,255,0.4);
+    font-size: 0.7rem; color: var(--dim);
     font-style: italic; margin-top: 0.25rem;
 }
 @media (min-width: 761px) {
@@ -310,7 +310,7 @@ body.dash-view #ingPanel { display: none !important; }
         position: fixed;
         top: 0; right: 0; bottom: 0;
         width: 400px;
-        border-left: 1px solid rgba(255,255,255,0.06);
+        border-left: 1px solid var(--line);
         z-index: 150;
         transform: translateX(100%);
         transition: transform 0.25s ease;
@@ -349,7 +349,7 @@ body.dash-view #ingPanel { display: none !important; }
         overflow-y: auto;
         padding: 1.5rem 1.5rem 2.5rem;
         scrollbar-width: thin;
-        scrollbar-color: rgba(255,255,255,0.3) transparent;
+        scrollbar-color: var(--line) transparent;
     }
     .ing-panel-head {
         margin-bottom: 1.25rem;
@@ -366,19 +366,19 @@ body.dash-view #ingPanel { display: none !important; }
         margin-bottom: 0.75rem;
     }
     .servings-scaler button {
-        background: rgba(255,255,255,0.15);
-        border: 1px solid rgba(255,255,255,0.35);
+        background: rgba(0,0,0,0.06);
+        border: 1px solid var(--line);
         border-radius: 50%;
         width: 22px; height: 22px;
         cursor: pointer; font-size: 0.9rem; line-height: 1;
-        color: #fff;
+        color: var(--text);
         display: flex; align-items: center; justify-content: center;
         font-family: var(--font-body);
         transition: background 0.15s; padding: 0;
     }
-    .servings-scaler button:hover { background: rgba(255,255,255,0.25); }
-    .servings-count { font-size: 0.85rem; font-weight: 600; min-width: 1.2rem; text-align: center; color: #fff; }
-    .servings-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+    .servings-scaler button:hover { background: rgba(0,0,0,0.12); }
+    .servings-count { font-size: 0.85rem; font-weight: 600; min-width: 1.2rem; text-align: center; color: var(--text); }
+    .servings-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
 }
 
 /* ── Mobile: bottom sheet (≤760px) ── */
@@ -428,53 +428,53 @@ body.dash-view #ingPanel { display: none !important; }
 
     .ing-panel-inner { flex: 1; overflow-y: auto; padding: 0.75rem 1.25rem 1.5rem; scrollbar-width: none; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
     .ing-panel-inner::-webkit-scrollbar { display: none; }
-    .ing-panel-head { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.25); }
+    .ing-panel-head { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--line); }
     .ing-panel-title-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.75rem; }
     .servings-scaler { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
     .servings-scaler button {
-        background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
+        background: rgba(0,0,0,0.06); border: 1px solid var(--line);
         border-radius: 50%; width: 22px; height: 22px;
-        cursor: pointer; font-size: 0.9rem; line-height: 1; color: #fff;
+        cursor: pointer; font-size: 0.9rem; line-height: 1; color: var(--text);
         display: flex; align-items: center; justify-content: center;
         font-family: var(--font-body); padding: 0;
     }
-    .servings-count { font-size: 0.85rem; font-weight: 600; min-width: 1.2rem; text-align: center; color: #fff; }
-    .servings-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+    .servings-count { font-size: 0.85rem; font-weight: 600; min-width: 1.2rem; text-align: center; color: var(--text); }
+    .servings-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
     .recipe-body { display: flex; flex-direction: column; }
     .recipe-steps-col { order: 1; }
 }
 
 /* ═══════════════════════════════════════════════
-   Panel interior — white on amber
+   Panel interior — dark on cream
    ═══════════════════════════════════════════════ */
-.sidebar-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.75); }
+.sidebar-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
 .guide-btn {
     background: none; border: none; padding: 0;
     font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-    color: rgba(255,255,255,0.7); cursor: pointer; font-family: var(--font-body); transition: color 0.15s;
+    color: var(--dim); cursor: pointer; font-family: var(--font-body); transition: color 0.15s;
 }
-.guide-btn:hover { color: #fff; }
+.guide-btn:hover { color: var(--text); }
 .unit-toggle { display: inline-flex; gap: 1.2rem; margin-bottom: 0.35rem; }
-.unit-toggle-note { font-size: 0.62rem; color: rgba(255,255,255,0.6); letter-spacing: 0.02em; margin-bottom: 1rem; }
+.unit-toggle-note { font-size: 0.62rem; color: var(--dim); letter-spacing: 0.02em; margin-bottom: 1rem; }
 .unit-toggle button {
     background: none; border: none; padding: 0;
     font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-    cursor: pointer; color: rgba(255,255,255,0.5); font-family: var(--font-body); transition: color 0.1s;
+    cursor: pointer; color: var(--dim); font-family: var(--font-body); transition: color 0.1s;
 }
-.unit-toggle button.active { color: #fff; }
-.unit-toggle button:not(.active):hover { color: rgba(255,255,255,0.8); }
-.conv { color: rgba(255,255,255,0.7); font-size: 0.8rem; }
+.unit-toggle button.active { color: var(--amber); }
+.unit-toggle button:not(.active):hover { color: var(--text); }
+.conv { color: var(--dim); font-size: 0.8rem; }
 
 /* Ingredient list (panel) */
 .ing-group + .ing-group { margin-top: 1.4rem; }
-.ing-group-name { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 0.5rem; }
+.ing-group-name { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.5rem; }
 .ing-list { list-style: none; padding: 0; }
-.ing-list li { display: flex; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.15); font-size: 0.95rem; line-height: 1.5; }
+.ing-list li { display: flex; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--line); font-size: 0.95rem; line-height: 1.5; }
 .ing-list li:last-child { border-bottom: none; }
-.ing-qty { font-variant-numeric: tabular-nums; min-width: 5.5rem; flex-shrink: 0; color: rgba(255,255,255,0.7); font-size: 0.82rem; padding-top: 0.05rem; }
-.ing-name { flex: 1; color: #fff; }
-.ing-notes { color: rgba(255,255,255,0.65); font-style: italic; font-size: 0.8rem; }
-.ing-hint { display: block; font-size: 0.72rem; color: rgba(255,255,255,0.6); font-style: italic; margin-top: 0.1rem; letter-spacing: 0.01em; }
+.ing-qty { font-variant-numeric: tabular-nums; min-width: 5.5rem; flex-shrink: 0; color: var(--dim); font-size: 0.82rem; padding-top: 0.05rem; }
+.ing-name { flex: 1; color: var(--text); }
+.ing-notes { color: var(--dim); font-style: italic; font-size: 0.8rem; }
+.ing-hint { display: block; font-size: 0.72rem; color: var(--dim); font-style: italic; margin-top: 0.1rem; letter-spacing: 0.01em; }
 
 /* ═══════════════════════════════════════════════
    Dashboard
