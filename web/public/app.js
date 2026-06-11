@@ -21,9 +21,15 @@ const status = document.getElementById('status');
 const recipeEl = document.getElementById('recipe');
 const emptyEl = document.getElementById('empty');
 const historyEl = document.getElementById('historyList');
+const newViewEl = document.getElementById('newView');
+const recipeLayoutEl = document.getElementById('recipeLayout');
 
 let activeFile = null;
 let currentSourceUrl = null;
+let currentRecipe = null;
+let currentUnits = 'original';
+let originalServings = null;
+let currentServings = null;
 
 const drawer = document.getElementById('drawer');
 const backdrop = document.getElementById('drawerBackdrop');
@@ -36,6 +42,32 @@ backdrop.addEventListener('click', closeDrawer);
 function closeDrawer() {
     drawer.classList.remove('open');
     backdrop.classList.remove('open');
+}
+
+document.getElementById('newBtn').addEventListener('click', () => {
+    history.pushState({}, '', '/new');
+    showView('new');
+});
+
+function showView(view) {
+    const isNew = view === 'new';
+    newViewEl.classList.toggle('hidden', !isNew);
+    recipeLayoutEl.classList.toggle('hidden', isNew);
+    const panel = document.getElementById('ingPanel');
+    if (isNew) {
+        panel.classList.remove('open');
+        document.body.classList.remove('ing-open');
+        setTimeout(() => urlInput?.focus(), 100);
+    } else if (document.getElementById('ingPanelBody')?.children.length > 0) {
+        panel.style.transition = 'none';
+        document.body.style.transition = 'none';
+        panel.classList.add('open');
+        document.body.classList.add('ing-open');
+        requestAnimationFrame(() => {
+            panel.style.transition = '';
+            document.body.style.transition = '';
+        });
+    }
 }
 
 async function loadHistory() {
@@ -81,10 +113,12 @@ async function loadFile(filename) {
 // ── Startup routing ──────────────────────────────────────────────────────────
 const routeMatch = window.location.pathname.match(/^\/r\/([a-zA-Z0-9_-]+)$/);
 if (routeMatch) {
-    // Deep-linked to a specific recipe
+    showView('recipe');
     loadFile(routeMatch[1] + '.json');
+} else if (window.location.pathname === '/new') {
+    showView('new');
 } else {
-    // Default: load the most recent recipe
+    showView('recipe');
     fetch(`${API_BASE}/recipe`)
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
@@ -96,10 +130,13 @@ loadHistory();
 
 // Handle browser back/forward
 window.addEventListener('popstate', (e) => {
-    if (e.state?.slug) {
+    if (window.location.pathname === '/new') {
+        showView('new');
+    } else if (e.state?.slug) {
+        showView('recipe');
         loadFile(e.state.slug + '.json');
     } else {
-        // Back to root — clear recipe view
+        showView('recipe');
         recipeEl.classList.add('hidden');
         emptyEl.classList.remove('hidden');
         activeFile = null;
@@ -134,6 +171,7 @@ form.addEventListener('submit', async (e) => {
         delete data._cached;
         delete data._hash;
         setStatus(cached ? 'Loaded from cache.' : '');
+        showView('recipe');
         renderRecipe(data);
         loadHistory();
         if (hash) history.pushState({ slug: hash }, '', `/r/${hash}`);
@@ -265,11 +303,6 @@ function renderRecipe(r) {
         });
     }
 }
-
-let currentUnits = 'original';
-let currentRecipe = null;
-let originalServings = null;
-let currentServings = null;
 
 function setUnits(mode) {
     currentUnits = mode;

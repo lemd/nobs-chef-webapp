@@ -92,8 +92,12 @@ app.post("/api/scrape", async (req, res) => {
   }
 });
 
-// ── SPA fallback: serve index.html for /r/:slug routes ───────────────────────
+// ── SPA fallback: serve index.html for /r/:slug and /new routes ──────────────
 app.get("/r/:slug", (_req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"));
+});
+
+app.get("/new", (_req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 

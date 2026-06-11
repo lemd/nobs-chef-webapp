@@ -2,6 +2,7 @@
     "outputDirectory": "web/public",
     "buildCommand": "",
     "routes": [
+        { "src": "/new", "dest": "/index.html" },
         { "src": "/r/[^/]+", "dest": "/index.html" },
         { "handle": "filesystem" }
     ]
