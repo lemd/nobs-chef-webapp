@@ -504,11 +504,11 @@ function queueAdd(url) {
 
 async function queueProcess() {
     queueRunning = true;
-    btn.disabled = true;
     while (scrapeQueue.length > 0) {
         const item = scrapeQueue[0];
         item.el.dataset.state = 'processing';
-        item.el.querySelector('.queue-item-state').innerHTML = '<span class="spinner"></span>Extracting';
+        item.el.querySelector('.queue-item-state').innerHTML =
+            '<span class="spinner"></span>Extracting';
         try {
             const secret = getPersonalSecret();
             const res = await fetch(`${API_BASE}/scrape`, {
@@ -537,13 +537,13 @@ async function queueProcess() {
             if (hash) history.pushState({ slug: hash }, '', `/r/${hash}`);
         } catch (err) {
             item.el.dataset.state = 'error';
-            item.el.querySelector('.queue-item-state').textContent = err.message.length < 30 ? err.message : 'Error';
+            item.el.querySelector('.queue-item-state').textContent =
+                err.message.length < 30 ? err.message : 'Error';
             item.el.title = err.message;
         }
         scrapeQueue.shift();
     }
     queueRunning = false;
-    btn.disabled = false;
     setStatus('');
 }
 
