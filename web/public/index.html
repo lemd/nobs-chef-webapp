@@ -178,9 +178,18 @@
                     class="font-display text-5xl font-normal text-[#111] mb-2 leading-tight"
                     >Add a Recipe</h2
                 >
-                <p class="text-[#8a7d72] text-sm mb-8 tracking-wide"
-                    >Paste a URL from any recipe site</p
-                >
+                <!-- Mode toggle -->
+                <div class="flex gap-4 mb-8">
+                    <button id="modeUrl" onclick="setInputMode('url')"
+                        class="font-body text-[0.75rem] font-bold tracking-[0.1em] uppercase border-0 bg-transparent cursor-pointer pb-[2px] transition-colors duration-150 text-[#111] border-b-2 border-[#111]">
+                        URL
+                    </button>
+                    <button id="modePaste" onclick="setInputMode('paste')"
+                        class="font-body text-[0.75rem] font-bold tracking-[0.1em] uppercase border-0 bg-transparent cursor-pointer pb-[2px] transition-colors duration-150 text-[#8a7d72] border-b-2 border-transparent">
+                        Paste Text
+                    </button>
+                </div>
+                <!-- URL form -->
                 <form
                     id="scrapeForm"
                     class="flex gap-0 border-b-[1.5px] border-[#111] pb-2 mb-3">
@@ -188,13 +197,26 @@
                         type="url"
                         id="urlInput"
                         placeholder="https://…"
-                        required
                         class="flex-1 bg-transparent border-0 outline-none text-[1rem] text-[#111] font-body placeholder-[#8a7d72]" />
                     <button
                         type="submit"
                         id="scrapeBtn"
                         class="bg-amber border-0 rounded-full text-[0.75rem] font-bold tracking-[0.08em] uppercase cursor-pointer text-white px-[1.1rem] py-[0.4rem] whitespace-nowrap transition-opacity duration-150 hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed font-body shrink-0">
                         Add
+                    </button>
+                </form>
+                <!-- Paste text form -->
+                <form id="pasteForm" class="hidden mb-3">
+                    <textarea
+                        id="pasteInput"
+                        placeholder="Paste recipe text here…"
+                        rows="8"
+                        class="w-full bg-transparent border border-[#e2d8cc] rounded outline-none text-[0.9rem] text-[#111] font-body placeholder-[#8a7d72] p-3 resize-y mb-2 focus:border-[#111] transition-colors"></textarea>
+                    <button
+                        type="submit"
+                        id="pasteScrapeBtn"
+                        class="bg-amber border-0 rounded-full text-[0.75rem] font-bold tracking-[0.08em] uppercase cursor-pointer text-white px-[1.1rem] py-[0.4rem] whitespace-nowrap transition-opacity duration-150 hover:opacity-80 font-body">
+                        Extract
                     </button>
                 </form>
                 <div

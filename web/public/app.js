@@ -488,7 +488,7 @@ window.addEventListener('popstate', (e) => {
 });
 
 // ── Scrape queue ──────────────────────────────
-const scrapeQueue = []; // { url, el }
+const scrapeQueue = []; // { url?, text?, label, el }
 let queueRunning = false;
 const queueListEl = document.getElementById('scrapeQueue');
 
@@ -499,13 +499,15 @@ window.addEventListener('beforeunload', (e) => {
     }
 });
 
-function queueAdd(url) {
+function queueAdd(item) {
+    // item: { url } or { text }
+    const label = item.url ?? 'Pasted text';
     const li = document.createElement('li');
     li.className = 'queue-item';
     li.dataset.state = 'pending';
-    li.innerHTML = `<span class="queue-item-url" title="${esc(url)}">${esc(url)}</span><span class="queue-item-state">Pending</span>`;
+    li.innerHTML = `<span class="queue-item-url" title="${esc(label)}">${esc(label)}</span><span class="queue-item-state">Pending</span>`;
     queueListEl.appendChild(li);
-    scrapeQueue.push({ url, el: li });
+    scrapeQueue.push({ ...item, label, el: li });
     if (!queueRunning) queueProcess();
 }
 
@@ -524,7 +526,7 @@ async function queueProcess() {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${secret}`,
                 },
-                body: JSON.stringify({ url: item.url }),
+                body: JSON.stringify(item.text ? { text: item.text } : { url: item.url }),
             });
             if (res.status === 401) {
                 clearPersonalSecret();
@@ -559,8 +561,40 @@ form.addEventListener('submit', (e) => {
     if (!url) return;
     urlInput.value = '';
     urlInput.focus();
-    queueAdd(url);
+    queueAdd({ url });
 });
+
+const pasteForm = document.getElementById('pasteForm');
+const pasteInput = document.getElementById('pasteInput');
+pasteForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = pasteInput.value.trim();
+    if (!text) return;
+    pasteInput.value = '';
+    pasteInput.focus();
+    queueAdd({ text });
+});
+
+let currentInputMode = 'url';
+function setInputMode(mode) {
+    currentInputMode = mode;
+    const urlForm = document.getElementById('scrapeForm');
+    const pasteFormEl = document.getElementById('pasteForm');
+    const btnUrl = document.getElementById('modeUrl');
+    const btnPaste = document.getElementById('modePaste');
+    const isUrl = mode === 'url';
+    urlForm.classList.toggle('hidden', !isUrl);
+    pasteFormEl.classList.toggle('hidden', isUrl);
+    btnUrl.classList.toggle('text-[#111]', isUrl);
+    btnUrl.classList.toggle('border-[#111]', isUrl);
+    btnUrl.classList.toggle('text-[#8a7d72]', !isUrl);
+    btnUrl.classList.toggle('border-transparent', !isUrl);
+    btnPaste.classList.toggle('text-[#111]', !isUrl);
+    btnPaste.classList.toggle('border-[#111]', !isUrl);
+    btnPaste.classList.toggle('text-[#8a7d72]', isUrl);
+    btnPaste.classList.toggle('border-transparent', isUrl);
+    setTimeout(() => (isUrl ? urlInput : pasteInput)?.focus(), 50);
+}
 
 function setStatus(msg, isError = false, loading = false) {
     btn.disabled = loading;

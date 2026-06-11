@@ -76,14 +76,17 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
-  const { url, force } = (await req.json()) as {
+  const { url, text, force } = (await req.json()) as {
     url?: string;
+    text?: string;
     force?: boolean;
   };
 
-  if (!url || typeof url !== "string") {
+  const isPasteMode = !url && typeof text === "string" && text.trim().length > 0;
+
+  if (!isPasteMode && (!url || typeof url !== "string")) {
     return jsonResponse(
-      { error: "Request body must include a 'url' string." },
+      { error: "Request body must include a 'url' or 'text' field." },
       400
     );
   }
@@ -93,7 +96,10 @@ Deno.serve(async (req: Request) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const hash = await urlToHash(url);
+  // For pasted text, hash the content itself; for URL, hash the URL
+  const hashInput = isPasteMode ? text!.trim() : url!;
+  const hash = await urlToHash(hashInput);
+  const sourceUrl = isPasteMode ? `text:${hash}` : url!;
 
   // ── Cache hit ──────────────────────────────────────────────────────────────
   if (!force) {
@@ -104,25 +110,31 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (cached) {
-      console.log(`[scrape] cache hit: ${url}`);
+      console.log(`[scrape] cache hit: ${sourceUrl}`);
       return jsonResponse({ ...cached.data, _cached: true, _hash: hash });
     }
   }
 
   try {
-    console.log(`[scrape] ${url}`);
-    const rawContent = await scrapeRecipePage(url);
-    console.log(`[scrape] extracted ${rawContent.length} chars`);
+    let rawContent: string;
+    if (isPasteMode) {
+      console.log(`[scrape] text paste: ${text!.length} chars`);
+      rawContent = text!.trim();
+    } else {
+      console.log(`[scrape] ${url}`);
+      rawContent = await scrapeRecipePage(url!);
+      console.log(`[scrape] extracted ${rawContent.length} chars`);
+    }
 
     const recipe = await parseRecipeWithClaude(rawContent);
     console.log(`[scrape] parsed: "${recipe.title}"`);
 
-    const recipeWithUrl = { ...recipe, sourceUrl: url };
+    const recipeWithUrl = { ...recipe, sourceUrl };
 
     const { data: upserted } = await supabase.from("recipes").upsert(
       {
         url_hash: hash,
-        source_url: url,
+        source_url: sourceUrl,
         title: recipe.title,
         data: recipeWithUrl,
         saved_at: new Date().toISOString(),
