@@ -71,15 +71,40 @@ async function loadFile(filename) {
     renderRecipe(data);
     loadHistory();
     closeDrawer();
+    // Push clean URL without the .json extension
+    const slug = filename.replace(/\.json$/, '');
+    if (window.location.pathname !== `/r/${slug}`) {
+        history.pushState({ slug }, '', `/r/${slug}`);
+    }
 }
 
-fetch(`${API_BASE}/recipe`)
-    .then((r) => (r.ok ? r.json() : null))
-    .then((data) => {
-        if (data) renderRecipe(data);
-    })
-    .catch(() => {});
+// ── Startup routing ──────────────────────────────────────────────────────────
+const routeMatch = window.location.pathname.match(/^\/r\/([a-zA-Z0-9_-]+)$/);
+if (routeMatch) {
+    // Deep-linked to a specific recipe
+    loadFile(routeMatch[1] + '.json');
+} else {
+    // Default: load the most recent recipe
+    fetch(`${API_BASE}/recipe`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => { if (data) renderRecipe(data); })
+        .catch(() => {});
+}
 loadHistory();
+
+// Handle browser back/forward
+window.addEventListener('popstate', (e) => {
+    if (e.state?.slug) {
+        loadFile(e.state.slug + '.json');
+    } else {
+        // Back to root — clear recipe view
+        recipeEl.classList.add('hidden');
+        emptyEl.classList.remove('hidden');
+        activeFile = null;
+        document.getElementById('ingPanel').classList.remove('open');
+        document.body.classList.remove('ing-open');
+    }
+});
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -103,10 +128,13 @@ form.addEventListener('submit', async (e) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? 'Unknown error');
         const cached = data._cached;
+        const hash = data._hash;
         delete data._cached;
+        delete data._hash;
         setStatus(cached ? 'Loaded from cache.' : '');
         renderRecipe(data);
         loadHistory();
+        if (hash) history.pushState({ slug: hash }, '', `/r/${hash}`);
     } catch (err) {
         setStatus(err.message, true);
     }
@@ -141,10 +169,13 @@ async function refetchRecipe() {
         }
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? 'Unknown error');
+        const hash = data._hash;
         delete data._cached;
+        delete data._hash;
         setStatus('');
         renderRecipe(data);
         loadHistory();
+        if (hash) history.pushState({ slug: hash }, '', `/r/${hash}`);
     } catch (err) {
         setStatus(err.message, true);
     }

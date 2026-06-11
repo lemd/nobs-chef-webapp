@@ -105,7 +105,7 @@ Deno.serve(async (req: Request) => {
 
     if (cached) {
       console.log(`[scrape] cache hit: ${url}`);
-      return jsonResponse({ ...cached.data, _cached: true });
+      return jsonResponse({ ...cached.data, _cached: true, _hash: hash });
     }
   }
 
@@ -134,7 +134,7 @@ Deno.serve(async (req: Request) => {
       await syncRecipeIngredients(recipe, upserted.id, supabase);
     }
 
-    return jsonResponse(recipeWithUrl);
+    return jsonResponse({ ...recipeWithUrl, _hash: hash });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[scrape] error:", message);

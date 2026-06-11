@@ -1,4 +1,7 @@
 {
     "outputDirectory": "web/public",
-    "buildCommand": null
+    "buildCommand": null,
+    "rewrites": [
+        { "source": "/r/:slug", "destination": "/index.html" }
+    ]
 }
