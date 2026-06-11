@@ -478,6 +478,37 @@ body.dash-view #ingPanel { display: none !important; }
 .ing-notes { color: var(--dim); font-style: italic; font-size: 0.8rem; }
 .ing-hint { display: block; font-size: 0.72rem; color: var(--dim); font-style: italic; margin-top: 0.1rem; letter-spacing: 0.01em; }
 
+/* ── Scrape queue ── */
+#scrapeQueue { margin: 0; padding: 0; list-style: none; }
+.queue-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+.queue-item:last-child { border-bottom: none; }
+.queue-item-url {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.queue-item-state {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.queue-item[data-state="pending"] .queue-item-state { color: var(--dim); }
+.queue-item[data-state="processing"] .queue-item-state { color: var(--amber); }
+.queue-item[data-state="done"] .queue-item-state { color: #2a9d8f; }
+.queue-item[data-state="error"] .queue-item-state { color: #c0392b; }
+
 /* ═══════════════════════════════════════════════
    Dashboard
    ═══════════════════════════════════════════════ */

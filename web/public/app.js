@@ -487,39 +487,73 @@ window.addEventListener('popstate', (e) => {
     }
 });
 
-form.addEventListener('submit', async (e) => {
+// ── Scrape queue ──────────────────────────────
+const scrapeQueue = []; // { url, el }
+let queueRunning = false;
+const queueListEl = document.getElementById('scrapeQueue');
+
+function queueAdd(url) {
+    const li = document.createElement('li');
+    li.className = 'queue-item';
+    li.dataset.state = 'pending';
+    li.innerHTML = `<span class="queue-item-url" title="${esc(url)}">${esc(url)}</span><span class="queue-item-state">Pending</span>`;
+    queueListEl.appendChild(li);
+    scrapeQueue.push({ url, el: li });
+    if (!queueRunning) queueProcess();
+}
+
+async function queueProcess() {
+    queueRunning = true;
+    btn.disabled = true;
+    while (scrapeQueue.length > 0) {
+        const item = scrapeQueue[0];
+        item.el.dataset.state = 'processing';
+        item.el.querySelector('.queue-item-state').innerHTML = '<span class="spinner"></span>Extracting';
+        try {
+            const secret = getPersonalSecret();
+            const res = await fetch(`${API_BASE}/scrape`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${secret}`,
+                },
+                body: JSON.stringify({ url: item.url }),
+            });
+            if (res.status === 401) {
+                clearPersonalSecret();
+                throw new Error('Wrong password.');
+            }
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error ?? 'Unknown error');
+            const hash = data._hash;
+            delete data._cached;
+            delete data._hash;
+            item.el.dataset.state = 'done';
+            item.el.querySelector('.queue-item-state').textContent = 'Done';
+            loadHistory();
+            // Navigate to the last completed recipe
+            showView('recipe');
+            renderRecipe(data);
+            if (hash) history.pushState({ slug: hash }, '', `/r/${hash}`);
+        } catch (err) {
+            item.el.dataset.state = 'error';
+            item.el.querySelector('.queue-item-state').textContent = err.message.length < 30 ? err.message : 'Error';
+            item.el.title = err.message;
+        }
+        scrapeQueue.shift();
+    }
+    queueRunning = false;
+    btn.disabled = false;
+    setStatus('');
+}
+
+form.addEventListener('submit', (e) => {
     e.preventDefault();
     const url = urlInput.value.trim();
     if (!url) return;
-    setStatus('Extracting…', false, true);
-    try {
-        const secret = getPersonalSecret();
-        const res = await fetch(`${API_BASE}/scrape`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${secret}`,
-            },
-            body: JSON.stringify({ url }),
-        });
-        if (res.status === 401) {
-            clearPersonalSecret();
-            throw new Error('Wrong password.');
-        }
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? 'Unknown error');
-        const cached = data._cached;
-        const hash = data._hash;
-        delete data._cached;
-        delete data._hash;
-        setStatus(cached ? 'Loaded from cache.' : '');
-        showView('recipe');
-        renderRecipe(data);
-        loadHistory();
-        if (hash) history.pushState({ slug: hash }, '', `/r/${hash}`);
-    } catch (err) {
-        setStatus(err.message, true);
-    }
+    urlInput.value = '';
+    urlInput.focus();
+    queueAdd(url);
 });
 
 function setStatus(msg, isError = false, loading = false) {
