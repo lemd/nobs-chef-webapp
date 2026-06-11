@@ -152,13 +152,17 @@
 
         <div class="mob-ing-backdrop" id="mobIngBackdrop"></div>
         <div class="mob-ing-sheet" id="mobIngSheet">
+            <button class="mob-ing-tab" onclick="toggleMobIng()">
+                Ingredients
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 5L5 1L9 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
             <div class="mob-ing-sheet-handle"></div>
             <div class="mob-ing-sheet-inner">
                 <div class="mob-ing-sheet-head">
                     <span class="sidebar-label">Ingredients</span>
-                    <button class="mob-ing-close" onclick="closeMobIng()"
-                        >✕</button
-                    >
+                    <button class="mob-ing-close" onclick="closeMobIng()">✕</button>
                 </div>
                 <div class="mob-servings-row" id="mobServingsRow"></div>
                 <div id="mobIngBody"></div>
@@ -616,50 +620,42 @@
                 );
             }
 
-            // ── Mobile bottom sheet ────────────────────────────────────────
+            // ── Mobile bottom panel ────────────────────────────────────────
+            function toggleMobIng() {
+                const sheet = document.getElementById('mobIngSheet');
+                sheet.classList.contains('open') ? closeMobIng() : openMobIng();
+            }
+
             function openMobIng() {
                 if (!currentRecipe) return;
                 const sheet = document.getElementById('mobIngSheet');
-                const backdrop = document.getElementById('mobIngBackdrop');
                 const servingsRow = document.getElementById('mobServingsRow');
                 const bodyEl = document.getElementById('mobIngBody');
                 if (originalServings && servingsRow) {
                     servingsRow.innerHTML = `
                         <div class="servings-scaler">
-                            <button onclick="changeServings(-1, true)" aria-label="Fewer">−</button>
+                            <button onclick="changeServings(-1)" aria-label="Fewer">−</button>
                             <span class="servings-count" id="mobServingsCount">${currentServings ?? originalServings}</span>
                             <span class="servings-label">servings</span>
-                            <button onclick="changeServings(1, true)" aria-label="More">+</button>
+                            <button onclick="changeServings(1)" aria-label="More">+</button>
                         </div>`;
                 } else if (servingsRow) {
                     servingsRow.innerHTML = '';
                 }
                 if (bodyEl) {
-                    const factor =
-                        currentServings && originalServings
-                            ? currentServings / originalServings
-                            : 1;
-                    bodyEl.innerHTML = renderIngredientGroupsScaled(
-                        currentRecipe.ingredientGroups,
-                        factor,
-                    );
+                    const factor = (currentServings && originalServings) ? currentServings / originalServings : 1;
+                    bodyEl.innerHTML = renderIngredientGroupsScaled(currentRecipe.ingredientGroups, factor);
                 }
                 sheet.classList.add('open');
-                backdrop.classList.add('open');
-                document.body.style.overflow = 'hidden';
+                document.body.classList.add('mob-ing-open');
             }
 
             function closeMobIng() {
                 document.getElementById('mobIngSheet').classList.remove('open');
-                document
-                    .getElementById('mobIngBackdrop')
-                    .classList.remove('open');
-                document.body.style.overflow = '';
+                document.body.classList.remove('mob-ing-open');
             }
 
-            document
-                .getElementById('mobIngBackdrop')
-                .addEventListener('click', closeMobIng);
+            document.getElementById('mobIngBackdrop').addEventListener('click', closeMobIng);
 
             // ── Servings scaler ────────────────────────────────────────────
             function parseServingsNum(str) {
