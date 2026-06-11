@@ -28,70 +28,123 @@
         </script>
         <link rel="stylesheet" href="/style.css" />
     </head>
-    <body class="font-body bg-parchment text-[#111] min-h-screen px-8 pb-24 text-[17px] leading-relaxed transition-[padding-right] duration-250">
-
+    <body
+        class="font-body bg-parchment text-[#111] min-h-screen px-8 pb-24 text-[17px] leading-relaxed transition-[padding-right] duration-250">
         <!-- Mosaic strip -->
         <div class="mosaic-strip">
-            <span style="background:#e63946"></span>
-            <span style="background:#f4a261"></span>
-            <span style="background:#e9c46a"></span>
-            <span style="background:#2a9d8f"></span>
-            <span style="background:#457b9d"></span>
-            <span style="background:#6a4c93"></span>
-            <span style="background:#ff595e"></span>
-            <span style="background:#ffca3a"></span>
-            <span style="background:#8ac926"></span>
-            <span style="background:#1982c4"></span>
-            <span style="background:#c8902d"></span>
-            <span style="background:#e63946"></span>
-            <span style="background:#f4a261"></span>
-            <span style="background:#2a9d8f"></span>
-            <span style="background:#6a4c93"></span>
-            <span style="background:#ffca3a"></span>
-            <span style="background:#8ac926"></span>
-            <span style="background:#457b9d"></span>
-            <span style="background:#ff595e"></span>
-            <span style="background:#c8902d"></span>
+            <span style="background: #e63946"></span>
+            <span style="background: #f4a261"></span>
+            <span style="background: #e9c46a"></span>
+            <span style="background: #2a9d8f"></span>
+            <span style="background: #457b9d"></span>
+            <span style="background: #6a4c93"></span>
+            <span style="background: #ff595e"></span>
+            <span style="background: #ffca3a"></span>
+            <span style="background: #8ac926"></span>
+            <span style="background: #1982c4"></span>
+            <span style="background: #c8902d"></span>
+            <span style="background: #e63946"></span>
+            <span style="background: #f4a261"></span>
+            <span style="background: #2a9d8f"></span>
+            <span style="background: #6a4c93"></span>
+            <span style="background: #ffca3a"></span>
+            <span style="background: #8ac926"></span>
+            <span style="background: #457b9d"></span>
+            <span style="background: #ff595e"></span>
+            <span style="background: #c8902d"></span>
         </div>
 
         <!-- Saved recipes drawer -->
-        <div id="drawer" class="fixed top-0 left-0 bottom-0 w-64 bg-parchment z-[300] px-6 py-8 -translate-x-full transition-transform duration-250 overflow-y-auto border-r border-[#e2d8cc]">
+        <div
+            id="drawer"
+            class="fixed top-0 left-0 bottom-0 w-64 bg-parchment z-[300] px-6 py-8 -translate-x-full transition-transform duration-300 overflow-y-auto border-r border-[#e2d8cc]">
             <div class="flex items-baseline justify-between mb-5">
-                <span class="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-[#8a7d72]">Saved</span>
-                <button id="drawerClose" aria-label="Close" class="text-base text-[#8a7d72] hover:text-[#111] leading-none bg-transparent border-0 cursor-pointer">✕</button>
+                <span
+                    class="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-[#8a7d72]"
+                    >Saved</span
+                >
+                <button
+                    id="drawerClose"
+                    aria-label="Close"
+                    class="text-base text-[#8a7d72] hover:text-[#111] leading-none bg-transparent border-0 cursor-pointer"
+                    >✕</button
+                >
             </div>
-            <ul class="list-none" id="historyList">
+            <ul class="history-list" id="historyList">
                 <li><span class="text-sm text-[#8a7d72]">None yet</span></li>
             </ul>
         </div>
-        <div id="drawerBackdrop" class="hidden fixed inset-0 bg-black/25 z-[200]"></div>
+        <div
+            id="drawerBackdrop"
+            class="hidden fixed inset-0 bg-black/25 z-[200]"></div>
 
         <!-- Ingredient guide modal -->
-        <div id="guideBackdrop" class="hidden fixed inset-0 bg-black/45 z-[400] items-center justify-center p-8">
-            <div id="guideModal" class="bg-parchment rounded-md max-w-xl w-full max-h-[80vh] flex flex-col shadow-[0_8px_40px_rgba(0,0,0,0.18)]" role="dialog" aria-modal="true" aria-label="Ingredient Guide">
-                <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#e2d8cc] shrink-0">
-                    <span class="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-[#8a7d72]">Ingredient Guide</span>
-                    <button id="guideClose" aria-label="Close" class="text-base text-[#8a7d72] hover:text-[#111] leading-none bg-transparent border-0 cursor-pointer">&#x2715;</button>
+        <div
+            id="guideBackdrop"
+            class="hidden fixed inset-0 bg-black/45 z-[400] items-center justify-center p-8">
+            <div
+                id="guideModal"
+                class="bg-parchment rounded-md max-w-xl w-full max-h-[80vh] flex flex-col shadow-[0_8px_40px_rgba(0,0,0,0.18)]"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Ingredient Guide">
+                <div
+                    class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#e2d8cc] shrink-0">
+                    <span
+                        class="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-[#8a7d72]"
+                        >Ingredient Guide</span
+                    >
+                    <button
+                        id="guideClose"
+                        aria-label="Close"
+                        class="text-base text-[#8a7d72] hover:text-[#111] leading-none bg-transparent border-0 cursor-pointer"
+                        >&#x2715;</button
+                    >
                 </div>
-                <div id="guideModalBody" class="overflow-y-auto px-6 py-4 [scrollbar-width:thin]"></div>
+                <div
+                    id="guideModalBody"
+                    class="overflow-y-auto px-6 py-4 [scrollbar-width:thin]"></div>
             </div>
         </div>
 
         <!-- Header -->
-        <header class="max-w-[1080px] mx-auto mt-12 mb-12 flex items-baseline gap-6">
-            <h1 class="font-display text-2xl font-normal tracking-wide text-[#111]">Nobs</h1>
-            <button id="drawerToggle" aria-label="Saved recipes" class="flex items-center gap-[0.45rem] bg-transparent border-0 font-body text-[0.75rem] font-bold tracking-[0.1em] uppercase text-[#8a7d72] hover:text-[#111] cursor-pointer transition-colors duration-150">
+        <header
+            class="max-w-[1080px] mx-auto mt-12 mb-12 flex items-center gap-6">
+            <h1
+                class="font-display text-2xl font-normal tracking-wide text-[#111]"
+                >Nobs</h1
+            >
+            <button
+                id="drawerToggle"
+                aria-label="Saved recipes"
+                class="flex items-center gap-[0.45rem] bg-transparent border-0 font-body text-[0.75rem] font-bold tracking-[0.1em] uppercase text-[#8a7d72] hover:text-[#111] cursor-pointer transition-colors duration-150">
                 <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
-                    <rect width="16" height="1.5" rx="0.75" fill="currentColor"/>
-                    <rect y="5.25" width="16" height="1.5" rx="0.75" fill="currentColor"/>
-                    <rect y="10.5" width="16" height="1.5" rx="0.75" fill="currentColor"/>
+                    <rect
+                        width="16"
+                        height="1.5"
+                        rx="0.75"
+                        fill="currentColor" />
+                    <rect
+                        y="5.25"
+                        width="16"
+                        height="1.5"
+                        rx="0.75"
+                        fill="currentColor" />
+                    <rect
+                        y="10.5"
+                        width="16"
+                        height="1.5"
+                        rx="0.75"
+                        fill="currentColor" />
                 </svg>
                 Saved
             </button>
         </header>
 
         <!-- URL form -->
-        <form id="scrapeForm" class="max-w-[1080px] mx-auto mb-2 flex gap-0 border-b-[1.5px] border-[#111] pb-2">
+        <form
+            id="scrapeForm"
+            class="max-w-[1080px] mx-auto mb-2 flex gap-0 border-b-[1.5px] border-[#111] pb-2">
             <input
                 type="url"
                 id="urlInput"
@@ -108,7 +161,9 @@
         </form>
 
         <!-- Status -->
-        <div id="status" class="max-w-[1080px] mx-auto mt-[0.4rem] text-[0.78rem] text-[#555] min-h-[1.2em] tracking-[0.02em]"></div>
+        <div
+            id="status"
+            class="max-w-[1080px] mx-auto mt-[0.4rem] text-[0.78rem] text-[#555] min-h-[1.2em] tracking-[0.02em]"></div>
 
         <!-- Main content -->
         <div class="max-w-[1080px] mx-auto mt-8">
@@ -128,8 +183,18 @@
                 onclick="toggleIngPanel()"
                 aria-label="Toggle ingredients panel">
                 <span class="ing-panel-tab-label">Ingredients</span>
-                <svg class="tab-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">
-                    <path d="M5.5 1.5L1.5 6L5.5 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <svg
+                    class="tab-chevron"
+                    width="7"
+                    height="12"
+                    viewBox="0 0 7 12"
+                    fill="none">
+                    <path
+                        d="M5.5 1.5L1.5 6L5.5 10.5"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round" />
                 </svg>
             </button>
             <div class="ing-panel-inner">
