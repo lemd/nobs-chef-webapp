@@ -85,10 +85,14 @@ function tapTimerBtn(stepNum) {
     // Scroll carousel to this timer (even if panel was already open)
     requestAnimationFrame(() => {
         const carousel = document.getElementById('timerCarousel');
-        if (carousel) carousel.scrollTo({ left: idx * carousel.clientWidth, behavior: 'smooth' });
-        document.querySelectorAll('.timer-dot').forEach((d, i) =>
-            d.classList.toggle('active', i === idx),
-        );
+        if (carousel)
+            carousel.scrollTo({
+                left: idx * carousel.clientWidth,
+                behavior: 'smooth',
+            });
+        document
+            .querySelectorAll('.timer-dot')
+            .forEach((d, i) => d.classList.toggle('active', i === idx));
     });
 }
 
@@ -97,10 +101,16 @@ function carouselNav(dir) {
     if (n < 2) return;
     timerCarouselIndex = Math.max(0, Math.min(timerCarouselIndex + dir, n - 1));
     const carousel = document.getElementById('timerCarousel');
-    if (carousel) carousel.scrollTo({ left: timerCarouselIndex * carousel.clientWidth, behavior: 'smooth' });
-    document.querySelectorAll('.timer-dot').forEach((d, i) =>
-        d.classList.toggle('active', i === timerCarouselIndex),
-    );
+    if (carousel)
+        carousel.scrollTo({
+            left: timerCarouselIndex * carousel.clientWidth,
+            behavior: 'smooth',
+        });
+    document
+        .querySelectorAll('.timer-dot')
+        .forEach((d, i) =>
+            d.classList.toggle('active', i === timerCarouselIndex),
+        );
 }
 
 const drawer = document.getElementById('drawer');
@@ -222,8 +232,12 @@ function removeTimer(id) {
 
 function buildCarouselHTML() {
     const hasMultiple = activeTimers.length > 1;
-    const navPrev = hasMultiple ? '<button class="timer-nav-btn" onclick="carouselNav(-1)" aria-label="Previous timer">&#8249;</button>' : '';
-    const navNext = hasMultiple ? '<button class="timer-nav-btn" onclick="carouselNav(1)" aria-label="Next timer">&#8250;</button>' : '';
+    const navPrev = hasMultiple
+        ? '<button class="timer-nav-btn" onclick="carouselNav(-1)" aria-label="Previous timer">&#8249;</button>'
+        : '';
+    const navNext = hasMultiple
+        ? '<button class="timer-nav-btn" onclick="carouselNav(1)" aria-label="Next timer">&#8250;</button>'
+        : '';
     return `
         <div class="timer-carousel-nav-wrap">
             ${navPrev}
@@ -231,7 +245,9 @@ function buildCarouselHTML() {
                 ${activeTimers
                     .map((t) => {
                         const done = t.remaining === 0;
-                        const toggleFn = t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`;
+                        const toggleFn = t.running
+                            ? `pauseTimer(${t.id})`
+                            : `startTimer(${t.id})`;
                         const toggleIcon = t.running ? '\u23f8' : '\u25b6';
                         return `<div class="timer-card${done ? ' timer-done' : ''}" data-timer-id="${t.id}">
                         <div class="timer-card-label">${esc(t.label)}</div>
@@ -247,26 +263,32 @@ function buildCarouselHTML() {
             </div>
             ${navNext}
         </div>
-        ${hasMultiple
-            ? `<div class="timer-dots" id="timerDots">
+        ${
+            hasMultiple
+                ? `<div class="timer-dots" id="timerDots">
             ${activeTimers.map((_, i) => `<div class="timer-dot${i === timerCarouselIndex ? ' active' : ''}"></div>`).join('')}
         </div>`
-            : ''}
+                : ''
+        }
     `;
 }
 
 function attachCarouselScroll() {
     const carousel = document.getElementById('timerCarousel');
     if (!carousel) return;
-    carousel.addEventListener('scroll', () => {
-        const idx = Math.round(carousel.scrollLeft / carousel.clientWidth);
-        if (idx !== timerCarouselIndex) {
-            timerCarouselIndex = idx;
-            document.querySelectorAll('.timer-dot').forEach((d, i) =>
-                d.classList.toggle('active', i === idx),
-            );
-        }
-    }, { passive: true });
+    carousel.addEventListener(
+        'scroll',
+        () => {
+            const idx = Math.round(carousel.scrollLeft / carousel.clientWidth);
+            if (idx !== timerCarouselIndex) {
+                timerCarouselIndex = idx;
+                document
+                    .querySelectorAll('.timer-dot')
+                    .forEach((d, i) => d.classList.toggle('active', i === idx));
+            }
+        },
+        { passive: true },
+    );
 }
 
 function renderTimers() {
@@ -293,26 +315,41 @@ function renderTimers() {
     }
 
     // Clamp carousel index
-    timerCarouselIndex = Math.max(0, Math.min(timerCarouselIndex, activeTimers.length - 1));
+    timerCarouselIndex = Math.max(
+        0,
+        Math.min(timerCarouselIndex, activeTimers.length - 1),
+    );
 
     // In-place update if carousel already has the right cards — preserves swipe state
     const existingCarousel = document.getElementById('timerCarousel');
-    if (existingCarousel && existingCarousel.children.length === activeTimers.length) {
+    if (
+        existingCarousel &&
+        existingCarousel.children.length === activeTimers.length
+    ) {
         activeTimers.forEach((t, i) => {
             const card = existingCarousel.children[i];
             if (!card) return;
             const done = t.remaining === 0;
             card.classList.toggle('timer-done', done);
             const disp = card.querySelector('.timer-card-display');
-            if (disp) disp.textContent = done ? 'Done' : formatTime(t.remaining);
+            if (disp)
+                disp.textContent = done ? 'Done' : formatTime(t.remaining);
             const controls = card.querySelector('.timer-card-controls');
             if (controls) {
                 const toggleBtn = controls.querySelector('.timer-toggle-btn');
                 if (done) {
                     if (toggleBtn) toggleBtn.remove();
                 } else if (toggleBtn) {
-                    toggleBtn.setAttribute('onclick', t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`);
-                    toggleBtn.setAttribute('aria-label', t.running ? 'Pause' : 'Start');
+                    toggleBtn.setAttribute(
+                        'onclick',
+                        t.running
+                            ? `pauseTimer(${t.id})`
+                            : `startTimer(${t.id})`,
+                    );
+                    toggleBtn.setAttribute(
+                        'aria-label',
+                        t.running ? 'Pause' : 'Start',
+                    );
                     toggleBtn.textContent = t.running ? '\u23f8' : '\u25b6';
                 }
             }
@@ -326,7 +363,12 @@ function renderTimers() {
         const carousel = document.getElementById('timerCarousel');
         if (!carousel) return;
         const card = carousel.children[timerCarouselIndex];
-        if (card) card.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'instant' });
+        if (card)
+            card.scrollIntoView({
+                block: 'nearest',
+                inline: 'center',
+                behavior: 'instant',
+            });
         attachCarouselScroll();
     });
 }
@@ -704,7 +746,7 @@ function renderStepTiming(stepNum, interval) {
     if (!interval) return '';
     const secs = parseTimingToSeconds(interval);
     const btn = secs
-        ? ` <button class="timer-start-btn" onclick="tapTimerBtn(${stepNum})" aria-label="Start timer">⏱</button>`
+        ? ` <button class="timer-start-btn" onclick="tapTimerBtn(${stepNum})" aria-label="Start timer"><i class="fa-solid fa-stopwatch"></i></button>`
         : '';
     return `<span class="step-timing">${esc(interval)}${btn}</span>`;
 }
