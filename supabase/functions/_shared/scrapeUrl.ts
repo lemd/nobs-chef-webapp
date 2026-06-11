@@ -15,7 +15,13 @@ export async function scrapeRecipePage(url: string): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+    if (response.status === 403 || response.status === 401) {
+      throw new Error(`This site blocks automated access (${response.status}). Try a different recipe site.`);
+    }
+    if (response.status === 404) {
+      throw new Error(`Page not found (404). Check the URL is correct.`);
+    }
+    throw new Error(`Failed to fetch page: ${response.status} ${response.statusText}`);
   }
 
   const rawHtml = await response.text();
