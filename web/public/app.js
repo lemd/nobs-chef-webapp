@@ -248,7 +248,9 @@ function buildCarouselHTML() {
                         const toggleFn = t.running
                             ? `pauseTimer(${t.id})`
                             : `startTimer(${t.id})`;
-                        const toggleIcon = t.running ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+                        const toggleIcon = t.running
+                            ? '<i class="fa-solid fa-pause"></i>'
+                            : '<i class="fa-solid fa-play"></i>';
                         return `<div class="timer-card${done ? ' timer-done' : ''}" data-timer-id="${t.id}">
                         <div class="timer-card-label">${esc(t.label)}</div>
                         ${t.sublabel ? `<div class="timer-card-sublabel">${esc(t.sublabel)}</div>` : ''}
@@ -350,7 +352,9 @@ function renderTimers() {
                         'aria-label',
                         t.running ? 'Pause' : 'Start',
                     );
-                    toggleBtn.innerHTML = t.running ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+                    toggleBtn.innerHTML = t.running
+                        ? '<i class="fa-solid fa-pause"></i>'
+                        : '<i class="fa-solid fa-play"></i>';
                 }
             }
         });
