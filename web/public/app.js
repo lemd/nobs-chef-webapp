@@ -46,6 +46,12 @@ function closeDrawer() {
     backdrop.classList.remove('open');
 }
 
+document.getElementById('homeBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    history.pushState({}, '', '/');
+    showView('dash');
+});
+
 document.getElementById('newBtn').addEventListener('click', () => {
     history.pushState({}, '', '/new');
     showView('new');
