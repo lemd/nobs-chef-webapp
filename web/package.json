@@ -1,7 +1,7 @@
 {
-    "name": "redipe-web",
+    "name": "nobs-web",
     "version": "1.0.0",
-    "description": "Web viewer for Redipe recipe extractor",
+    "description": "Nobs recipe extractor web app",
     "scripts": {
         "start": "tsx src/server.ts",
         "dev": "tsx watch src/server.ts"

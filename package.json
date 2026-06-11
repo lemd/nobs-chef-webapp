@@ -1,5 +1,5 @@
 {
-    "name": "redipe",
+    "name": "nobs",
     "version": "1.0.0",
     "description": "Recipe scraper and parser using OpenRouter + Claude",
     "main": "dist/index.js",
