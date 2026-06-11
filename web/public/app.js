@@ -67,13 +67,40 @@ function tapTimerBtn(stepNum) {
     const idx = activeTimers.findIndex((t) => t.stepNum === stepNum);
     if (idx === -1) return;
     timerCarouselIndex = idx;
+    const t = activeTimers[idx];
+    // Reset if already done so tapping always restarts
+    if (t.remaining === 0) {
+        clearInterval(t.interval);
+        t.interval = null;
+        t.running = false;
+        t.remaining = t.total;
+    }
     const panel = document.getElementById('ingPanel');
     if (!panel.classList.contains('open')) {
         panel.classList.add('open');
         document.body.classList.add('ing-open');
     }
     switchPanelTab('timers');
-    startTimer(activeTimers[idx].id);
+    startTimer(t.id);
+    // Scroll carousel to this timer (even if panel was already open)
+    requestAnimationFrame(() => {
+        const carousel = document.getElementById('timerCarousel');
+        if (carousel) carousel.scrollTo({ left: idx * carousel.clientWidth, behavior: 'smooth' });
+        document.querySelectorAll('.timer-dot').forEach((d, i) =>
+            d.classList.toggle('active', i === idx),
+        );
+    });
+}
+
+function carouselNav(dir) {
+    const n = activeTimers.length;
+    if (n < 2) return;
+    timerCarouselIndex = Math.max(0, Math.min(timerCarouselIndex + dir, n - 1));
+    const carousel = document.getElementById('timerCarousel');
+    if (carousel) carousel.scrollTo({ left: timerCarouselIndex * carousel.clientWidth, behavior: 'smooth' });
+    document.querySelectorAll('.timer-dot').forEach((d, i) =>
+        d.classList.toggle('active', i === timerCarouselIndex),
+    );
 }
 
 const drawer = document.getElementById('drawer');
@@ -194,26 +221,33 @@ function removeTimer(id) {
 }
 
 function buildCarouselHTML() {
+    const hasMultiple = activeTimers.length > 1;
+    const navPrev = hasMultiple ? '<button class="timer-nav-btn" onclick="carouselNav(-1)" aria-label="Previous timer">&#8249;</button>' : '';
+    const navNext = hasMultiple ? '<button class="timer-nav-btn" onclick="carouselNav(1)" aria-label="Next timer">&#8250;</button>' : '';
     return `
-        <div class="timer-carousel" id="timerCarousel">
-            ${activeTimers
-                .map((t) => {
-                    const done = t.remaining === 0;
-                    const toggleFn = t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`;
-                    const toggleIcon = t.running ? '\u23f8' : '\u25b6';
-                    return `<div class="timer-card${done ? ' timer-done' : ''}" data-timer-id="${t.id}">
-                    <div class="timer-card-label">${esc(t.label)}</div>
-                    ${t.sublabel ? `<div class="timer-card-sublabel">${esc(t.sublabel)}</div>` : ''}
-                    <div class="timer-card-display">${done ? 'Done' : formatTime(t.remaining)}</div>
-                    <div class="timer-card-controls">
-                        ${!done ? `<button class="timer-toggle-btn" onclick="${toggleFn}" aria-label="${t.running ? 'Pause' : 'Start'}">${toggleIcon}</button>` : ''}
-                        <button onclick="resetTimer(${t.id})" aria-label="Reset">&#8635;</button>
-                    </div>
-                </div>`;
-                })
-                .join('')}
+        <div class="timer-carousel-nav-wrap">
+            ${navPrev}
+            <div class="timer-carousel" id="timerCarousel">
+                ${activeTimers
+                    .map((t) => {
+                        const done = t.remaining === 0;
+                        const toggleFn = t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`;
+                        const toggleIcon = t.running ? '\u23f8' : '\u25b6';
+                        return `<div class="timer-card${done ? ' timer-done' : ''}" data-timer-id="${t.id}">
+                        <div class="timer-card-label">${esc(t.label)}</div>
+                        ${t.sublabel ? `<div class="timer-card-sublabel">${esc(t.sublabel)}</div>` : ''}
+                        <div class="timer-card-display">${done ? 'Done' : formatTime(t.remaining)}</div>
+                        <div class="timer-card-controls">
+                            ${!done ? `<button class="timer-toggle-btn" onclick="${toggleFn}" aria-label="${t.running ? 'Pause' : 'Start'}">${toggleIcon}</button>` : ''}
+                            <button onclick="resetTimer(${t.id})" aria-label="Reset">&#8635;</button>
+                        </div>
+                    </div>`;
+                    })
+                    .join('')}
+            </div>
+            ${navNext}
         </div>
-        ${activeTimers.length > 1
+        ${hasMultiple
             ? `<div class="timer-dots" id="timerDots">
             ${activeTimers.map((_, i) => `<div class="timer-dot${i === timerCarouselIndex ? ' active' : ''}"></div>`).join('')}
         </div>`
