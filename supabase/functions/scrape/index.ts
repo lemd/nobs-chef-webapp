@@ -21,6 +21,12 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
+  const authHeader = req.headers.get("Authorization");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!authHeader || authHeader !== `Bearer ${anonKey}`) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+
   const { url, force } = (await req.json()) as {
     url?: string;
     force?: boolean;

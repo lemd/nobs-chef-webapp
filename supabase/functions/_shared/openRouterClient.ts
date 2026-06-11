@@ -172,9 +172,7 @@ export async function parseRecipeWithClaude(rawContent: string): Promise<Recipe>
 
   const result = RecipeSchema.safeParse(parsed);
   if (!result.success) {
-    console.warn("⚠  Zod validation issues (returning best-effort data):");
-    console.warn(result.error.format());
-    return parsed as Recipe;
+    throw new Error(`Claude returned invalid recipe structure:\n${JSON.stringify(result.error.format(), null, 2)}`);
   }
 
   return result.data;

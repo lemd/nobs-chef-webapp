@@ -100,7 +100,7 @@ function extractMainContent($: cheerio.CheerioAPI): string {
   for (const sel of candidateSelectors) {
     const el = $(sel).first();
     if (el.length && el.text().trim().length > 200) {
-      return el.html() ?? "";
+      return (el.html() ?? "").slice(0, 20_000);
     }
   }
 

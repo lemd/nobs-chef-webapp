@@ -124,9 +124,10 @@
         </div>
 
         <script>
-            // ── Replace with your Supabase project URL before deploying ──────────────
             const API_BASE =
                 'https://vcsuynfbykvncenmhjfh.supabase.co/functions/v1';
+            const SUPABASE_ANON_KEY =
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjc3V5bmZieWt2bmNlbm1oamZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODQyMDEsImV4cCI6MjA5Njc2MDIwMX0.1Ka-pJ5gy0u5-yRYkfhC1kAJhk1OXyTiENqXAS8Yi6M';
 
             const form = document.getElementById('scrapeForm');
             const urlInput = document.getElementById('urlInput');
@@ -209,7 +210,10 @@
                 try {
                     const res = await fetch(`${API_BASE}/scrape`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        },
                         body: JSON.stringify({ url }),
                     });
                     const data = await res.json();
@@ -240,7 +244,10 @@
                 try {
                     const res = await fetch(`${API_BASE}/scrape`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        },
                         body: JSON.stringify({
                             url: currentSourceUrl,
                             force: true,
@@ -283,7 +290,7 @@
                 recipeEl.innerHTML = `
                     <h1 class="recipe-title">${esc(r.title)}</h1>
                     <div class="recipe-source-row">
-                        ${r.sourceUrl ? `<a class="recipe-source" href="${esc(r.sourceUrl)}" target="_blank" rel="noopener">source ↗</a>` : ''}
+                        ${r.sourceUrl && /^https?:\/\//i.test(r.sourceUrl) ? `<a class="recipe-source" href="${esc(r.sourceUrl)}" target="_blank" rel="noopener">source ↗</a>` : ''}
                         ${r.sourceUrl ? `<button class="refetch-btn" onclick="refetchRecipe()">Re-fetch</button>` : ''}
                     </div>
                     ${r.description ? `<p class="recipe-description">${esc(r.description)}</p>` : ''}
