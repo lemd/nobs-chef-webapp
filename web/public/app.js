@@ -87,7 +87,9 @@ if (routeMatch) {
     // Default: load the most recent recipe
     fetch(`${API_BASE}/recipe`)
         .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data) renderRecipe(data); })
+        .then((data) => {
+            if (data) renderRecipe(data);
+        })
         .catch(() => {});
 }
 loadHistory();
@@ -249,9 +251,19 @@ function renderRecipe(r) {
         </div>`;
 
     populateIngPanel(r, hasConversions, hasHints);
-    // Open panel by default
-    document.getElementById('ingPanel').classList.add('open');
-    document.body.classList.add('ing-open');
+    // Open panel instantly on first load (suppress transition)
+    const panel = document.getElementById('ingPanel');
+    if (!panel.classList.contains('open')) {
+        panel.style.transition = 'none';
+        document.body.style.transition = 'none';
+        panel.classList.add('open');
+        document.body.classList.add('ing-open');
+        // Re-enable transitions after layout has settled
+        requestAnimationFrame(() => {
+            panel.style.transition = '';
+            document.body.style.transition = '';
+        });
+    }
 }
 
 let currentUnits = 'original';
