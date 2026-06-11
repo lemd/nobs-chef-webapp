@@ -129,6 +129,7 @@
                 id="ingPanelTab"
                 onclick="toggleIngPanel()"
                 aria-label="Toggle ingredients panel">
+                <span class="ing-panel-tab-label">Ingredients</span>
                 <svg
                     class="tab-chevron"
                     width="7"
@@ -150,36 +151,6 @@
             </div>
         </div>
 
-        <div class="mob-ing-backdrop" id="mobIngBackdrop"></div>
-        <div class="mob-ing-sheet" id="mobIngSheet">
-            <button class="mob-ing-tab" onclick="toggleMobIng()">
-                Ingredients
-                <svg
-                    width="10"
-                    height="6"
-                    viewBox="0 0 10 6"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M1 5L5 1L9 5"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round" />
-                </svg>
-            </button>
-            <div class="mob-ing-sheet-handle"></div>
-            <div class="mob-ing-sheet-inner">
-                <div class="mob-ing-sheet-head">
-                    <span class="sidebar-label">Ingredients</span>
-                    <button class="mob-ing-close" onclick="closeMobIng()"
-                        >✕</button
-                    >
-                </div>
-                <div class="mob-servings-row" id="mobServingsRow"></div>
-                <div id="mobIngBody"></div>
-            </div>
-        </div>
         <script src="/app.js"></script>
     </body>
 </html>

@@ -60,7 +60,9 @@ async function loadHistory() {
 
 async function loadFile(filename) {
     activeFile = filename;
-    const res = await fetch(`${API_BASE}/recipe?file=${encodeURIComponent(filename)}`);
+    const res = await fetch(
+        `${API_BASE}/recipe?file=${encodeURIComponent(filename)}`,
+    );
     const data = await res.json();
     if (!res.ok) {
         setStatus(data.error, true);
@@ -73,7 +75,9 @@ async function loadFile(filename) {
 
 fetch(`${API_BASE}/recipe`)
     .then((r) => (r.ok ? r.json() : null))
-    .then((data) => { if (data) renderRecipe(data); })
+    .then((data) => {
+        if (data) renderRecipe(data);
+    })
     .catch(() => {});
 loadHistory();
 
@@ -152,15 +156,16 @@ function renderRecipe(r) {
     currentSourceUrl = r.sourceUrl ?? null;
 
     const meta = [
-        r.prepTime  && { label: 'Prep',   value: r.prepTime },
-        r.cookTime  && { label: 'Cook',   value: r.cookTime },
-        r.totalTime && { label: 'Total',  value: r.totalTime },
-        r.servings  && { label: 'Serves', value: r.servings },
+        r.prepTime && { label: 'Prep', value: r.prepTime },
+        r.cookTime && { label: 'Cook', value: r.cookTime },
+        r.totalTime && { label: 'Total', value: r.totalTime },
+        r.servings && { label: 'Serves', value: r.servings },
     ].filter(Boolean);
 
     const hasConversions =
-        (r.ingredientGroups ?? []).some((g) => (g.items ?? []).some((i) => i.conversion)) ||
-        (r.steps ?? []).some((s) => s.temperatureConversion);
+        (r.ingredientGroups ?? []).some((g) =>
+            (g.items ?? []).some((i) => i.conversion),
+        ) || (r.steps ?? []).some((s) => s.temperatureConversion);
 
     const hasHints = (r.ingredientGroups ?? []).some((g) =>
         (g.items ?? []).some((i) => i.hint),
@@ -175,27 +180,29 @@ function renderRecipe(r) {
             ${r.sourceUrl ? `<button class="refetch-btn" onclick="refetchRecipe()">Re-fetch</button>` : ''}
         </div>
         ${r.description ? `<p class="recipe-description">${esc(r.description)}</p>` : ''}
-        ${meta.length ? `
+        ${
+            meta.length
+                ? `
         <div class="meta-row">
-            ${meta.map((m) => `
+            ${meta
+                .map(
+                    (m) => `
             <div class="meta-pill">
                 <span class="label">${esc(m.label)}</span>
                 <span class="value">${esc(m.value)}</span>
-            </div>`).join('')}
-        </div>` : ''}
+            </div>`,
+                )
+                .join('')}
+        </div>`
+                : ''
+        }
         <div class="recipe-body">
-            <div class="recipe-ing-mobile">
-                <button class="mob-ing-trigger" onclick="openMobIng()">
-                    Ingredients
-                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-            </div>
             <div class="recipe-steps-col">
                 <div class="section-label">Method</div>
                 <ol class="steps-list">
-                    ${(r.steps ?? []).map((s) => `
+                    ${(r.steps ?? [])
+                        .map(
+                            (s) => `
                     <li class="step">
                         <span class="step-num">${s.stepNumber}</span>
                         <div class="step-body">
@@ -203,30 +210,17 @@ function renderRecipe(r) {
                             ${s.temperatureConversion ? `<span class="conv step-temp-conv" style="display:none">→ ${esc(s.temperatureConversion)}</span>` : ''}
                             ${s.timingInterval ? `<span class="step-timing">${esc(s.timingInterval)}</span>` : ''}
                         </div>
-                    </li>`).join('')}
+                    </li>`,
+                        )
+                        .join('')}
                 </ol>
-            </div>
-            <div class="ing-sidebar">
-                ${hasConversions ? `
-                <div class="unit-toggle">
-                    <button id="btnOriginal" class="active" onclick="setUnits('original')">Imperial</button>
-                    <button id="btnConverted" onclick="setUnits('converted')">Metric</button>
-                </div>
-                <p class="unit-toggle-note">Weights &amp; temperatures only</p>` : ''}
-                <div class="ing-header-row">
-                    <div class="section-label">Ingredients</div>
-                    ${hasHints ? '<button class="guide-btn" onclick="openGuide()">Guide</button>' : ''}
-                </div>
-                ${renderIngredientGroups(r.ingredientGroups)}
             </div>
         </div>`;
 
     populateIngPanel(r, hasConversions, hasHints);
-    // Open panels by default
-    const panel = document.getElementById('ingPanel');
-    panel.classList.add('open');
+    // Open panel by default
+    document.getElementById('ingPanel').classList.add('open');
     document.body.classList.add('ing-open');
-    openMobIng();
 }
 
 let currentUnits = 'original';
@@ -256,17 +250,26 @@ function setUnits(mode) {
 }
 
 function renderIngredientGroups(groups) {
-    return (groups ?? []).map((g) => `
+    return (groups ?? [])
+        .map(
+            (g) => `
         <div class="ing-group">
             ${g.group ? `<div class="ing-group-name">${esc(g.group)}</div>` : ''}
             <ul class="ing-list">
-                ${(g.items ?? []).map((i) => {
-                    const orig = [i.quantity, i.unit].filter(Boolean).join(' ') || '—';
-                    const conv = i.conversion
-                        ? [i.conversion.quantity, i.conversion.unit].filter(Boolean).join(' ')
-                        : null;
-                    const origClass = conv ? 'ing-qty ing-qty-original' : 'ing-qty';
-                    return `
+                ${(g.items ?? [])
+                    .map((i) => {
+                        const orig =
+                            [i.quantity, i.unit].filter(Boolean).join(' ') ||
+                            '—';
+                        const conv = i.conversion
+                            ? [i.conversion.quantity, i.conversion.unit]
+                                  .filter(Boolean)
+                                  .join(' ')
+                            : null;
+                        const origClass = conv
+                            ? 'ing-qty ing-qty-original'
+                            : 'ing-qty';
+                        return `
                 <li>
                     <span class="${origClass}">${orig}</span>
                     ${conv ? `<span class="ing-qty ing-qty-converted conv" style="display:none">${conv}</span>` : ''}
@@ -275,9 +278,12 @@ function renderIngredientGroups(groups) {
                         ${i.hint ? `<span class="ing-hint">${esc(i.hint)}</span>` : ''}
                     </span>
                 </li>`;
-                }).join('')}
+                    })
+                    .join('')}
             </ul>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
 }
 
 // ── Guide modal ──────────────────────────────────────────────────────────────
@@ -303,19 +309,27 @@ document.addEventListener('keydown', (e) => {
 });
 
 function renderGuideGroups(groups) {
-    return (groups ?? []).map((g) => `
+    return (groups ?? [])
+        .map(
+            (g) => `
         <div class="guide-group">
             ${g.group ? `<div class="guide-group-name">${esc(g.group)}</div>` : ''}
-            ${(g.items ?? []).map((i) => {
-                const qty = [i.quantity, i.unit].filter(Boolean).join('\u00a0') || '—';
-                return `
+            ${(g.items ?? [])
+                .map((i) => {
+                    const qty =
+                        [i.quantity, i.unit].filter(Boolean).join('\u00a0') ||
+                        '—';
+                    return `
         <div class="guide-row">
             <span class="guide-qty">${qty}</span>
             <span class="guide-name">${esc(i.name)}${i.notes ? ` <span class="guide-notes">(${esc(i.notes)})</span>` : ''}</span>
             <span class="guide-hint-cell">${i.hint ? esc(i.hint) : ''}</span>
         </div>`;
-            }).join('')}
-        </div>`).join('');
+                })
+                .join('')}
+        </div>`,
+        )
+        .join('');
 }
 
 function renderStepInstruction(instruction) {
@@ -358,59 +372,30 @@ function populateIngPanel(r, hasConversions, hasHints) {
             <span class="sidebar-label">Ingredients</span>
             ${hasHints ? '<button class="guide-btn" onclick="openGuide()">Guide</button>' : ''}
         </div>
-        ${originalServings ? `
+        ${
+            originalServings
+                ? `
         <div class="servings-scaler">
             <button onclick="changeServings(-1)" aria-label="Fewer">−</button>
             <span class="servings-count" id="servingsCount">${originalServings}</span>
             <span class="servings-label">servings</span>
             <button onclick="changeServings(1)" aria-label="More">+</button>
-        </div>` : ''}
-        ${hasConversions ? `
+        </div>`
+                : ''
+        }
+        ${
+            hasConversions
+                ? `
         <div class="unit-toggle">
             <button id="btnOriginalPanel" class="active" onclick="setUnits('original')">Imperial</button>
             <button id="btnConvertedPanel" onclick="setUnits('converted')">Metric</button>
         </div>
-        <p class="unit-toggle-note">Weights &amp; temperatures only</p>` : ''}
+        <p class="unit-toggle-note">Weights &amp; temperatures only</p>`
+                : ''
+        }
     `;
     bodyEl.innerHTML = renderIngredientGroupsScaled(r.ingredientGroups, 1);
 }
-
-// ── Mobile bottom panel ──────────────────────────────────────────────────────
-function toggleMobIng() {
-    const sheet = document.getElementById('mobIngSheet');
-    sheet.classList.contains('open') ? closeMobIng() : openMobIng();
-}
-
-function openMobIng() {
-    if (!currentRecipe) return;
-    const sheet = document.getElementById('mobIngSheet');
-    const servingsRow = document.getElementById('mobServingsRow');
-    const bodyEl = document.getElementById('mobIngBody');
-    if (originalServings && servingsRow) {
-        servingsRow.innerHTML = `
-            <div class="servings-scaler">
-                <button onclick="changeServings(-1)" aria-label="Fewer">−</button>
-                <span class="servings-count" id="mobServingsCount">${currentServings ?? originalServings}</span>
-                <span class="servings-label">servings</span>
-                <button onclick="changeServings(1)" aria-label="More">+</button>
-            </div>`;
-    } else if (servingsRow) {
-        servingsRow.innerHTML = '';
-    }
-    if (bodyEl) {
-        const factor = (currentServings && originalServings) ? currentServings / originalServings : 1;
-        bodyEl.innerHTML = renderIngredientGroupsScaled(currentRecipe.ingredientGroups, factor);
-    }
-    sheet.classList.add('open');
-    document.body.classList.add('mob-ing-open');
-}
-
-function closeMobIng() {
-    document.getElementById('mobIngSheet').classList.remove('open');
-    document.body.classList.remove('mob-ing-open');
-}
-
-document.getElementById('mobIngBackdrop').addEventListener('click', closeMobIng);
 
 // ── Servings scaler ──────────────────────────────────────────────────────────
 function parseServingsNum(str) {
@@ -423,7 +408,8 @@ function parseFraction(str) {
     if (!str) return null;
     const s = String(str).trim();
     const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/);
-    if (mixed) return parseInt(mixed[1]) + parseInt(mixed[2]) / parseInt(mixed[3]);
+    if (mixed)
+        return parseInt(mixed[1]) + parseInt(mixed[2]) / parseInt(mixed[3]);
     const frac = s.match(/^(\d+)\/(\d+)$/);
     if (frac) return parseInt(frac[1]) / parseInt(frac[2]);
     const range = s.match(/^(\d+(?:\.\d+)?)[–\-](\d+(?:\.\d+)?)$/);
@@ -457,39 +443,49 @@ function changeServings(delta) {
     if (next === currentServings) return;
     currentServings = next;
     const factor = currentServings / originalServings;
-    ['servingsCount', 'mobServingsCount'].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = currentServings;
-    });
+    const scEl = document.getElementById('servingsCount');
+    if (scEl) scEl.textContent = currentServings;
     const bodyEl = document.getElementById('ingPanelBody');
     if (bodyEl) {
-        bodyEl.innerHTML = renderIngredientGroupsScaled(currentRecipe.ingredientGroups, factor);
-        document.querySelectorAll('#ingPanelBody .ing-qty-original').forEach((el) => {
-            el.style.display = currentUnits === 'original' ? '' : 'none';
-        });
-        document.querySelectorAll('#ingPanelBody .ing-qty-converted').forEach((el) => {
-            el.style.display = currentUnits === 'converted' ? '' : 'none';
-        });
-    }
-    const mobBodyEl = document.getElementById('mobIngBody');
-    if (mobBodyEl && document.getElementById('mobIngSheet').classList.contains('open')) {
-        mobBodyEl.innerHTML = renderIngredientGroupsScaled(currentRecipe.ingredientGroups, factor);
+        bodyEl.innerHTML = renderIngredientGroupsScaled(
+            currentRecipe.ingredientGroups,
+            factor,
+        );
+        document
+            .querySelectorAll('#ingPanelBody .ing-qty-original')
+            .forEach((el) => {
+                el.style.display = currentUnits === 'original' ? '' : 'none';
+            });
+        document
+            .querySelectorAll('#ingPanelBody .ing-qty-converted')
+            .forEach((el) => {
+                el.style.display = currentUnits === 'converted' ? '' : 'none';
+            });
     }
 }
 
 function renderIngredientGroupsScaled(groups, factor) {
-    return (groups ?? []).map((g) => `
+    return (groups ?? [])
+        .map(
+            (g) => `
         <div class="ing-group">
             ${g.group ? `<div class="ing-group-name">${esc(g.group)}</div>` : ''}
             <ul class="ing-list">
-                ${(g.items ?? []).map((i) => {
-                    const scaledQty = scaleQty(i.quantity, factor);
-                    const orig = [scaledQty, i.unit].filter(Boolean).join(' ') || '—';
-                    const conv = i.conversion
-                        ? [i.conversion.quantity, i.conversion.unit].filter(Boolean).join(' ')
-                        : null;
-                    const origClass = conv ? 'ing-qty ing-qty-original' : 'ing-qty';
-                    return `<li>
+                ${(g.items ?? [])
+                    .map((i) => {
+                        const scaledQty = scaleQty(i.quantity, factor);
+                        const orig =
+                            [scaledQty, i.unit].filter(Boolean).join(' ') ||
+                            '—';
+                        const conv = i.conversion
+                            ? [i.conversion.quantity, i.conversion.unit]
+                                  .filter(Boolean)
+                                  .join(' ')
+                            : null;
+                        const origClass = conv
+                            ? 'ing-qty ing-qty-original'
+                            : 'ing-qty';
+                        return `<li>
                     <span class="${origClass}">${orig}</span>
                     ${conv ? `<span class="ing-qty ing-qty-converted conv" style="display:none">${conv}</span>` : ''}
                     <span class="ing-name">
@@ -497,7 +493,10 @@ function renderIngredientGroupsScaled(groups, factor) {
                         ${i.hint ? `<span class="ing-hint">${esc(i.hint)}</span>` : ''}
                     </span>
                 </li>`;
-                }).join('')}
+                    })
+                    .join('')}
             </ul>
-        </div>`).join('');
+        </div>`,
+        )
+        .join('');
 }
