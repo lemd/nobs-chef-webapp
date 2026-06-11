@@ -2,6 +2,8 @@ import { createClient } from "npm:@supabase/supabase-js";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { scrapeRecipePage } from "../_shared/scrapeUrl.ts";
 import { parseRecipeWithClaude } from "../_shared/openRouterClient.ts";
+import { matchIngredient, retryUnmatched } from "../_shared/ingredientMatcher.ts";
+import type { Recipe } from "../_shared/recipe.ts";
 
 async function urlToHash(url: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -10,6 +12,53 @@ async function urlToHash(url: string): Promise<string> {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("")
     .slice(0, 12);
+}
+
+async function syncRecipeIngredients(
+  recipe: Recipe,
+  recipeId: number,
+  supabase: ReturnType<typeof createClient>
+): Promise<void> {
+  // Flatten all ingredient groups into a single ordered list
+  const rows: {
+    recipe_id: number;
+    raw_name: string;
+    quantity: string | null;
+    unit: string | null;
+    notes: string | null;
+    group_name: string | null;
+    position: number;
+    ingredient_id: number | null;
+    match_score: number;
+  }[] = [];
+
+  let position = 0;
+  for (const group of recipe.ingredientGroups) {
+    for (const item of group.items) {
+      const result = await matchIngredient(item.name, supabase);
+      rows.push({
+        recipe_id: recipeId,
+        raw_name: item.name,
+        quantity: item.quantity ?? null,
+        unit: item.unit ?? null,
+        notes: item.notes ?? null,
+        group_name: group.group ?? null,
+        position,
+        ingredient_id: result.ingredient_id,
+        match_score: result.match_score,
+      });
+      position++;
+    }
+  }
+
+  if (rows.length > 0) {
+    await supabase
+      .from("recipe_ingredients")
+      .upsert(rows, { onConflict: "recipe_id,position" });
+  }
+
+  // Retry any previously unmatched ingredients on this recipe
+  await retryUnmatched(recipeId, supabase);
 }
 
 Deno.serve(async (req: Request) => {
@@ -70,7 +119,7 @@ Deno.serve(async (req: Request) => {
 
     const recipeWithUrl = { ...recipe, sourceUrl: url };
 
-    await supabase.from("recipes").upsert(
+    const { data: upserted } = await supabase.from("recipes").upsert(
       {
         url_hash: hash,
         source_url: url,
@@ -79,7 +128,11 @@ Deno.serve(async (req: Request) => {
         saved_at: new Date().toISOString(),
       },
       { onConflict: "url_hash" }
-    );
+    ).select("id").single();
+
+    if (upserted) {
+      await syncRecipeIngredients(recipe, upserted.id, supabase);
+    }
 
     return jsonResponse(recipeWithUrl);
   } catch (err) {
