@@ -12,6 +12,13 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* iOS safe area support */
+body {
+    padding-left: max(2rem, env(safe-area-inset-left));
+    padding-right: max(2rem, env(safe-area-inset-right));
+    padding-bottom: max(6rem, env(safe-area-inset-bottom));
+}
+
 /* ── Mosaic strip ── */
 .mosaic-strip {
     position: fixed;
