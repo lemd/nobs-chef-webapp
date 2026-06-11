@@ -237,27 +237,77 @@
                 <div id="dashFilters" class="mb-6">
                     <!-- Ingredient chip search -->
                     <div class="flex flex-wrap items-center gap-2 mb-3">
-                        <div class="flex items-center gap-1 border-b border-[#111] pb-[3px] min-w-[180px] max-w-xs">
-                            <i class="fa-solid fa-magnifying-glass text-[#8a7d72] text-[0.75rem]"></i>
-                            <input id="ingredientSearch" type="text" placeholder="Search by ingredient…"
+                        <div
+                            class="flex items-center gap-1 border-b border-[#111] pb-[3px] min-w-[180px] max-w-xs">
+                            <i
+                                class="fa-solid fa-magnifying-glass text-[#8a7d72] text-[0.75rem]"></i>
+                            <input
+                                id="ingredientSearch"
+                                type="text"
+                                placeholder="Search by ingredient…"
                                 class="bg-transparent border-0 outline-none text-[0.82rem] text-[#111] font-body placeholder-[#8a7d72] w-full"
-                                oninput="onIngredientInput(event)" onkeydown="onIngredientKeydown(event)" />
+                                oninput="onIngredientInput(event)"
+                                onkeydown="onIngredientKeydown(event)" />
                         </div>
-                        <div id="ingredientChips" class="flex flex-wrap gap-1"></div>
+                        <div
+                            id="ingredientChips"
+                            class="flex flex-wrap gap-1"></div>
                     </div>
                     <!-- Tag filter rows -->
-                    <div id="mealTypeFilters" class="flex flex-wrap gap-1 mb-2"></div>
+                    <div
+                        id="mealTypeFilters"
+                        class="flex flex-wrap gap-1 mb-2"></div>
                     <div class="flex flex-wrap gap-1 mb-2">
-                        <button onclick="toggleFilter('dietary','vegetarian')" data-filter="dietary:vegetarian" class="filter-chip">Vegetarian</button>
-                        <button onclick="toggleFilter('dietary','vegan')" data-filter="dietary:vegan" class="filter-chip">Vegan</button>
-                        <button onclick="toggleFilter('dietary','gluten-free')" data-filter="dietary:gluten-free" class="filter-chip">Gluten-free</button>
-                        <button onclick="toggleFilter('dietary','dairy-free')" data-filter="dietary:dairy-free" class="filter-chip">Dairy-free</button>
+                        <button
+                            onclick="toggleFilter('dietary', 'vegetarian')"
+                            data-filter="dietary:vegetarian"
+                            class="filter-chip"
+                            >Vegetarian</button
+                        >
+                        <button
+                            onclick="toggleFilter('dietary', 'vegan')"
+                            data-filter="dietary:vegan"
+                            class="filter-chip"
+                            >Vegan</button
+                        >
+                        <button
+                            onclick="toggleFilter('dietary', 'gluten-free')"
+                            data-filter="dietary:gluten-free"
+                            class="filter-chip"
+                            >Gluten-free</button
+                        >
+                        <button
+                            onclick="toggleFilter('dietary', 'dairy-free')"
+                            data-filter="dietary:dairy-free"
+                            class="filter-chip"
+                            >Dairy-free</button
+                        >
                     </div>
                     <div class="flex flex-wrap gap-1">
-                        <button onclick="toggleFilter('season','spring')" data-filter="season:spring" class="filter-chip">🌿 Spring</button>
-                        <button onclick="toggleFilter('season','summer')" data-filter="season:summer" class="filter-chip">☀️ Summer</button>
-                        <button onclick="toggleFilter('season','autumn')" data-filter="season:autumn" class="filter-chip">🍂 Autumn</button>
-                        <button onclick="toggleFilter('season','winter')" data-filter="season:winter" class="filter-chip">❄️ Winter</button>
+                        <button
+                            onclick="toggleFilter('season', 'spring')"
+                            data-filter="season:spring"
+                            class="filter-chip"
+                            >Spring</button
+                        >
+                        <button
+                            onclick="toggleFilter('season', 'summer')"
+                            data-filter="season:summer"
+                            class="filter-chip"
+                            >Summer</button
+                        >
+                        <button
+                            onclick="toggleFilter('season', 'autumn')"
+                            data-filter="season:autumn"
+                            class="filter-chip"
+                            >Autumn</button
+                        >
+                        <button
+                            onclick="toggleFilter('season', 'winter')"
+                            data-filter="season:winter"
+                            class="filter-chip"
+                            >Winter</button
+                        >
                     </div>
                 </div>
                 <div id="dashGrid" class="dash-grid"></div>
