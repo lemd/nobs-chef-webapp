@@ -411,7 +411,6 @@ body.dash-view #ingPanel { display: none !important; }
         white-space: nowrap;
         border: 1px solid var(--line);
         border-bottom: none;
-        box-shadow: 0 -4px 16px rgba(0,0,0,0.10);
     }
     .ing-outer-tab {
         flex: 1;
