@@ -126,8 +126,20 @@
         <script>
             const API_BASE =
                 'https://vcsuynfbykvncenmhjfh.supabase.co/functions/v1';
-            const SUPABASE_ANON_KEY =
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjc3V5bmZieWt2bmNlbm1oamZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODQyMDEsImV4cCI6MjA5Njc2MDIwMX0.1Ka-pJ5gy0u5-yRYkfhC1kAJhk1OXyTiENqXAS8Yi6M';
+
+            function getPersonalSecret() {
+                let secret = localStorage.getItem('nobs_secret');
+                if (!secret) {
+                    secret = prompt('Enter access password:');
+                    if (!secret) throw new Error('Password required.');
+                    localStorage.setItem('nobs_secret', secret);
+                }
+                return secret;
+            }
+
+            function clearPersonalSecret() {
+                localStorage.removeItem('nobs_secret');
+            }
 
             const form = document.getElementById('scrapeForm');
             const urlInput = document.getElementById('urlInput');
@@ -208,14 +220,19 @@
                 if (!url) return;
                 setStatus('Extracting…', false, true);
                 try {
+                    const secret = getPersonalSecret();
                     const res = await fetch(`${API_BASE}/scrape`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Authorization': `Bearer ${secret}`,
                         },
                         body: JSON.stringify({ url }),
                     });
+                    if (res.status === 401) {
+                        clearPersonalSecret();
+                        throw new Error('Wrong password.');
+                    }
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error ?? 'Unknown error');
                     const cached = data._cached;
@@ -242,17 +259,22 @@
                 if (!currentSourceUrl) return;
                 setStatus('Re-fetching…', false, true);
                 try {
+                    const secret = getPersonalSecret();
                     const res = await fetch(`${API_BASE}/scrape`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Authorization': `Bearer ${secret}`,
                         },
                         body: JSON.stringify({
                             url: currentSourceUrl,
                             force: true,
                         }),
                     });
+                    if (res.status === 401) {
+                        clearPersonalSecret();
+                        throw new Error('Wrong password.');
+                    }
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error ?? 'Unknown error');
                     delete data._cached;

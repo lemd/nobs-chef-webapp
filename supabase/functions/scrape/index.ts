@@ -22,8 +22,8 @@ Deno.serve(async (req: Request) => {
   }
 
   const authHeader = req.headers.get("Authorization");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!authHeader || authHeader !== `Bearer ${anonKey}`) {
+  const secret = Deno.env.get("PERSONAL_SECRET");
+  if (!secret || !authHeader || authHeader !== `Bearer ${secret}`) {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
