@@ -25,6 +25,7 @@ const newViewEl = document.getElementById('newView');
 const recipeLayoutEl = document.getElementById('recipeLayout');
 const dashViewEl = document.getElementById('dashView');
 const dashGridEl = document.getElementById('dashGrid');
+const appScroll = document.getElementById('app-scroll');
 
 let activeFile = null;
 let currentSourceUrl = null;
@@ -38,8 +39,8 @@ let timerIdCounter = 0;
 
 const PANEL_TAB_CONFIG = {
     ingredients: { height: '40vh', pad: '42vh' },
-    timers:      { height: '30vh', pad: '32vh' },
-    servings:    { height: '22vh', pad: '24vh' },
+    timers: { height: '30vh', pad: '32vh' },
+    servings: { height: '22vh', pad: '24vh' },
 };
 
 const drawer = document.getElementById('drawer');
@@ -71,17 +72,23 @@ function switchPanelTab(tab) {
     ['Ingredients', 'Timers', 'Servings'].forEach((name) => {
         const t = name.toLowerCase();
         const sec = document.getElementById(`panel${name}`);
-        const btn = document.getElementById(`ptab${name}`);
+        const outerBtn = document.getElementById(`otab-${t}`);
         if (sec) sec.style.display = t === tab ? '' : 'none';
-        if (btn) btn.classList.toggle('active', t === tab);
+        if (outerBtn) outerBtn.classList.toggle('active', t === tab);
     });
-    // Update mobile tab label
-    const label = document.querySelector('.ing-panel-tab-label');
-    if (label) label.textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
-    // Update mobile panel height via CSS vars
-    const cfg = PANEL_TAB_CONFIG[tab] || PANEL_TAB_CONFIG.ingredients;
-    document.documentElement.style.setProperty('--panel-height', cfg.height);
-    document.documentElement.style.setProperty('--panel-pad', cfg.pad);
+}
+
+function tapOuterTab(tab) {
+    const panel = document.getElementById('ingPanel');
+    const isOpen = panel.classList.contains('open');
+    if (isOpen && currentPanelTab === tab) {
+        panel.classList.remove('open');
+        document.body.classList.remove('ing-open');
+    } else {
+        switchPanelTab(tab);
+        panel.classList.add('open');
+        document.body.classList.add('ing-open');
+    }
 }
 
 function parseTimingToSeconds(str) {
@@ -100,7 +107,8 @@ function formatTime(secs) {
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);
     const s = secs % 60;
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    if (h > 0)
+        return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     return `${m}:${String(s).padStart(2, '0')}`;
 }
 
@@ -180,7 +188,9 @@ function renderTimers() {
     listEl.innerHTML = activeTimers
         .map((t) => {
             const done = t.remaining === 0;
-            const toggleFn = t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`;
+            const toggleFn = t.running
+                ? `pauseTimer(${t.id})`
+                : `startTimer(${t.id})`;
             const toggleIcon = t.running ? '\u23f8' : '\u25b6';
             return `<div class="timer-item${done ? ' timer-done' : ''}">
                 <div class="timer-info">
@@ -212,12 +222,12 @@ function showView(view) {
         if (isNew) setTimeout(() => urlInput?.focus(), 100);
     } else if (document.getElementById('ingPanelBody')?.children.length > 0) {
         panel.style.transition = 'none';
-        document.body.style.transition = 'none';
+        if (appScroll) appScroll.style.transition = 'none';
         panel.classList.add('open');
         document.body.classList.add('ing-open');
         requestAnimationFrame(() => {
             panel.style.transition = '';
-            document.body.style.transition = '';
+            if (appScroll) appScroll.style.transition = '';
         });
     }
 }
@@ -455,13 +465,12 @@ function renderRecipe(r) {
     const panel = document.getElementById('ingPanel');
     if (!panel.classList.contains('open')) {
         panel.style.transition = 'none';
-        document.body.style.transition = 'none';
+        if (appScroll) appScroll.style.transition = 'none';
         panel.classList.add('open');
         document.body.classList.add('ing-open');
-        // Re-enable transitions after layout has settled
         requestAnimationFrame(() => {
             panel.style.transition = '';
-            document.body.style.transition = '';
+            if (appScroll) appScroll.style.transition = '';
         });
     }
 }
@@ -530,12 +539,10 @@ function openGuide() {
     const body = document.getElementById('guideModalBody');
     body.innerHTML = renderGuideGroups(currentRecipe.ingredientGroups);
     document.getElementById('guideBackdrop').classList.add('open');
-    document.body.style.overflow = 'hidden';
 }
 
 function closeGuide() {
     document.getElementById('guideBackdrop').classList.remove('open');
-    document.body.style.overflow = '';
 }
 
 document.getElementById('guideClose').addEventListener('click', closeGuide);
@@ -631,12 +638,16 @@ function populateIngPanel(r, hasConversions, hasHints) {
 
     // Ingredients head: guide + unit toggle
     const headContent = [
-        hasHints ? '<button class="guide-btn" onclick="openGuide()" style="display:block;margin-bottom:0.75rem">Guide</button>' : '',
-        hasConversions ? `<div class="unit-toggle">
+        hasHints
+            ? '<button class="guide-btn" onclick="openGuide()" style="display:block;margin-bottom:0.75rem">Guide</button>'
+            : '',
+        hasConversions
+            ? `<div class="unit-toggle">
             <button id="btnOriginalPanel" class="active" onclick="setUnits('original')">Imperial</button>
             <button id="btnConvertedPanel" onclick="setUnits('converted')">Metric</button>
         </div>
-        <p class="unit-toggle-note">Weights &amp; temperatures only</p>` : '',
+        <p class="unit-toggle-note">Weights &amp; temperatures only</p>`
+            : '',
     ].join('');
     headEl.innerHTML = headContent;
     headEl.style.display = headContent.trim() ? '' : 'none';

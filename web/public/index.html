@@ -39,7 +39,7 @@
         <link rel="stylesheet" href="/style.css" />
     </head>
     <body
-        class="font-body bg-parchment text-[#111] min-h-screen px-4 sm:px-8 pb-24 text-[17px] leading-relaxed">
+        class="font-body bg-parchment text-[#111] text-[17px] leading-relaxed">
         <!-- Mosaic strip -->
         <div class="mosaic-strip">
             <span style="background: #e63946"></span>
@@ -118,8 +118,9 @@
         </div>
 
         <!-- Header -->
+        <div id="app-scroll">
         <header
-            class="max-w-[1080px] mx-auto mt-12 mb-12 flex items-center gap-4">
+            class="max-w-[1080px] mx-auto mt-8 mb-8 flex items-center gap-4">
             <a
                 href="/"
                 id="homeBtn"
@@ -211,34 +212,15 @@
                 </div>
             </main>
         </div>
+        </div><!-- end #app-scroll -->
 
         <!-- Ingredients panel (desktop: right slide-in, mobile: bottom sheet) -->
         <div id="ingPanel">
-            <button
-                class="ing-panel-tab"
-                id="ingPanelTab"
-                onclick="toggleIngPanel()"
-                aria-label="Toggle panel">
-                <span class="ing-panel-tab-label"></span>
-                <svg
-                    class="tab-chevron"
-                    width="7"
-                    height="12"
-                    viewBox="0 0 7 12"
-                    fill="none">
-                    <path
-                        d="M5.5 1.5L1.5 6L5.5 10.5"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round" />
-                </svg>
-            </button>
-            <!-- Tab bar -->
-            <div class="panel-tab-bar">
-                <button class="ptab active" id="ptabIngredients" onclick="switchPanelTab('ingredients')">Ingredients</button>
-                <button class="ptab" id="ptabTimers" onclick="switchPanelTab('timers')">Timers</button>
-                <button class="ptab" id="ptabServings" onclick="switchPanelTab('servings')">Servings</button>
+            <!-- 3 outer tabs — open/close panel AND switch tab -->
+            <div class="ing-outer-tabs">
+                <button class="ing-outer-tab active" id="otab-ingredients" onclick="tapOuterTab('ingredients')">Ingredients</button>
+                <button class="ing-outer-tab" id="otab-timers" onclick="tapOuterTab('timers')">Timers</button>
+                <button class="ing-outer-tab" id="otab-servings" onclick="tapOuterTab('servings')">Servings</button>
             </div>
             <!-- Ingredients section -->
             <div class="panel-section" id="panelIngredients">
@@ -248,14 +230,16 @@
                 </div>
             </div>
             <!-- Timers section -->
-            <div class="panel-section" id="panelTimers" style="display:none">
+            <div class="panel-section" id="panelTimers" style="display: none">
                 <div class="ing-panel-inner">
-                    <p class="panel-empty-hint" id="timerEmptyHint">Tap ⏱ on a step to start a timer.</p>
+                    <p class="panel-empty-hint" id="timerEmptyHint"
+                        >Tap ⏱ on a step to start a timer.</p
+                    >
                     <div id="timersList"></div>
                 </div>
             </div>
             <!-- Servings section -->
-            <div class="panel-section" id="panelServings" style="display:none">
+            <div class="panel-section" id="panelServings" style="display: none">
                 <div class="ing-panel-inner">
                     <div id="servingsSection"></div>
                 </div>
