@@ -193,6 +193,48 @@ function removeTimer(id) {
     renderTimers();
 }
 
+function buildCarouselHTML() {
+    return `
+        <div class="timer-carousel" id="timerCarousel">
+            ${activeTimers
+                .map((t) => {
+                    const done = t.remaining === 0;
+                    const toggleFn = t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`;
+                    const toggleIcon = t.running ? '\u23f8' : '\u25b6';
+                    return `<div class="timer-card${done ? ' timer-done' : ''}" data-timer-id="${t.id}">
+                    <div class="timer-card-label">${esc(t.label)}</div>
+                    ${t.sublabel ? `<div class="timer-card-sublabel">${esc(t.sublabel)}</div>` : ''}
+                    <div class="timer-card-display">${done ? 'Done' : formatTime(t.remaining)}</div>
+                    <div class="timer-card-controls">
+                        ${!done ? `<button class="timer-toggle-btn" onclick="${toggleFn}" aria-label="${t.running ? 'Pause' : 'Start'}">${toggleIcon}</button>` : ''}
+                        <button onclick="resetTimer(${t.id})" aria-label="Reset">&#8635;</button>
+                    </div>
+                </div>`;
+                })
+                .join('')}
+        </div>
+        ${activeTimers.length > 1
+            ? `<div class="timer-dots" id="timerDots">
+            ${activeTimers.map((_, i) => `<div class="timer-dot${i === timerCarouselIndex ? ' active' : ''}"></div>`).join('')}
+        </div>`
+            : ''}
+    `;
+}
+
+function attachCarouselScroll() {
+    const carousel = document.getElementById('timerCarousel');
+    if (!carousel) return;
+    carousel.addEventListener('scroll', () => {
+        const idx = Math.round(carousel.scrollLeft / carousel.clientWidth);
+        if (idx !== timerCarouselIndex) {
+            timerCarouselIndex = idx;
+            document.querySelectorAll('.timer-dot').forEach((d, i) =>
+                d.classList.toggle('active', i === idx),
+            );
+        }
+    }, { passive: true });
+}
+
 function renderTimers() {
     const listEl = document.getElementById('timersList');
     const hintEl = document.getElementById('timerEmptyHint');
@@ -200,6 +242,9 @@ function renderTimers() {
     if (!activeTimers.length) {
         if (hintEl) hintEl.style.display = '';
         listEl.innerHTML = '';
+        // Reset tab label
+        const btn = document.getElementById('otab-timers');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-stopwatch"></i>';
         return;
     }
     if (hintEl) hintEl.style.display = 'none';
@@ -214,71 +259,41 @@ function renderTimers() {
     }
 
     // Clamp carousel index
-    timerCarouselIndex = Math.max(
-        0,
-        Math.min(timerCarouselIndex, activeTimers.length - 1),
-    );
+    timerCarouselIndex = Math.max(0, Math.min(timerCarouselIndex, activeTimers.length - 1));
 
-    listEl.innerHTML = `
-        <div class="timer-carousel" id="timerCarousel">
-            ${activeTimers
-                .map((t) => {
-                    const done = t.remaining === 0;
-                    const toggleFn = t.running
-                        ? `pauseTimer(${t.id})`
-                        : `startTimer(${t.id})`;
-                    const toggleIcon = t.running ? '\u23f8' : '\u25b6';
-                    return `<div class="timer-card${done ? ' timer-done' : ''}">
-                    <div class="timer-card-label">${esc(t.label)}</div>
-                    ${t.sublabel ? `<div class="timer-card-sublabel">${esc(t.sublabel)}</div>` : ''}
-                    <div class="timer-card-display">${done ? 'Done' : formatTime(t.remaining)}</div>
-                    <div class="timer-card-controls">
-                        ${!done ? `<button onclick="${toggleFn}" aria-label="${t.running ? 'Pause' : 'Start'}">${toggleIcon}</button>` : ''}
-                        <button onclick="resetTimer(${t.id})" aria-label="Reset">&#8635;</button>
-                    </div>
-                </div>`;
-                })
-                .join('')}
-        </div>
-        ${
-            activeTimers.length > 1
-                ? `<div class="timer-dots">
-            ${activeTimers.map((_, i) => `<div class="timer-dot${i === timerCarouselIndex ? ' active' : ''}"></div>`).join('')}
-        </div>`
-                : ''
-        }
-    `;
+    // In-place update if carousel already has the right cards — preserves swipe state
+    const existingCarousel = document.getElementById('timerCarousel');
+    if (existingCarousel && existingCarousel.children.length === activeTimers.length) {
+        activeTimers.forEach((t, i) => {
+            const card = existingCarousel.children[i];
+            if (!card) return;
+            const done = t.remaining === 0;
+            card.classList.toggle('timer-done', done);
+            const disp = card.querySelector('.timer-card-display');
+            if (disp) disp.textContent = done ? 'Done' : formatTime(t.remaining);
+            const controls = card.querySelector('.timer-card-controls');
+            if (controls) {
+                const toggleBtn = controls.querySelector('.timer-toggle-btn');
+                if (done) {
+                    if (toggleBtn) toggleBtn.remove();
+                } else if (toggleBtn) {
+                    toggleBtn.setAttribute('onclick', t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`);
+                    toggleBtn.setAttribute('aria-label', t.running ? 'Pause' : 'Start');
+                    toggleBtn.textContent = t.running ? '\u23f8' : '\u25b6';
+                }
+            }
+        });
+        return;
+    }
 
-    // Scroll carousel to active index
+    // Full rebuild (first render or timer count changed)
+    listEl.innerHTML = buildCarouselHTML();
     requestAnimationFrame(() => {
         const carousel = document.getElementById('timerCarousel');
         if (!carousel) return;
         const card = carousel.children[timerCarouselIndex];
-        if (card)
-            card.scrollIntoView({
-                block: 'nearest',
-                inline: 'center',
-                behavior: 'instant',
-            });
-
-        // Update dots on scroll
-        carousel.addEventListener(
-            'scroll',
-            () => {
-                const idx = Math.round(
-                    carousel.scrollLeft / carousel.clientWidth,
-                );
-                if (idx !== timerCarouselIndex) {
-                    timerCarouselIndex = idx;
-                    document
-                        .querySelectorAll('.timer-dot')
-                        .forEach((d, i) =>
-                            d.classList.toggle('active', i === idx),
-                        );
-                }
-            },
-            { passive: true },
-        );
+        if (card) card.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'instant' });
+        attachCarouselScroll();
     });
 }
 
