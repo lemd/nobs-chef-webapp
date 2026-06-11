@@ -424,7 +424,7 @@ function toggleFilter(type, value) {
 }
 
 function onIngredientInput(e) {
-    // handled on keydown; nothing on plain input needed
+    renderDashGrid();
 }
 
 function onIngredientKeydown(e) {
@@ -483,11 +483,11 @@ function recipeMatchesFilters(item) {
         if (!isAllYear && ![...activeFilters.season].some((v) => s.includes(v)))
             return false;
     }
-    if (activeIngredients.size > 0) {
-        // item.ingredients is a flat array we build from tags, or we check title
+    if (activeIngredients.size > 0 || document.getElementById('ingredientSearch')?.value.trim()) {
         const haystack = (item._ingredientNames ?? '').toLowerCase();
-        if (![...activeIngredients].every((v) => haystack.includes(v)))
-            return false;
+        const typed = (document.getElementById('ingredientSearch')?.value.trim().toLowerCase()) ?? '';
+        const allTerms = [...activeIngredients, ...(typed ? [typed] : [])];
+        if (!allTerms.every((v) => haystack.includes(v))) return false;
     }
     return true;
 }
