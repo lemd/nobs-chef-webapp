@@ -7,6 +7,8 @@
     --line: #e2d8cc;
     --amber: #c8902d;
     --panel: #a87228;
+    --panel-height: 40vh;
+    --panel-pad: 42vh;
     --font-body: 'Montserrat', system-ui, sans-serif;
     --font-display: 'Della Respira', Georgia, serif;
 }
@@ -63,7 +65,93 @@ body.new-view #ingPanel { display: none !important; }
 /* ═══════════════════════════════════════════════
    Ingredient panel — shared
    ═══════════════════════════════════════════════ */
-#ingPanel { background: var(--panel); }
+#ingPanel { background: var(--panel); display: flex; flex-direction: column; }
+
+/* ── Panel tab bar ── */
+.panel-tab-bar {
+    flex-shrink: 0;
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    padding: 0 0.25rem;
+}
+.ptab {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: rgba(255,255,255,0.5);
+    font-family: var(--font-body);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.6rem 0;
+    cursor: pointer;
+    transition: color 0.15s;
+    margin-bottom: -1px;
+}
+.ptab.active { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
+.ptab:not(.active):hover { color: rgba(255,255,255,0.8); }
+
+/* ── Panel sections ── */
+.panel-section { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.panel-empty-hint { font-size: 0.78rem; color: rgba(255,255,255,0.55); font-style: italic; margin: 0 0 0.75rem; line-height: 1.5; }
+
+/* ── Timers ── */
+.timer-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.timer-item:last-child { border-bottom: none; }
+.timer-item.timer-done { opacity: 0.55; }
+.timer-info { flex: 1; min-width: 0; }
+.timer-label { font-size: 0.82rem; font-weight: 600; color: #fff; }
+.timer-sublabel { font-size: 0.7rem; color: rgba(255,255,255,0.6); margin-top: 0.1rem; }
+.timer-display {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    min-width: 3rem;
+    text-align: right;
+    flex-shrink: 0;
+}
+.timer-done .timer-display { color: rgba(255,255,255,0.55); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.timer-controls { display: flex; gap: 0.25rem; flex-shrink: 0; }
+.timer-controls button {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.7rem;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s;
+    padding: 0;
+    font-family: inherit;
+}
+.timer-controls button:hover { background: rgba(255,255,255,0.28); }
+
+/* Step timing start button */
+.timer-start-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0 0 0 0.3rem;
+    opacity: 0.55;
+    transition: opacity 0.15s;
+    vertical-align: middle;
+    line-height: 1;
+}
+.timer-start-btn:hover { opacity: 1; }
 
 /* ── Desktop: right slide-in (≥761px) ── */
 @media (min-width: 761px) {
@@ -107,9 +195,9 @@ body.new-view #ingPanel { display: none !important; }
     .ing-panel-tab-label { display: none; }
 
     .ing-panel-inner {
-        height: 100%;
+        flex: 1;
         overflow-y: auto;
-        padding: 4rem 1.5rem 3rem;
+        padding: 1rem 1.5rem 2.5rem;
         scrollbar-width: thin;
         scrollbar-color: rgba(255,255,255,0.3) transparent;
     }
@@ -150,18 +238,18 @@ body.new-view #ingPanel { display: none !important; }
         padding-left: max(1rem, env(safe-area-inset-left));
         padding-right: max(1rem, env(safe-area-inset-right));
     }
-    body.ing-open { padding-bottom: 42vh; }
+    body.ing-open { padding-bottom: var(--panel-pad, 42vh); }
 
     #ingPanel {
         position: fixed;
         top: auto; left: 0; right: 0; bottom: 0;
-        width: 100%; height: 40vh;
+        width: 100%; height: var(--panel-height, 40vh);
         border-left: none;
         border-top: none;
         border-radius: 16px 16px 0 0;
         z-index: 200;
         transform: translateY(100%);
-        transition: transform 0.28s cubic-bezier(0.32,0.72,0,1);
+        transition: transform 0.28s cubic-bezier(0.32,0.72,0,1), height 0.2s ease;
         display: flex; flex-direction: column;
         box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
     }

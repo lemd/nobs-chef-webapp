@@ -218,8 +218,8 @@
                 class="ing-panel-tab"
                 id="ingPanelTab"
                 onclick="toggleIngPanel()"
-                aria-label="Toggle ingredients panel">
-                <span class="ing-panel-tab-label">Ingredients</span>
+                aria-label="Toggle panel">
+                <span class="ing-panel-tab-label"></span>
                 <svg
                     class="tab-chevron"
                     width="7"
@@ -234,9 +234,31 @@
                         stroke-linejoin="round" />
                 </svg>
             </button>
-            <div class="ing-panel-inner">
-                <div class="ing-panel-head" id="ingPanelHead"></div>
-                <div id="ingPanelBody"></div>
+            <!-- Tab bar -->
+            <div class="panel-tab-bar">
+                <button class="ptab active" id="ptabIngredients" onclick="switchPanelTab('ingredients')">Ingredients</button>
+                <button class="ptab" id="ptabTimers" onclick="switchPanelTab('timers')">Timers</button>
+                <button class="ptab" id="ptabServings" onclick="switchPanelTab('servings')">Servings</button>
+            </div>
+            <!-- Ingredients section -->
+            <div class="panel-section" id="panelIngredients">
+                <div class="ing-panel-inner">
+                    <div class="ing-panel-head" id="ingPanelHead"></div>
+                    <div id="ingPanelBody"></div>
+                </div>
+            </div>
+            <!-- Timers section -->
+            <div class="panel-section" id="panelTimers" style="display:none">
+                <div class="ing-panel-inner">
+                    <p class="panel-empty-hint" id="timerEmptyHint">Tap ⏱ on a step to start a timer.</p>
+                    <div id="timersList"></div>
+                </div>
+            </div>
+            <!-- Servings section -->
+            <div class="panel-section" id="panelServings" style="display:none">
+                <div class="ing-panel-inner">
+                    <div id="servingsSection"></div>
+                </div>
             </div>
         </div>
 

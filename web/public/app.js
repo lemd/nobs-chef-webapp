@@ -32,6 +32,15 @@ let currentRecipe = null;
 let currentUnits = 'original';
 let originalServings = null;
 let currentServings = null;
+let currentPanelTab = 'ingredients';
+const activeTimers = [];
+let timerIdCounter = 0;
+
+const PANEL_TAB_CONFIG = {
+    ingredients: { height: '40vh', pad: '42vh' },
+    timers:      { height: '30vh', pad: '32vh' },
+    servings:    { height: '22vh', pad: '24vh' },
+};
 
 const drawer = document.getElementById('drawer');
 const backdrop = document.getElementById('drawerBackdrop');
@@ -56,6 +65,138 @@ document.getElementById('newBtn').addEventListener('click', () => {
     history.pushState({}, '', '/new');
     showView('new');
 });
+
+function switchPanelTab(tab) {
+    currentPanelTab = tab;
+    ['Ingredients', 'Timers', 'Servings'].forEach((name) => {
+        const t = name.toLowerCase();
+        const sec = document.getElementById(`panel${name}`);
+        const btn = document.getElementById(`ptab${name}`);
+        if (sec) sec.style.display = t === tab ? '' : 'none';
+        if (btn) btn.classList.toggle('active', t === tab);
+    });
+    // Update mobile tab label
+    const label = document.querySelector('.ing-panel-tab-label');
+    if (label) label.textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+    // Update mobile panel height via CSS vars
+    const cfg = PANEL_TAB_CONFIG[tab] || PANEL_TAB_CONFIG.ingredients;
+    document.documentElement.style.setProperty('--panel-height', cfg.height);
+    document.documentElement.style.setProperty('--panel-pad', cfg.pad);
+}
+
+function parseTimingToSeconds(str) {
+    if (!str) return null;
+    let secs = 0;
+    const h = str.match(/(\d+)\s*h(?:our|r)?s?/i);
+    if (h) secs += parseInt(h[1]) * 3600;
+    const m = str.match(/(?:\d+[\u2013\-])?((\d+))\s*min/i);
+    if (m) secs += parseInt(m[1]) * 60;
+    const s = str.match(/(\d+)\s*sec/i);
+    if (s) secs += parseInt(s[1]);
+    return secs > 0 ? secs : null;
+}
+
+function formatTime(secs) {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function addTimer(stepNum, seconds) {
+    const step = currentRecipe?.steps?.find((s) => s.stepNumber === stepNum);
+    activeTimers.push({
+        id: ++timerIdCounter,
+        label: `Step ${stepNum}`,
+        sublabel: step?.timingInterval ?? '',
+        total: seconds,
+        remaining: seconds,
+        running: false,
+        interval: null,
+    });
+    const panel = document.getElementById('ingPanel');
+    if (!panel.classList.contains('open')) {
+        panel.classList.add('open');
+        document.body.classList.add('ing-open');
+    }
+    switchPanelTab('timers');
+    renderTimers();
+}
+
+function startTimer(id) {
+    const t = activeTimers.find((t) => t.id === id);
+    if (!t || t.running || t.remaining === 0) return;
+    t.running = true;
+    t.interval = setInterval(() => {
+        t.remaining = Math.max(0, t.remaining - 1);
+        if (t.remaining === 0) {
+            t.running = false;
+            clearInterval(t.interval);
+            t.interval = null;
+        }
+        renderTimers();
+    }, 1000);
+    renderTimers();
+}
+
+function pauseTimer(id) {
+    const t = activeTimers.find((t) => t.id === id);
+    if (!t || !t.running) return;
+    t.running = false;
+    clearInterval(t.interval);
+    t.interval = null;
+    renderTimers();
+}
+
+function resetTimer(id) {
+    const t = activeTimers.find((t) => t.id === id);
+    if (!t) return;
+    clearInterval(t.interval);
+    t.interval = null;
+    t.running = false;
+    t.remaining = t.total;
+    renderTimers();
+}
+
+function removeTimer(id) {
+    const idx = activeTimers.findIndex((t) => t.id === id);
+    if (idx === -1) return;
+    clearInterval(activeTimers[idx].interval);
+    activeTimers.splice(idx, 1);
+    renderTimers();
+}
+
+function renderTimers() {
+    const listEl = document.getElementById('timersList');
+    const hintEl = document.getElementById('timerEmptyHint');
+    if (!listEl) return;
+    if (!activeTimers.length) {
+        if (hintEl) hintEl.style.display = '';
+        listEl.innerHTML = '';
+        return;
+    }
+    if (hintEl) hintEl.style.display = 'none';
+    listEl.innerHTML = activeTimers
+        .map((t) => {
+            const done = t.remaining === 0;
+            const toggleFn = t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`;
+            const toggleIcon = t.running ? '\u23f8' : '\u25b6';
+            return `<div class="timer-item${done ? ' timer-done' : ''}">
+                <div class="timer-info">
+                    <div class="timer-label">${esc(t.label)}</div>
+                    ${t.sublabel ? `<div class="timer-sublabel">${esc(t.sublabel)}</div>` : ''}
+                </div>
+                <div class="timer-display">${done ? 'Done' : formatTime(t.remaining)}</div>
+                <div class="timer-controls">
+                    ${!done ? `<button onclick="${toggleFn}">${toggleIcon}</button>` : ''}
+                    <button onclick="resetTimer(${t.id})">&#8635;</button>
+                    <button onclick="removeTimer(${t.id})">&#x2715;</button>
+                </div>
+            </div>`;
+        })
+        .join('');
+}
 
 function showView(view) {
     const isNew = view === 'new';
@@ -300,7 +441,7 @@ function renderRecipe(r) {
                         <div class="step-body">
                             ${renderStepInstruction(s.instruction)}
                             ${s.temperatureConversion ? `<span class="conv step-temp-conv" style="display:none">→ ${esc(s.temperatureConversion)}</span>` : ''}
-                            ${s.timingInterval ? `<span class="step-timing">${esc(s.timingInterval)}</span>` : ''}
+                            ${renderStepTiming(s.stepNumber, s.timingInterval)}
                         </div>
                     </li>`,
                         )
@@ -429,6 +570,15 @@ function renderGuideGroups(groups) {
         .join('');
 }
 
+function renderStepTiming(stepNum, interval) {
+    if (!interval) return '';
+    const secs = parseTimingToSeconds(interval);
+    const btn = secs
+        ? ` <button class="timer-start-btn" onclick="addTimer(${stepNum}, ${secs})" aria-label="Start timer">⏱</button>`
+        : '';
+    return `<span class="step-timing">${esc(interval)}${btn}</span>`;
+}
+
 function renderStepInstruction(instruction) {
     if (!instruction) return '';
     const lines = instruction
@@ -461,36 +611,36 @@ function toggleIngPanel() {
 function populateIngPanel(r, hasConversions, hasHints) {
     const headEl = document.getElementById('ingPanelHead');
     const bodyEl = document.getElementById('ingPanelBody');
+    const servingsEl = document.getElementById('servingsSection');
     if (!headEl || !bodyEl) return;
     originalServings = parseServingsNum(r.servings);
     currentServings = originalServings;
-    headEl.innerHTML = `
-        <div class="ing-panel-title-row">
-            <span class="sidebar-label">Ingredients</span>
-            ${hasHints ? '<button class="guide-btn" onclick="openGuide()">Guide</button>' : ''}
-        </div>
-        ${
-            originalServings
-                ? `
-        <div class="servings-scaler">
-            <button onclick="changeServings(-1)" aria-label="Fewer">−</button>
-            <span class="servings-count" id="servingsCount">${originalServings}</span>
-            <span class="servings-label">servings</span>
-            <button onclick="changeServings(1)" aria-label="More">+</button>
-        </div>`
-                : ''
-        }
-        ${
-            hasConversions
-                ? `
-        <div class="unit-toggle">
+
+    // Servings tab content
+    if (servingsEl) {
+        servingsEl.innerHTML = originalServings
+            ? `<div class="servings-scaler">
+                <button onclick="changeServings(-1)" aria-label="Fewer">−</button>
+                <span class="servings-count" id="servingsCount">${originalServings}</span>
+                <span class="servings-label">servings</span>
+                <button onclick="changeServings(1)" aria-label="More">+</button>
+               </div>
+               <p class="panel-empty-hint" style="margin-top:0.75rem">Quantities scale with the recipe.</p>`
+            : '<p class="panel-empty-hint">No serving info for this recipe.</p>';
+    }
+
+    // Ingredients head: guide + unit toggle
+    const headContent = [
+        hasHints ? '<button class="guide-btn" onclick="openGuide()" style="display:block;margin-bottom:0.75rem">Guide</button>' : '',
+        hasConversions ? `<div class="unit-toggle">
             <button id="btnOriginalPanel" class="active" onclick="setUnits('original')">Imperial</button>
             <button id="btnConvertedPanel" onclick="setUnits('converted')">Metric</button>
         </div>
-        <p class="unit-toggle-note">Weights &amp; temperatures only</p>`
-                : ''
-        }
-    `;
+        <p class="unit-toggle-note">Weights &amp; temperatures only</p>` : '',
+    ].join('');
+    headEl.innerHTML = headContent;
+    headEl.style.display = headContent.trim() ? '' : 'none';
+
     bodyEl.innerHTML = renderIngredientGroupsScaled(r.ingredientGroups, 1);
 }
 
