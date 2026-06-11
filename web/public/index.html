@@ -235,16 +235,16 @@
             <div id="dashView" class="hidden max-w-[1080px] mx-auto mt-8 px-2">
                 <!-- Filter bar -->
                 <div id="dashFilters" class="mb-6">
-                    <!-- Ingredient chip search -->
+                    <!-- Search + count/clear row -->
                     <div class="flex flex-wrap items-center gap-2 mb-3">
                         <div
-                            class="flex items-center gap-1 border-b border-[#111] pb-[3px] min-w-[180px] max-w-xs">
+                            class="flex items-center gap-1 border-b border-[#111] pb-[3px] min-w-[200px] max-w-xs">
                             <i
                                 class="fa-solid fa-magnifying-glass text-[#8a7d72] text-[0.75rem]"></i>
                             <input
                                 id="ingredientSearch"
                                 type="text"
-                                placeholder="Search by ingredient…"
+                                placeholder="Search recipes or ingredients…"
                                 class="bg-transparent border-0 outline-none text-[0.82rem] text-[#111] font-body placeholder-[#8a7d72] w-full"
                                 oninput="onIngredientInput(event)"
                                 onkeydown="onIngredientKeydown(event)" />
@@ -252,6 +252,8 @@
                         <div
                             id="ingredientChips"
                             class="flex flex-wrap gap-1"></div>
+                        <span id="dashCount" class="text-[0.72rem] text-[#8a7d72] font-body ml-auto"></span>
+                        <button id="clearFiltersBtn" onclick="clearAllFilters()" class="hidden text-[0.72rem] font-body font-semibold tracking-wide text-[#8a7d72] border-0 bg-transparent cursor-pointer hover:text-[#111] transition-colors">Clear filters</button>
                     </div>
                     <!-- Tag filter rows -->
                     <div
@@ -281,6 +283,18 @@
                             data-filter="dietary:dairy-free"
                             class="filter-chip"
                             >Dairy-free</button
+                        >
+                        <button
+                            onclick="toggleFilter('dietary', 'nut-free')"
+                            data-filter="dietary:nut-free"
+                            class="filter-chip"
+                            >Nut-free</button
+                        >
+                        <button
+                            onclick="toggleFilter('dietary', 'low-carb')"
+                            data-filter="dietary:low-carb"
+                            class="filter-chip"
+                            >Low-carb</button
                         >
                     </div>
                     <div class="flex flex-wrap gap-1">

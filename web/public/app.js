@@ -467,6 +467,7 @@ function buildMealTypeFilters(recipes) {
 
 function recipeMatchesFilters(item) {
     const tags = item.tags ?? {};
+    // Meal type: multi-select OR
     if (
         activeFilters.mealType.size > 0 &&
         !activeFilters.mealType.has(tags.mealType)
@@ -483,18 +484,55 @@ function recipeMatchesFilters(item) {
         if (!isAllYear && ![...activeFilters.season].some((v) => s.includes(v)))
             return false;
     }
-    if (activeIngredients.size > 0 || document.getElementById('ingredientSearch')?.value.trim()) {
-        const haystack = (item._ingredientNames ?? '').toLowerCase();
-        const typed = (document.getElementById('ingredientSearch')?.value.trim().toLowerCase()) ?? '';
+    const typed =
+        document.getElementById('ingredientSearch')?.value.trim().toLowerCase() ?? '';
+    if (activeIngredients.size > 0 || typed) {
+        // Search both ingredient names and recipe title
+        const haystack =
+            (item._ingredientNames ?? '').toLowerCase() +
+            ' ' +
+            item.title.toLowerCase();
         const allTerms = [...activeIngredients, ...(typed ? [typed] : [])];
         if (!allTerms.every((v) => haystack.includes(v))) return false;
     }
     return true;
 }
 
+function hasActiveFilters() {
+    return (
+        activeFilters.mealType.size > 0 ||
+        activeFilters.dietary.size > 0 ||
+        activeFilters.season.size > 0 ||
+        activeIngredients.size > 0 ||
+        !!(document.getElementById('ingredientSearch')?.value.trim())
+    );
+}
+
+function clearAllFilters() {
+    activeFilters.mealType.clear();
+    activeFilters.dietary.clear();
+    activeFilters.season.clear();
+    activeIngredients.clear();
+    const search = document.getElementById('ingredientSearch');
+    if (search) search.value = '';
+    document.getElementById('ingredientChips').innerHTML = '';
+    document.querySelectorAll('.filter-chip.active').forEach((b) => b.classList.remove('active'));
+    renderDashGrid();
+}
+
 function renderDashGrid() {
     if (!dashGridEl) return;
     const filtered = allRecipes.filter(recipeMatchesFilters);
+    // Count badge
+    const countEl = document.getElementById('dashCount');
+    if (countEl) {
+        countEl.textContent = filtered.length === allRecipes.length
+            ? `${allRecipes.length} recipe${allRecipes.length !== 1 ? 's' : ''}`
+            : `${filtered.length} of ${allRecipes.length}`;
+    }
+    // Clear button visibility
+    const clearBtn = document.getElementById('clearFiltersBtn');
+    if (clearBtn) clearBtn.classList.toggle('hidden', !hasActiveFilters());
     if (filtered.length === 0) {
         dashGridEl.innerHTML = `<p class="dash-no-results">No recipes match the current filters.</p>`;
         return;
@@ -506,9 +544,12 @@ function renderDashGrid() {
                 day: 'numeric',
                 year: 'numeric',
             });
+            const mealType = item.tags?.mealType
+                ? `<span class="dash-card-tag">${esc(item.tags.mealType)}</span>`
+                : '';
             return `<button class="dash-card" onclick="loadFile('${esc(item.filename)}')">
             <span class="dash-card-title">${esc(item.title)}</span>
-            <span class="dash-card-meta">${esc(date)}</span>
+            <span class="dash-card-meta">${mealType}${esc(date)}</span>
         </button>`;
         })
         .join('');
@@ -566,6 +607,18 @@ async function loadFile(filename) {
 }
 
 // ── Startup routing ──────────────────────────────────────────────────────────
+// Auto-activate current season
+(function initSeasonFilter() {
+    const month = new Date().getMonth(); // 0=Jan
+    const season =
+        month >= 2 && month <= 4 ? 'spring' :
+        month >= 5 && month <= 7 ? 'summer' :
+        month >= 8 && month <= 10 ? 'autumn' : 'winter';
+    activeFilters.season.add(season);
+    const btn = document.querySelector(`[data-filter="season:${season}"]`);
+    if (btn) btn.classList.add('active');
+})();
+
 const routeMatch = window.location.pathname.match(/^\/r\/([a-zA-Z0-9_-]+)$/);
 if (routeMatch) {
     showView('recipe');
