@@ -260,9 +260,9 @@ body.new-view #ingPanel { display: none !important; }
     transform: translateY(-2px);
 }
 .dash-card-title {
-    font-family: var(--font-display);
-    font-size: 1rem;
-    font-weight: 400;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 500;
     line-height: 1.35;
     color: var(--text);
     display: -webkit-box;
@@ -276,11 +276,7 @@ body.new-view #ingPanel { display: none !important; }
     letter-spacing: 0.02em;
     margin-top: auto;
     padding-top: 0.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
 }
-.dash-card-domain { font-weight: 600; }
 
 /* ═══════════════════════════════════════════════
    JS-rendered recipe components (main area)

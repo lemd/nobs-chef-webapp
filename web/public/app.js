@@ -105,15 +105,10 @@ async function loadHistory() {
     if (dashGridEl) {
         dashGridEl.innerHTML = list
             .map((item) => {
-                let domain = '';
-                try { domain = new URL(item.sourceUrl).hostname.replace(/^www\./, ''); } catch {}
                 const date = new Date(item.savedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
                 return `<button class="dash-card" onclick="loadFile('${esc(item.filename)}')">
                     <span class="dash-card-title">${esc(item.title)}</span>
-                    <span class="dash-card-meta">
-                        <span class="dash-card-domain">${esc(domain)}</span>
-                        <span>${esc(date)}</span>
-                    </span>
+                    <span class="dash-card-meta">${esc(date)}</span>
                 </button>`;
             })
             .join('');
