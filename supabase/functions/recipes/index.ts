@@ -20,13 +20,25 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: error.message }, 500);
   }
 
-  const files = (data ?? []).map((r) => ({
-    filename: `${r.url_hash}.json`,
-    title: r.title,
-    sourceUrl: r.source_url,
-    savedAt: r.saved_at,
-    tags: (r.data as { tags?: unknown })?.tags ?? null,
-  }));
+  type RecipeData = {
+    tags?: unknown;
+    ingredientGroups?: Array<{ items: Array<{ name: string }> }>;
+  };
+
+  const files = (data ?? []).map((r) => {
+    const d = r.data as RecipeData;
+    const ingredientNames = (d.ingredientGroups ?? [])
+      .flatMap((g) => g.items.map((i) => i.name.toLowerCase()))
+      .join(" ");
+    return {
+      filename: `${r.url_hash}.json`,
+      title: r.title,
+      sourceUrl: r.source_url,
+      savedAt: r.saved_at,
+      tags: d.tags ?? null,
+      ingredientNames,
+    };
+  });
 
   return jsonResponse(files);
 });
