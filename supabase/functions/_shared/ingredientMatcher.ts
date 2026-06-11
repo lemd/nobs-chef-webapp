@@ -36,6 +36,7 @@ function wordOverlap(a: string, b: string): number {
 
 /** Normalize a USDA description to Claude-style lowercase */
 function normalizeUsdaName(raw: string): string {
+  if (!raw) return "";
   // USDA format: "VINEGAR, BALSAMIC" → "balsamic vinegar"
   // Split on comma, reverse, lowercase, trim
   return raw
@@ -53,6 +54,7 @@ function extractConversions(
 ): Record<string, number> {
   const out: Record<string, number> = {};
   for (const p of portions) {
+    if (!p.portionDescription || !p.gramWeight) continue;
     const desc = p.portionDescription.toLowerCase();
     const grams = Math.round(p.gramWeight / (p.amount || 1));
     if (desc.includes("cup")) out["cup_g"] = grams;
@@ -82,6 +84,7 @@ async function usdaSearch(
     let best: UsdaSearchResult | null = null;
     let bestScore = 0;
     for (const food of foods) {
+      if (!food.description) continue;
       const normalized = normalizeUsdaName(food.description);
       const score = wordOverlap(name, normalized);
       if (score > bestScore) {
@@ -117,7 +120,9 @@ export async function matchIngredient(
   rawName: string,
   supabase: SupabaseClient
 ): Promise<MatchResult> {
+  if (!rawName) return { ingredient_id: null, match_score: 0, canonical_name: null };
   const name = rawName.toLowerCase().trim();
+  if (!name) return { ingredient_id: null, match_score: 0, canonical_name: null };
   const usdaKey = Deno.env.get("USDA_API_KEY");
 
   // 1. Exact local match
