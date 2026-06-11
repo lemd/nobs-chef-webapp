@@ -485,7 +485,10 @@ function recipeMatchesFilters(item) {
             return false;
     }
     const typed =
-        document.getElementById('ingredientSearch')?.value.trim().toLowerCase() ?? '';
+        document
+            .getElementById('ingredientSearch')
+            ?.value.trim()
+            .toLowerCase() ?? '';
     if (activeIngredients.size > 0 || typed) {
         // Search both ingredient names and recipe title
         const haystack =
@@ -504,7 +507,7 @@ function hasActiveFilters() {
         activeFilters.dietary.size > 0 ||
         activeFilters.season.size > 0 ||
         activeIngredients.size > 0 ||
-        !!(document.getElementById('ingredientSearch')?.value.trim())
+        !!document.getElementById('ingredientSearch')?.value.trim()
     );
 }
 
@@ -516,7 +519,9 @@ function clearAllFilters() {
     const search = document.getElementById('ingredientSearch');
     if (search) search.value = '';
     document.getElementById('ingredientChips').innerHTML = '';
-    document.querySelectorAll('.filter-chip.active').forEach((b) => b.classList.remove('active'));
+    document
+        .querySelectorAll('.filter-chip.active')
+        .forEach((b) => b.classList.remove('active'));
     renderDashGrid();
 }
 
@@ -526,9 +531,10 @@ function renderDashGrid() {
     // Count badge
     const countEl = document.getElementById('dashCount');
     if (countEl) {
-        countEl.textContent = filtered.length === allRecipes.length
-            ? `${allRecipes.length} recipe${allRecipes.length !== 1 ? 's' : ''}`
-            : `${filtered.length} of ${allRecipes.length}`;
+        countEl.textContent =
+            filtered.length === allRecipes.length
+                ? `${allRecipes.length} recipe${allRecipes.length !== 1 ? 's' : ''}`
+                : `${filtered.length} of ${allRecipes.length}`;
     }
     // Clear button visibility
     const clearBtn = document.getElementById('clearFiltersBtn');
@@ -611,9 +617,13 @@ async function loadFile(filename) {
 (function initSeasonFilter() {
     const month = new Date().getMonth(); // 0=Jan
     const season =
-        month >= 2 && month <= 4 ? 'spring' :
-        month >= 5 && month <= 7 ? 'summer' :
-        month >= 8 && month <= 10 ? 'autumn' : 'winter';
+        month >= 2 && month <= 4
+            ? 'spring'
+            : month >= 5 && month <= 7
+              ? 'summer'
+              : month >= 8 && month <= 10
+                ? 'autumn'
+                : 'winter';
     activeFilters.season.add(season);
     const btn = document.querySelector(`[data-filter="season:${season}"]`);
     if (btn) btn.classList.add('active');

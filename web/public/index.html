@@ -48,7 +48,7 @@
         <!-- Saved recipes drawer -->
         <div
             id="drawer"
-            class="fixed top-0 left-0 bottom-0 w-64 bg-parchment z-[300] px-6 py-8 -translate-x-full transition-transform duration-300 overflow-y-auto border-r border-[#e2d8cc]">
+            class="fixed top-0 left-0 bottom-0 w-64 bg-parchment z-[300] px-6 py-8 -translate-x-full overflow-y-auto border-r border-[#e2d8cc]">
             <div class="flex items-baseline justify-between mb-5">
                 <span
                     class="text-[0.65rem] font-bold tracking-[0.14em] uppercase text-[#8a7d72]"
@@ -252,8 +252,15 @@
                         <div
                             id="ingredientChips"
                             class="flex flex-wrap gap-1"></div>
-                        <span id="dashCount" class="text-[0.72rem] text-[#8a7d72] font-body ml-auto"></span>
-                        <button id="clearFiltersBtn" onclick="clearAllFilters()" class="hidden text-[0.72rem] font-body font-semibold tracking-wide text-[#8a7d72] border-0 bg-transparent cursor-pointer hover:text-[#111] transition-colors">Clear filters</button>
+                        <span
+                            id="dashCount"
+                            class="text-[0.72rem] text-[#8a7d72] font-body ml-auto"></span>
+                        <button
+                            id="clearFiltersBtn"
+                            onclick="clearAllFilters()"
+                            class="hidden text-[0.72rem] font-body font-semibold tracking-wide text-[#8a7d72] border-0 bg-transparent cursor-pointer hover:text-[#111] transition-colors"
+                            >Clear filters</button
+                        >
                     </div>
                     <!-- Tag filter rows -->
                     <div
