@@ -13,7 +13,7 @@ Deno.serve(async (req: Request) => {
 
   const { data, error } = await supabase
     .from("recipes")
-    .select("url_hash, title, saved_at")
+    .select("url_hash, title, source_url, saved_at")
     .order("saved_at", { ascending: false });
 
   if (error) {
@@ -23,6 +23,7 @@ Deno.serve(async (req: Request) => {
   const files = (data ?? []).map((r) => ({
     filename: `${r.url_hash}.json`,
     title: r.title,
+    sourceUrl: r.source_url,
     savedAt: r.saved_at,
   }));
 

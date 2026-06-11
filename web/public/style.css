@@ -234,6 +234,55 @@ body.new-view #ingPanel { display: none !important; }
 .ing-hint { display: block; font-size: 0.72rem; color: rgba(255,255,255,0.6); font-style: italic; margin-top: 0.1rem; letter-spacing: 0.01em; }
 
 /* ═══════════════════════════════════════════════
+   Dashboard
+   ═══════════════════════════════════════════════ */
+.dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.dash-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem 1rem;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-body);
+    transition: box-shadow 0.15s, transform 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.dash-card:hover {
+    box-shadow: 0 4px 18px rgba(0,0,0,0.09);
+    transform: translateY(-2px);
+}
+.dash-card-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.35;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.dash-card-meta {
+    font-size: 0.68rem;
+    color: var(--dim);
+    letter-spacing: 0.02em;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+.dash-card-domain { font-weight: 600; }
+
+/* ═══════════════════════════════════════════════
    JS-rendered recipe components (main area)
    ═══════════════════════════════════════════════ */
 .recipe-title { font-family: var(--font-display); font-size: 3rem; font-weight: 400; letter-spacing: 0.01em; line-height: 1.15; margin-bottom: 0.4rem; }

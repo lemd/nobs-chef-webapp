@@ -149,7 +149,13 @@
                 id="newBtn"
                 aria-label="Add recipe"
                 class="flex items-center gap-1.5 bg-amber text-white border-0 rounded-full text-[0.7rem] font-bold tracking-[0.1em] uppercase cursor-pointer px-3 py-[0.35rem] font-body transition-opacity duration-150 hover:opacity-80">
-                <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M4.5 1v7M1 4.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+                    <path
+                        d="M4.5 1v7M1 4.5h7"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round" />
+                </svg>
                 New
             </button>
             <a
@@ -162,8 +168,13 @@
 
         <!-- New recipe view -->
         <div id="newView" class="hidden max-w-[560px] mx-auto mt-20 px-2">
-            <h2 class="font-display text-5xl font-normal text-[#111] mb-2 leading-tight">Add a Recipe</h2>
-            <p class="text-[#8a7d72] text-sm mb-8 tracking-wide">Paste a URL from any recipe site</p>
+            <h2
+                class="font-display text-5xl font-normal text-[#111] mb-2 leading-tight"
+                >Add a Recipe</h2
+            >
+            <p class="text-[#8a7d72] text-sm mb-8 tracking-wide"
+                >Paste a URL from any recipe site</p
+            >
             <form
                 id="scrapeForm"
                 class="flex gap-0 border-b-[1.5px] border-[#111] pb-2 mb-3">
@@ -180,10 +191,17 @@
                     Extract
                 </button>
             </form>
-            <div id="status" class="text-[0.78rem] text-[#555] min-h-[1.2em] tracking-[0.02em]"></div>
+            <div
+                id="status"
+                class="text-[0.78rem] text-[#555] min-h-[1.2em] tracking-[0.02em]"></div>
         </div>
 
-        <!-- Main content -->
+        <!-- Dashboard view -->
+        <div id="dashView" class="hidden max-w-[1080px] mx-auto mt-8">
+            <div id="dashGrid" class="dash-grid"></div>
+        </div>
+
+        <!-- Recipe / empty view -->
         <div id="recipeLayout" class="max-w-[1080px] mx-auto mt-8">
             <main>
                 <div id="recipe" class="hidden min-w-0"></div>

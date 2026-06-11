@@ -23,6 +23,8 @@ const emptyEl = document.getElementById('empty');
 const historyEl = document.getElementById('historyList');
 const newViewEl = document.getElementById('newView');
 const recipeLayoutEl = document.getElementById('recipeLayout');
+const dashViewEl = document.getElementById('dashView');
+const dashGridEl = document.getElementById('dashGrid');
 
 let activeFile = null;
 let currentSourceUrl = null;
@@ -51,14 +53,16 @@ document.getElementById('newBtn').addEventListener('click', () => {
 
 function showView(view) {
     const isNew = view === 'new';
+    const isDash = view === 'dash';
     newViewEl.classList.toggle('hidden', !isNew);
-    recipeLayoutEl.classList.toggle('hidden', isNew);
+    dashViewEl.classList.toggle('hidden', !isDash);
+    recipeLayoutEl.classList.toggle('hidden', isDash || isNew);
     document.body.classList.toggle('new-view', isNew);
     const panel = document.getElementById('ingPanel');
-    if (isNew) {
+    if (isNew || isDash) {
         panel.classList.remove('open');
         document.body.classList.remove('ing-open');
-        setTimeout(() => urlInput?.focus(), 100);
+        if (isNew) setTimeout(() => urlInput?.focus(), 100);
     } else if (document.getElementById('ingPanelBody')?.children.length > 0) {
         panel.style.transition = 'none';
         document.body.style.transition = 'none';
@@ -75,10 +79,11 @@ async function loadHistory() {
     const res = await fetch(`${API_BASE}/recipes`).catch(() => null);
     if (!res || !res.ok) return;
     const list = await res.json();
-    if (!list.length) return;
-    historyEl.innerHTML = list
-        .map(
-            (item) => `
+    // Sidebar
+    if (list.length) {
+        historyEl.innerHTML = list
+            .map(
+                (item) => `
         <li>
             <button onclick="loadFile('${esc(item.filename)}')"
                     class="${item.filename === activeFile ? 'active' : ''}"
@@ -87,8 +92,26 @@ async function loadHistory() {
                 <span class="hist-date">${new Date(item.savedAt).toLocaleDateString()}</span>
             </button>
         </li>`,
-        )
-        .join('');
+            )
+            .join('');
+    }
+    // Dashboard grid
+    if (dashGridEl) {
+        dashGridEl.innerHTML = list
+            .map((item) => {
+                let domain = '';
+                try { domain = new URL(item.sourceUrl).hostname.replace(/^www\./, ''); } catch {}
+                const date = new Date(item.savedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                return `<button class="dash-card" onclick="loadFile('${esc(item.filename)}')">
+                    <span class="dash-card-title">${esc(item.title)}</span>
+                    <span class="dash-card-meta">
+                        <span class="dash-card-domain">${esc(domain)}</span>
+                        <span>${esc(date)}</span>
+                    </span>
+                </button>`;
+            })
+            .join('');
+    }
 }
 
 async function loadFile(filename) {
@@ -101,6 +124,7 @@ async function loadFile(filename) {
         setStatus(data.error, true);
         return;
     }
+    showView('recipe');
     renderRecipe(data);
     loadHistory();
     closeDrawer();
@@ -119,13 +143,7 @@ if (routeMatch) {
 } else if (window.location.pathname === '/new') {
     showView('new');
 } else {
-    showView('recipe');
-    fetch(`${API_BASE}/recipe`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-            if (data) renderRecipe(data);
-        })
-        .catch(() => {});
+    showView('dash');
 }
 loadHistory();
 
@@ -137,9 +155,7 @@ window.addEventListener('popstate', (e) => {
         showView('recipe');
         loadFile(e.state.slug + '.json');
     } else {
-        showView('recipe');
-        recipeEl.classList.add('hidden');
-        emptyEl.classList.remove('hidden');
+        showView('dash');
         activeFile = null;
         document.getElementById('ingPanel').classList.remove('open');
         document.body.classList.remove('ing-open');
