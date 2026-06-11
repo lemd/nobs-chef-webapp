@@ -123,6 +123,18 @@
             </main>
         </div>
 
+        <div id="ingPanel">
+            <button class="ing-panel-tab" id="ingPanelTab" onclick="toggleIngPanel()" aria-label="Toggle ingredients panel">
+                <svg class="tab-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5.5 1.5L1.5 6L5.5 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="ing-panel-inner">
+                <div class="ing-panel-head" id="ingPanelHead"></div>
+                <div id="ingPanelBody"></div>
+            </div>
+        </div>
+
         <script>
             const API_BASE =
                 'https://vcsuynfbykvncenmhjfh.supabase.co/functions/v1';
@@ -225,7 +237,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${secret}`,
+                            Authorization: `Bearer ${secret}`,
                         },
                         body: JSON.stringify({ url }),
                     });
@@ -264,7 +276,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${secret}`,
+                            Authorization: `Bearer ${secret}`,
                         },
                         body: JSON.stringify({
                             url: currentSourceUrl,
@@ -370,10 +382,14 @@
                             ${renderIngredientGroups(r.ingredientGroups)}
                         </div>
                     </div>`;
+                populateIngPanel(r, hasConversions, hasHints);
             }
 
             let currentUnits = 'original';
             let currentRecipe = null;
+            let originalServings = null;
+            let currentServings = null;
+
             function setUnits(mode) {
                 currentUnits = mode;
                 document.querySelectorAll('.ing-qty-original').forEach((el) => {
@@ -387,10 +403,14 @@
                 document.querySelectorAll('.step-temp-conv').forEach((el) => {
                     el.style.display = mode === 'converted' ? '' : 'none';
                 });
-                const btnO = document.getElementById('btnOriginal');
-                const btnC = document.getElementById('btnConverted');
-                if (btnO) btnO.className = mode === 'original' ? 'active' : '';
-                if (btnC) btnC.className = mode === 'converted' ? 'active' : '';
+                ['btnOriginal', 'btnOriginalPanel'].forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) el.className = mode === 'original' ? 'active' : '';
+                });
+                ['btnConverted', 'btnConvertedPanel'].forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) el.className = mode === 'converted' ? 'active' : '';
+                });
             }
 
             function renderIngredientGroups(groups) {
@@ -513,6 +533,124 @@
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;')
                     .replace(/"/g, '&quot;');
+            }
+
+            // ── Ingredient panel ───────────────────────────────────────────
+            function toggleIngPanel() {
+                const panel = document.getElementById('ingPanel');
+                const isOpen = panel.classList.toggle('open');
+                document.body.classList.toggle('ing-open', isOpen);
+            }
+
+            function populateIngPanel(r, hasConversions, hasHints) {
+                const headEl = document.getElementById('ingPanelHead');
+                const bodyEl = document.getElementById('ingPanelBody');
+                if (!headEl || !bodyEl) return;
+                originalServings = parseServingsNum(r.servings);
+                currentServings = originalServings;
+                headEl.innerHTML = `
+                    <div class="ing-panel-title-row">
+                        <span class="sidebar-label">Ingredients</span>
+                        ${hasHints ? '<button class="guide-btn" onclick="openGuide()">Guide</button>' : ''}
+                    </div>
+                    ${originalServings ? `
+                    <div class="servings-scaler">
+                        <button onclick="changeServings(-1)" aria-label="Fewer">−</button>
+                        <span class="servings-count" id="servingsCount">${originalServings}</span>
+                        <span class="servings-label">servings</span>
+                        <button onclick="changeServings(1)" aria-label="More">+</button>
+                    </div>` : ''}
+                    ${hasConversions ? `
+                    <div class="unit-toggle">
+                        <button id="btnOriginalPanel" class="active" onclick="setUnits('original')">Original</button>
+                        <button id="btnConvertedPanel" onclick="setUnits('converted')">Converted</button>
+                    </div>` : ''}
+                `;
+                bodyEl.innerHTML = renderIngredientGroupsScaled(r.ingredientGroups, 1);
+            }
+
+            // ── Servings scaler ────────────────────────────────────────────
+            function parseServingsNum(str) {
+                if (!str) return null;
+                const m = String(str).match(/\d+/);
+                return m ? parseInt(m[0]) : null;
+            }
+
+            function parseFraction(str) {
+                if (!str) return null;
+                const s = String(str).trim();
+                const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+                if (mixed) return parseInt(mixed[1]) + parseInt(mixed[2]) / parseInt(mixed[3]);
+                const frac = s.match(/^(\d+)\/(\d+)$/);
+                if (frac) return parseInt(frac[1]) / parseInt(frac[2]);
+                const range = s.match(/^(\d+(?:\.\d+)?)[–\-](\d+(?:\.\d+)?)$/);
+                if (range) return (parseFloat(range[1]) + parseFloat(range[2])) / 2;
+                const num = parseFloat(s);
+                return isNaN(num) ? null : num;
+            }
+
+            function formatFraction(val) {
+                if (val === null || val <= 0) return '0';
+                const eighths = Math.round(val * 8);
+                if (eighths === 0) return '0';
+                const whole = Math.floor(eighths / 8);
+                const rem = eighths % 8;
+                const f = { 0: '', 1: '⅛', 2: '¼', 3: '⅜', 4: '½', 5: '⅝', 6: '¾', 7: '⅞' };
+                const fStr = f[rem] ?? `${rem}/8`;
+                if (whole === 0) return fStr;
+                return fStr ? `${whole} ${fStr}` : `${whole}`;
+            }
+
+            function scaleQty(qty, factor) {
+                if (!qty || factor === 1) return qty;
+                const val = parseFraction(qty);
+                if (val === null) return qty;
+                return formatFraction(val * factor);
+            }
+
+            function changeServings(delta) {
+                if (!currentServings || !originalServings) return;
+                const next = Math.max(1, currentServings + delta);
+                if (next === currentServings) return;
+                currentServings = next;
+                const countEl = document.getElementById('servingsCount');
+                if (countEl) countEl.textContent = currentServings;
+                const factor = currentServings / originalServings;
+                const bodyEl = document.getElementById('ingPanelBody');
+                if (bodyEl) {
+                    bodyEl.innerHTML = renderIngredientGroupsScaled(currentRecipe.ingredientGroups, factor);
+                    document.querySelectorAll('.ing-qty-original').forEach((el) => {
+                        el.style.display = currentUnits === 'original' ? '' : 'none';
+                    });
+                    document.querySelectorAll('.ing-qty-converted').forEach((el) => {
+                        el.style.display = currentUnits === 'converted' ? '' : 'none';
+                    });
+                }
+            }
+
+            function renderIngredientGroupsScaled(groups, factor) {
+                return (groups ?? []).map((g) => `
+                    <div class="ing-group">
+                        ${g.group ? `<div class="ing-group-name">${esc(g.group)}</div>` : ''}
+                        <ul class="ing-list">
+                            ${(g.items ?? []).map((i) => {
+                                const scaledQty = scaleQty(i.quantity, factor);
+                                const orig = [scaledQty, i.unit].filter(Boolean).join(' ') || '—';
+                                const conv = i.conversion
+                                    ? [i.conversion.quantity, i.conversion.unit].filter(Boolean).join(' ')
+                                    : null;
+                                const origClass = conv ? 'ing-qty ing-qty-original' : 'ing-qty';
+                                return `<li>
+                                    <span class="${origClass}">${orig}</span>
+                                    ${conv ? `<span class="ing-qty ing-qty-converted conv" style="display:none">${conv}</span>` : ''}
+                                    <span class="ing-name">
+                                        ${esc(i.name)}${i.notes ? ` <span class="ing-notes">(${esc(i.notes)})</span>` : ''}
+                                        ${i.hint ? `<span class="ing-hint">${esc(i.hint)}</span>` : ''}
+                                    </span>
+                                </li>`;
+                            }).join('')}
+                        </ul>
+                    </div>`).join('');
             }
         </script>
     </body>
