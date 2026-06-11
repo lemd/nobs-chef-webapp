@@ -1,3 +1,4 @@
 {
-  "outputDirectory": "web/public"
+    "outputDirectory": "web/public",
+    "buildCommand": null
 }
