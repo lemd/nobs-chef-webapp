@@ -1,6 +1,6 @@
 {
     "outputDirectory": "web/public",
-    "buildCommand": null,
+    "buildCommand": "",
     "routes": [
         { "src": "/r/[^/]+", "dest": "/index.html" },
         { "handle": "filesystem" }
