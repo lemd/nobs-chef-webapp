@@ -104,7 +104,7 @@ body.new-view #ingPanel { display: none !important; }
     transition: color 0.15s;
     line-height: 1;
 }
-.ing-outer-tab.active { color: rgba(255,255,255,0.95); }
+.ing-outer-tab.active { color: rgba(255,255,255,0.95); background: rgba(255,255,255,0.1); }
 .ing-outer-tab:not(.active):hover { color: rgba(255,255,255,0.7); }
 
 /* ── Panel sections ── */
@@ -234,7 +234,49 @@ body.new-view #ingPanel { display: none !important; }
 }
 .timer-start-btn:hover { opacity: 1; }
 
-/* ── Desktop: right slide-in (≥761px) ── */
+/* ── Servings card (large carousel-style) ── */
+.servings-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 1rem;
+    height: 100%;
+}
+.servings-card-label {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: rgba(255,255,255,0.5);
+}
+.servings-card-display {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    min-width: 4rem;
+    text-align: center;
+}
+.servings-card-unit {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: rgba(255,255,255,0.5);
+    margin-top: -0.25rem;
+}
+.servings-card-controls { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.servings-card-controls button {
+    min-width: 52px; min-height: 52px; width: 52px; height: 52px;
+    background: rgba(255,255,255,0.12);
+    border: none; border-radius: 50%;
+    color: #fff; font-size: 1.6rem; font-weight: 300;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.12s; padding: 0;
+    font-family: inherit; line-height: 1;
+}
+.servings-card-controls button:hover { background: rgba(255,255,255,0.22); }
+.servings-card-hint {
+    font-size: 0.7rem; color: rgba(255,255,255,0.4);
+    font-style: italic; margin-top: 0.25rem;
+}
 @media (min-width: 761px) {
     #app-scroll { transition: padding-right 0.25s ease; }
     body.ing-open #app-scroll { padding-right: calc(2rem + 400px); }
@@ -338,15 +380,15 @@ body.new-view #ingPanel { display: none !important; }
 
     /* 3 horizontal tabs above the panel on mobile */
     .ing-outer-tabs {
-        top: -40px; left: 50%;
-        transform: translateX(-50%);
+        top: -40px; left: 0; right: 0;
         flex-direction: row;
         border-radius: 10px 10px 0 0;
         overflow: hidden;
         white-space: nowrap;
     }
     .ing-outer-tab {
-        padding: 0.55rem 0.85rem;
+        flex: 1;
+        padding: 0.55rem 0;
         height: 40px;
         display: flex;
         align-items: center;
@@ -357,7 +399,7 @@ body.new-view #ingPanel { display: none !important; }
         border: none;
     }
     .ing-outer-tab + .ing-outer-tab { border-left: 1px solid rgba(255,255,255,0.18); }
-    .ing-outer-tab.active { background: rgba(255,255,255,0.08); color: #fff; }
+    .ing-outer-tab.active { background: rgba(255,255,255,0.1); color: #fff; }
 
     .ing-panel-inner { flex: 1; overflow-y: auto; padding: 0.75rem 1.25rem 1.5rem; scrollbar-width: none; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
     .ing-panel-inner::-webkit-scrollbar { display: none; }

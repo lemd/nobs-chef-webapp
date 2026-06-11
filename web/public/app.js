@@ -204,16 +204,29 @@ function renderTimers() {
     }
     if (hintEl) hintEl.style.display = 'none';
 
+    // Update timers tab label
+    const timerTabBtn = document.getElementById('otab-timers');
+    if (timerTabBtn) {
+        const running = activeTimers.find((t) => t.running);
+        timerTabBtn.textContent = running ? formatTime(running.remaining) : 'Timers';
+    }
+
     // Clamp carousel index
-    timerCarouselIndex = Math.max(0, Math.min(timerCarouselIndex, activeTimers.length - 1));
+    timerCarouselIndex = Math.max(
+        0,
+        Math.min(timerCarouselIndex, activeTimers.length - 1),
+    );
 
     listEl.innerHTML = `
         <div class="timer-carousel" id="timerCarousel">
-            ${activeTimers.map((t) => {
-                const done = t.remaining === 0;
-                const toggleFn = t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`;
-                const toggleIcon = t.running ? '\u23f8' : '\u25b6';
-                return `<div class="timer-card${done ? ' timer-done' : ''}">
+            ${activeTimers
+                .map((t) => {
+                    const done = t.remaining === 0;
+                    const toggleFn = t.running
+                        ? `pauseTimer(${t.id})`
+                        : `startTimer(${t.id})`;
+                    const toggleIcon = t.running ? '\u23f8' : '\u25b6';
+                    return `<div class="timer-card${done ? ' timer-done' : ''}">
                     <div class="timer-card-label">${esc(t.label)}</div>
                     ${t.sublabel ? `<div class="timer-card-sublabel">${esc(t.sublabel)}</div>` : ''}
                     <div class="timer-card-display">${done ? 'Done' : formatTime(t.remaining)}</div>
@@ -222,11 +235,16 @@ function renderTimers() {
                         <button onclick="resetTimer(${t.id})" aria-label="Reset">&#8635;</button>
                     </div>
                 </div>`;
-            }).join('')}
+                })
+                .join('')}
         </div>
-        ${activeTimers.length > 1 ? `<div class="timer-dots">
+        ${
+            activeTimers.length > 1
+                ? `<div class="timer-dots">
             ${activeTimers.map((_, i) => `<div class="timer-dot${i === timerCarouselIndex ? ' active' : ''}"></div>`).join('')}
-        </div>` : ''}
+        </div>`
+                : ''
+        }
     `;
 
     // Scroll carousel to active index
@@ -234,17 +252,31 @@ function renderTimers() {
         const carousel = document.getElementById('timerCarousel');
         if (!carousel) return;
         const card = carousel.children[timerCarouselIndex];
-        if (card) card.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'instant' });
+        if (card)
+            card.scrollIntoView({
+                block: 'nearest',
+                inline: 'center',
+                behavior: 'instant',
+            });
 
         // Update dots on scroll
-        carousel.addEventListener('scroll', () => {
-            const idx = Math.round(carousel.scrollLeft / carousel.clientWidth);
-            if (idx !== timerCarouselIndex) {
-                timerCarouselIndex = idx;
-                document.querySelectorAll('.timer-dot').forEach((d, i) =>
-                    d.classList.toggle('active', i === idx));
-            }
-        }, { passive: true });
+        carousel.addEventListener(
+            'scroll',
+            () => {
+                const idx = Math.round(
+                    carousel.scrollLeft / carousel.clientWidth,
+                );
+                if (idx !== timerCarouselIndex) {
+                    timerCarouselIndex = idx;
+                    document
+                        .querySelectorAll('.timer-dot')
+                        .forEach((d, i) =>
+                            d.classList.toggle('active', i === idx),
+                        );
+                }
+            },
+            { passive: true },
+        );
     });
 }
 
@@ -665,15 +697,17 @@ function populateIngPanel(r, hasConversions, hasHints) {
 
     // Servings tab content
     if (servingsEl) {
-        servingsEl.innerHTML = originalServings
-            ? `<div class="servings-scaler">
+        const count = originalServings ?? 1;
+        servingsEl.innerHTML = `<div class="servings-card">
+            <div class="servings-card-label">Servings</div>
+            <div class="servings-card-display" id="servingsCount">${count}</div>
+            <div class="servings-card-unit">people</div>
+            <div class="servings-card-controls">
                 <button onclick="changeServings(-1)" aria-label="Fewer">−</button>
-                <span class="servings-count" id="servingsCount">${originalServings}</span>
-                <span class="servings-label">servings</span>
                 <button onclick="changeServings(1)" aria-label="More">+</button>
-               </div>
-               <p class="panel-empty-hint" style="margin-top:0.75rem">Quantities scale with the recipe.</p>`
-            : '<p class="panel-empty-hint">No serving info for this recipe.</p>';
+            </div>
+            ${originalServings ? '<p class="servings-card-hint">Ingredient quantities scale automatically.</p>' : '<p class="servings-card-hint">No serving info for this recipe.</p>'}
+        </div>`;
     }
 
     // Ingredients head: guide + unit toggle
