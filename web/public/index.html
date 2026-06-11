@@ -156,7 +156,9 @@
             <div class="mob-ing-sheet-inner">
                 <div class="mob-ing-sheet-head">
                     <span class="sidebar-label">Ingredients</span>
-                    <button class="mob-ing-close" onclick="closeMobIng()">✕</button>
+                    <button class="mob-ing-close" onclick="closeMobIng()"
+                        >✕</button
+                    >
                 </div>
                 <div class="mob-servings-row" id="mobServingsRow"></div>
                 <div id="mobIngBody"></div>
@@ -406,9 +408,10 @@
                                 hasConversions
                                     ? `
                             <div class="unit-toggle">
-                                <button id="btnOriginal" class="active" onclick="setUnits('original')">Original</button>
-                                <button id="btnConverted" onclick="setUnits('converted')">Converted</button>
-                            </div>`
+                                <button id="btnOriginal" class="active" onclick="setUnits('original')">Imperial</button>
+                                <button id="btnConverted" onclick="setUnits('converted')">Metric</button>
+                            </div>
+                            <p class="unit-toggle-note">Weights &amp; temperatures only</p>`
                                     : ''
                             }
                             <div class="ing-header-row">
@@ -589,20 +592,28 @@
                         <span class="sidebar-label">Ingredients</span>
                         ${hasHints ? '<button class="guide-btn" onclick="openGuide()">Guide</button>' : ''}
                     </div>
-                    ${originalServings ? `
+                    ${
+                        originalServings
+                            ? `
                     <div class="servings-scaler">
                         <button onclick="changeServings(-1)" aria-label="Fewer">−</button>
                         <span class="servings-count" id="servingsCount">${originalServings}</span>
                         <span class="servings-label">servings</span>
                         <button onclick="changeServings(1)" aria-label="More">+</button>
-                    </div>` : ''}
+                    </div>`
+                            : ''
+                    }
                     ${hasConversions ? `
                     <div class="unit-toggle">
-                        <button id="btnOriginalPanel" class="active" onclick="setUnits('original')">Original</button>
-                        <button id="btnConvertedPanel" onclick="setUnits('converted')">Converted</button>
-                    </div>` : ''}
+                        <button id="btnOriginalPanel" class="active" onclick="setUnits('original')">Imperial</button>
+                        <button id="btnConvertedPanel" onclick="setUnits('converted')">Metric</button>
+                    </div>
+                    <p class="unit-toggle-note">Weights &amp; temperatures only</p>` : ''}
                 `;
-                bodyEl.innerHTML = renderIngredientGroupsScaled(r.ingredientGroups, 1);
+                bodyEl.innerHTML = renderIngredientGroupsScaled(
+                    r.ingredientGroups,
+                    1,
+                );
             }
 
             // ── Mobile bottom sheet ────────────────────────────────────────
@@ -624,8 +635,14 @@
                     servingsRow.innerHTML = '';
                 }
                 if (bodyEl) {
-                    const factor = (currentServings && originalServings) ? currentServings / originalServings : 1;
-                    bodyEl.innerHTML = renderIngredientGroupsScaled(currentRecipe.ingredientGroups, factor);
+                    const factor =
+                        currentServings && originalServings
+                            ? currentServings / originalServings
+                            : 1;
+                    bodyEl.innerHTML = renderIngredientGroupsScaled(
+                        currentRecipe.ingredientGroups,
+                        factor,
+                    );
                 }
                 sheet.classList.add('open');
                 backdrop.classList.add('open');
@@ -634,11 +651,15 @@
 
             function closeMobIng() {
                 document.getElementById('mobIngSheet').classList.remove('open');
-                document.getElementById('mobIngBackdrop').classList.remove('open');
+                document
+                    .getElementById('mobIngBackdrop')
+                    .classList.remove('open');
                 document.body.style.overflow = '';
             }
 
-            document.getElementById('mobIngBackdrop').addEventListener('click', closeMobIng);
+            document
+                .getElementById('mobIngBackdrop')
+                .addEventListener('click', closeMobIng);
 
             // ── Servings scaler ────────────────────────────────────────────
             function parseServingsNum(str) {
@@ -705,17 +726,34 @@
                 });
                 const bodyEl = document.getElementById('ingPanelBody');
                 if (bodyEl) {
-                    bodyEl.innerHTML = renderIngredientGroupsScaled(currentRecipe.ingredientGroups, factor);
-                    document.querySelectorAll('#ingPanelBody .ing-qty-original').forEach((el) => {
-                        el.style.display = currentUnits === 'original' ? '' : 'none';
-                    });
-                    document.querySelectorAll('#ingPanelBody .ing-qty-converted').forEach((el) => {
-                        el.style.display = currentUnits === 'converted' ? '' : 'none';
-                    });
+                    bodyEl.innerHTML = renderIngredientGroupsScaled(
+                        currentRecipe.ingredientGroups,
+                        factor,
+                    );
+                    document
+                        .querySelectorAll('#ingPanelBody .ing-qty-original')
+                        .forEach((el) => {
+                            el.style.display =
+                                currentUnits === 'original' ? '' : 'none';
+                        });
+                    document
+                        .querySelectorAll('#ingPanelBody .ing-qty-converted')
+                        .forEach((el) => {
+                            el.style.display =
+                                currentUnits === 'converted' ? '' : 'none';
+                        });
                 }
                 const mobBodyEl = document.getElementById('mobIngBody');
-                if (mobBodyEl && document.getElementById('mobIngSheet').classList.contains('open')) {
-                    mobBodyEl.innerHTML = renderIngredientGroupsScaled(currentRecipe.ingredientGroups, factor);
+                if (
+                    mobBodyEl &&
+                    document
+                        .getElementById('mobIngSheet')
+                        .classList.contains('open')
+                ) {
+                    mobBodyEl.innerHTML = renderIngredientGroupsScaled(
+                        currentRecipe.ingredientGroups,
+                        factor,
+                    );
                 }
             }
 

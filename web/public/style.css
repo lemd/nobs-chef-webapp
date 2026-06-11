@@ -348,6 +348,12 @@ header h1 {
 .unit-toggle {
     display: inline-flex;
     gap: 1.2rem;
+    margin-bottom: 0.35rem;
+}
+.unit-toggle-note {
+    font-size: 0.62rem;
+    color: var(--dim);
+    letter-spacing: 0.02em;
     margin-bottom: 1rem;
 }
 .unit-toggle button {
