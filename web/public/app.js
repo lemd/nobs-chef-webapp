@@ -105,7 +105,10 @@ async function loadHistory() {
     if (dashGridEl) {
         dashGridEl.innerHTML = list
             .map((item) => {
-                const date = new Date(item.savedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                const date = new Date(item.savedAt).toLocaleDateString(
+                    undefined,
+                    { month: 'short', day: 'numeric', year: 'numeric' },
+                );
                 return `<button class="dash-card" onclick="loadFile('${esc(item.filename)}')">
                     <span class="dash-card-title">${esc(item.title)}</span>
                     <span class="dash-card-meta">${esc(date)}</span>
