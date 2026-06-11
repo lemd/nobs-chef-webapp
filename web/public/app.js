@@ -151,8 +151,8 @@ async function refetchRecipe() {
 }
 
 function renderRecipe(r) {
-    emptyEl.style.display = 'none';
-    recipeEl.style.display = 'block';
+    emptyEl.classList.add('hidden');
+    recipeEl.classList.remove('hidden');
     currentSourceUrl = r.sourceUrl ?? null;
 
     const meta = [
