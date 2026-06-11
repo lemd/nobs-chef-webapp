@@ -531,10 +531,9 @@ async function queueProcess() {
             item.el.dataset.state = 'done';
             item.el.querySelector('.queue-item-state').textContent = 'Done';
             loadHistory();
-            // Navigate to the last completed recipe
-            showView('recipe');
+            // Silently cache the recipe but stay on the add page
             renderRecipe(data);
-            if (hash) history.pushState({ slug: hash }, '', `/r/${hash}`);
+            if (hash) history.replaceState({ slug: hash }, '', `/new`);
         } catch (err) {
             item.el.dataset.state = 'error';
             item.el.querySelector('.queue-item-state').textContent =
