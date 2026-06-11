@@ -84,7 +84,7 @@ body.dash-view #ingPanel { display: none !important; }
 /* ═══════════════════════════════════════════════
    Ingredient panel — shared
    ═══════════════════════════════════════════════ */
-#ingPanel { background: var(--panel); display: flex; flex-direction: column; }
+#ingPanel { background: #fff; display: flex; flex-direction: column; }
 
 /* ── Outer tabs (replace old ing-panel-tab + panel-tab-bar) ── */
 .ing-outer-tabs {
@@ -92,7 +92,7 @@ body.dash-view #ingPanel { display: none !important; }
     display: flex;
 }
 .ing-outer-tab {
-    background: var(--bg);
+    background: #fff;
     border: none;
     color: var(--dim);
     font-family: var(--font-body);
