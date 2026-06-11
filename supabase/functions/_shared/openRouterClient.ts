@@ -14,6 +14,15 @@ const RECIPE_JSON_SCHEMA = {
     cookTime: { type: "string" },
     totalTime: { type: "string" },
     servings: { type: "string" },
+    tags: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        mealType: { type: "string" },
+        dietary: { type: "array", items: { type: "string" } },
+        season: { type: "array", items: { type: "string" } },
+      },
+    },
     ingredientGroups: {
       type: "array",
       items: {
@@ -109,6 +118,11 @@ Temperature conversion rules ("temperatureConversion" field on steps):
 Ingredient hint rules ("hint" field on ingredients):
 - Provide a colloquial real-world equivalent ONLY when the original measurement is in grams or ounces and a plain-English description helps a home cook visualise the amount. Examples: "~½ small onion", "~1 medium clove", "~4 cups loosely packed", "~¾ cup or ~12 tomatoes", "~2 tbsp".
 - Prefer count descriptions for produce (e.g. "~2 medium carrots") and volume for loose/leafy items (e.g. "~3 cups baby spinach").
+
+Tags rules ("tags" object):
+- "mealType": a single lowercase string describing the dish category. Choose the most specific applicable value from: "salad", "soup", "pasta", "rice", "noodles", "pizza", "bread", "sandwich", "burger", "taco", "curry", "stew", "roast", "steak", "chicken", "fish", "seafood", "eggs", "breakfast", "dessert", "cake", "cookies", "snack", "side dish", "sauce", "dip", "drink". If none fit, use a short lowercase descriptor.
+- "dietary": an array of applicable labels. Choose from: "vegetarian", "vegan", "pescatarian", "gluten-free", "dairy-free", "nut-free", "low-carb", "keto". Only include labels that are clearly true for the whole dish. Omit if none apply — do NOT include an empty array.
+- "season": an array of seasons this dish is best suited to. Choose from: "spring", "summer", "autumn", "winter". Use ["all year"] if genuinely seasonal-neutral. Err toward the seasons where the dish's main ingredients are most available or where the dish is most appealing (e.g. hot soups → winter, cold salads → summer).
 - Omit for: items already expressed as a count or volume, seasonings/spices where grams is standard (flour, sugar, salt), or items where no intuitive equivalent exists.
 - Keep hints to ≤5 words and always prefix with "~" to signal approximation.`;
 

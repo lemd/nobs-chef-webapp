@@ -402,10 +402,97 @@ function showView(view) {
     }
 }
 
+// ── Filter state ──────────────────────────────
+let allRecipes = [];
+const activeFilters = { mealType: new Set(), dietary: new Set(), season: new Set() };
+const activeIngredients = new Set();
+
+function toggleFilter(type, value) {
+    const set = activeFilters[type];
+    if (set.has(value)) { set.delete(value); } else { set.add(value); }
+    const btn = document.querySelector(`[data-filter="${type}:${value}"]`);
+    if (btn) btn.classList.toggle('active', set.has(value));
+    renderDashGrid();
+}
+
+function onIngredientInput(e) {
+    // handled on keydown; nothing on plain input needed
+}
+
+function onIngredientKeydown(e) {
+    if (e.key !== 'Enter' && e.key !== ',') return;
+    e.preventDefault();
+    const val = e.target.value.trim().toLowerCase();
+    if (!val) return;
+    addIngredientChip(val);
+    e.target.value = '';
+}
+
+function addIngredientChip(val) {
+    if (activeIngredients.has(val)) return;
+    activeIngredients.add(val);
+    const chip = document.createElement('button');
+    chip.className = 'ingredient-chip';
+    chip.innerHTML = `${esc(val)} <span aria-hidden="true">×</span>`;
+    chip.onclick = () => { activeIngredients.delete(val); chip.remove(); renderDashGrid(); };
+    document.getElementById('ingredientChips').appendChild(chip);
+    renderDashGrid();
+}
+
+function buildMealTypeFilters(recipes) {
+    const el = document.getElementById('mealTypeFilters');
+    if (!el) return;
+    const types = [...new Set(recipes.map(r => r.tags?.mealType).filter(Boolean))].sort();
+    el.innerHTML = types.map(t =>
+        `<button onclick="toggleFilter('mealType','${esc(t)}')" data-filter="mealType:${esc(t)}" class="filter-chip${activeFilters.mealType.has(t) ? ' active' : ''}">${esc(t)}</button>`
+    ).join('');
+}
+
+function recipeMatchesFilters(item) {
+    const tags = item.tags ?? {};
+    if (activeFilters.mealType.size > 0 && !activeFilters.mealType.has(tags.mealType)) return false;
+    if (activeFilters.dietary.size > 0) {
+        const d = tags.dietary ?? [];
+        if (![...activeFilters.dietary].every(v => d.includes(v))) return false;
+    }
+    if (activeFilters.season.size > 0) {
+        const s = tags.season ?? [];
+        const isAllYear = s.includes('all year');
+        if (!isAllYear && ![...activeFilters.season].some(v => s.includes(v))) return false;
+    }
+    if (activeIngredients.size > 0) {
+        // item.ingredients is a flat array we build from tags, or we check title
+        const haystack = (item._ingredientNames ?? '').toLowerCase();
+        if (![...activeIngredients].every(v => haystack.includes(v))) return false;
+    }
+    return true;
+}
+
+function renderDashGrid() {
+    if (!dashGridEl) return;
+    const filtered = allRecipes.filter(recipeMatchesFilters);
+    if (filtered.length === 0) {
+        dashGridEl.innerHTML = `<p class="dash-no-results">No recipes match the current filters.</p>`;
+        return;
+    }
+    dashGridEl.innerHTML = filtered.map((item) => {
+        const date = new Date(item.savedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        return `<button class="dash-card" onclick="loadFile('${esc(item.filename)}')">
+            <span class="dash-card-title">${esc(item.title)}</span>
+            <span class="dash-card-meta">${esc(date)}</span>
+        </button>`;
+    }).join('');
+}
+
 async function loadHistory() {
     const res = await fetch(`${API_BASE}/recipes`).catch(() => null);
     if (!res || !res.ok) return;
     const list = await res.json();
+    // Cache all recipes with flat ingredient name string for search
+    allRecipes = list.map(item => ({
+        ...item,
+        _ingredientNames: '', // populated lazily if needed; for now use title
+    }));
     // Sidebar
     if (list.length) {
         historyEl.innerHTML = list
@@ -422,21 +509,9 @@ async function loadHistory() {
             )
             .join('');
     }
-    // Dashboard grid
-    if (dashGridEl) {
-        dashGridEl.innerHTML = list
-            .map((item) => {
-                const date = new Date(item.savedAt).toLocaleDateString(
-                    undefined,
-                    { month: 'short', day: 'numeric', year: 'numeric' },
-                );
-                return `<button class="dash-card" onclick="loadFile('${esc(item.filename)}')">
-                    <span class="dash-card-title">${esc(item.title)}</span>
-                    <span class="dash-card-meta">${esc(date)}</span>
-                </button>`;
-            })
-            .join('');
-    }
+    // Dashboard grid + meal type chips
+    buildMealTypeFilters(list);
+    renderDashGrid();
 }
 
 async function loadFile(filename) {
@@ -526,7 +601,9 @@ async function queueProcess() {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${secret}`,
                 },
-                body: JSON.stringify(item.text ? { text: item.text } : { url: item.url }),
+                body: JSON.stringify(
+                    item.text ? { text: item.text } : { url: item.url },
+                ),
             });
             if (res.status === 401) {
                 clearPersonalSecret();

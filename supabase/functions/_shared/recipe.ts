@@ -34,6 +34,14 @@ export const StepSchema = z.object({
 
 export type Step = z.infer<typeof StepSchema>;
 
+export const RecipeTagsSchema = z.object({
+  mealType: z.string().optional().describe("e.g. 'salad', 'soup', 'pasta', 'roast', 'dessert', 'breakfast', 'snack', 'side dish'"),
+  dietary: z.array(z.string()).optional().describe("e.g. ['vegetarian', 'vegan', 'gluten-free', 'dairy-free']"),
+  season: z.array(z.string()).optional().describe("e.g. ['spring', 'summer', 'autumn', 'winter'] or ['all year']"),
+});
+
+export type RecipeTags = z.infer<typeof RecipeTagsSchema>;
+
 export const RecipeSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
@@ -42,6 +50,7 @@ export const RecipeSchema = z.object({
   cookTime: z.string().optional(),
   totalTime: z.string().optional(),
   servings: z.string().optional(),
+  tags: RecipeTagsSchema.optional(),
   ingredientGroups: z.array(IngredientGroupSchema),
   steps: z.array(StepSchema),
 });
