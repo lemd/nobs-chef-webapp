@@ -399,7 +399,7 @@ body.dash-view #ingPanel { display: none !important; }
         transform: translateY(100%);
         transition: transform 0.28s cubic-bezier(0.32,0.72,0,1);
         display: flex; flex-direction: column;
-        box-shadow: 0 -8px 32px rgba(0,0,0,0.14);
+        filter: drop-shadow(0 -5px 16px rgba(0,0,0,0.15));
     }
     #ingPanel.open { transform: translateY(0); }
 
