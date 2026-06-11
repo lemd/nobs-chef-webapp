@@ -492,6 +492,13 @@ const scrapeQueue = []; // { url, el }
 let queueRunning = false;
 const queueListEl = document.getElementById('scrapeQueue');
 
+window.addEventListener('beforeunload', (e) => {
+    if (queueRunning || scrapeQueue.length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
 function queueAdd(url) {
     const li = document.createElement('li');
     li.className = 'queue-item';
