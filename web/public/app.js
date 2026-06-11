@@ -248,14 +248,14 @@ function buildCarouselHTML() {
                         const toggleFn = t.running
                             ? `pauseTimer(${t.id})`
                             : `startTimer(${t.id})`;
-                        const toggleIcon = t.running ? '\u23f8' : '\u25b6';
+                        const toggleIcon = t.running ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
                         return `<div class="timer-card${done ? ' timer-done' : ''}" data-timer-id="${t.id}">
                         <div class="timer-card-label">${esc(t.label)}</div>
                         ${t.sublabel ? `<div class="timer-card-sublabel">${esc(t.sublabel)}</div>` : ''}
                         <div class="timer-card-display">${done ? 'Done' : formatTime(t.remaining)}</div>
                         <div class="timer-card-controls">
                             ${!done ? `<button class="timer-toggle-btn" onclick="${toggleFn}" aria-label="${t.running ? 'Pause' : 'Start'}">${toggleIcon}</button>` : ''}
-                            <button onclick="resetTimer(${t.id})" aria-label="Reset">&#8635;</button>
+                            <button onclick="resetTimer(${t.id})" aria-label="Reset"><i class="fa-solid fa-rotate-right"></i></button>
                         </div>
                     </div>`;
                     })
@@ -350,7 +350,7 @@ function renderTimers() {
                         'aria-label',
                         t.running ? 'Pause' : 'Start',
                     );
-                    toggleBtn.textContent = t.running ? '\u23f8' : '\u25b6';
+                    toggleBtn.innerHTML = t.running ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
                 }
             }
         });
@@ -380,6 +380,7 @@ function showView(view) {
     dashViewEl.classList.toggle('hidden', !isDash);
     recipeLayoutEl.classList.toggle('hidden', isDash || isNew);
     document.body.classList.toggle('new-view', isNew);
+    document.body.classList.toggle('dash-view', isDash);
     const panel = document.getElementById('ingPanel');
     if (isNew || isDash) {
         panel.classList.remove('open');
