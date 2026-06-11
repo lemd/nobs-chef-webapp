@@ -36,12 +36,9 @@ let currentServings = null;
 let currentPanelTab = 'ingredients';
 const activeTimers = [];
 let timerIdCounter = 0;
+let timerCarouselIndex = 0;
 
-const PANEL_TAB_CONFIG = {
-    ingredients: { height: '40vh', pad: '42vh' },
-    timers: { height: '30vh', pad: '32vh' },
-    servings: { height: '22vh', pad: '24vh' },
-};
+const PANEL_TAB_CONFIG = {}; // kept for safety, no longer used
 
 const drawer = document.getElementById('drawer');
 const backdrop = document.getElementById('drawerBackdrop');
@@ -114,7 +111,7 @@ function formatTime(secs) {
 
 function addTimer(stepNum, seconds) {
     const step = currentRecipe?.steps?.find((s) => s.stepNumber === stepNum);
-    activeTimers.push({
+    const t = {
         id: ++timerIdCounter,
         label: `Step ${stepNum}`,
         sublabel: step?.timingInterval ?? '',
@@ -122,14 +119,16 @@ function addTimer(stepNum, seconds) {
         remaining: seconds,
         running: false,
         interval: null,
-    });
+    };
+    activeTimers.push(t);
+    timerCarouselIndex = activeTimers.length - 1;
     const panel = document.getElementById('ingPanel');
     if (!panel.classList.contains('open')) {
         panel.classList.add('open');
         document.body.classList.add('ing-open');
     }
     switchPanelTab('timers');
-    renderTimers();
+    startTimer(t.id);
 }
 
 function startTimer(id) {
@@ -185,27 +184,50 @@ function renderTimers() {
         return;
     }
     if (hintEl) hintEl.style.display = 'none';
-    listEl.innerHTML = activeTimers
-        .map((t) => {
-            const done = t.remaining === 0;
-            const toggleFn = t.running
-                ? `pauseTimer(${t.id})`
-                : `startTimer(${t.id})`;
-            const toggleIcon = t.running ? '\u23f8' : '\u25b6';
-            return `<div class="timer-item${done ? ' timer-done' : ''}">
-                <div class="timer-info">
-                    <div class="timer-label">${esc(t.label)}</div>
-                    ${t.sublabel ? `<div class="timer-sublabel">${esc(t.sublabel)}</div>` : ''}
-                </div>
-                <div class="timer-display">${done ? 'Done' : formatTime(t.remaining)}</div>
-                <div class="timer-controls">
-                    ${!done ? `<button onclick="${toggleFn}">${toggleIcon}</button>` : ''}
-                    <button onclick="resetTimer(${t.id})">&#8635;</button>
-                    <button onclick="removeTimer(${t.id})">&#x2715;</button>
-                </div>
-            </div>`;
-        })
-        .join('');
+
+    // Clamp carousel index
+    timerCarouselIndex = Math.max(0, Math.min(timerCarouselIndex, activeTimers.length - 1));
+
+    listEl.innerHTML = `
+        <div class="timer-carousel" id="timerCarousel">
+            ${activeTimers.map((t) => {
+                const done = t.remaining === 0;
+                const toggleFn = t.running ? `pauseTimer(${t.id})` : `startTimer(${t.id})`;
+                const toggleIcon = t.running ? '\u23f8' : '\u25b6';
+                return `<div class="timer-card${done ? ' timer-done' : ''}">
+                    <div class="timer-card-label">${esc(t.label)}</div>
+                    ${t.sublabel ? `<div class="timer-card-sublabel">${esc(t.sublabel)}</div>` : ''}
+                    <div class="timer-card-display">${done ? 'Done' : formatTime(t.remaining)}</div>
+                    <div class="timer-card-controls">
+                        ${!done ? `<button onclick="${toggleFn}" aria-label="${t.running ? 'Pause' : 'Start'}">${toggleIcon}</button>` : ''}
+                        <button onclick="resetTimer(${t.id})" aria-label="Reset">&#8635;</button>
+                        <button onclick="removeTimer(${t.id})" aria-label="Remove">&#x2715;</button>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+        ${activeTimers.length > 1 ? `<div class="timer-dots">
+            ${activeTimers.map((_, i) => `<div class="timer-dot${i === timerCarouselIndex ? ' active' : ''}"></div>`).join('')}
+        </div>` : ''}
+    `;
+
+    // Scroll carousel to active index
+    requestAnimationFrame(() => {
+        const carousel = document.getElementById('timerCarousel');
+        if (!carousel) return;
+        const card = carousel.children[timerCarouselIndex];
+        if (card) card.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'instant' });
+
+        // Update dots on scroll
+        carousel.addEventListener('scroll', () => {
+            const idx = Math.round(carousel.scrollLeft / carousel.clientWidth);
+            if (idx !== timerCarouselIndex) {
+                timerCarouselIndex = idx;
+                document.querySelectorAll('.timer-dot').forEach((d, i) =>
+                    d.classList.toggle('active', i === idx));
+            }
+        }, { passive: true });
+    });
 }
 
 function showView(view) {
