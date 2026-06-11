@@ -17,11 +17,12 @@
 html {
     height: 100%;
     overflow: hidden;
-    overscroll-behavior: none;
 }
 
 body {
-    height: 100%;
+    /* position:fixed;inset:0 is the only reliable way to lock scroll on iOS Safari */
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
     overflow: hidden;
     overscroll-behavior: none;
     display: flex;
@@ -30,9 +31,9 @@ body {
 
 /* Scrollable content wrapper */
 #app-scroll {
-    flex: 1;
-    min-height: 0;
+    flex: 1 1 0;          /* explicit 0 basis so Safari honours flex shrink */
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* momentum scroll on iOS */
     overscroll-behavior: contain;
     padding-left: max(2rem, env(safe-area-inset-left));
     padding-right: max(2rem, env(safe-area-inset-right));
