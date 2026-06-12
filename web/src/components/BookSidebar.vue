@@ -106,6 +106,7 @@ function goProfile(fromMobile = false) {
   <!-- Mobile hamburger button (fixed, shown only on mobile) -->
   <Teleport to="body">
     <button class="mobile-menu-btn" aria-label="Open books menu" @click="openMobile">
+      <span class="menu-book-label">B</span>
       <i class="fa-solid fa-bars"></i>
     </button>
 
