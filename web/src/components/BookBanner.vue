@@ -28,7 +28,7 @@ async function onBannerFileChange(e: Event) {
   bannerUploading.value = true
   bannerError.value = ''
   try {
-    const blob = await resizeImage(file, 1600, 0.85)
+    const blob = await resizeImage(file, 1400, 0.85, true) // square crop
     const url = await saveBannerImage(book.value.id, blob)
     if (state.currentBook) state.currentBook.banner_url = url
   } catch (err: unknown) {
@@ -266,13 +266,35 @@ async function clearAll() {
   renderFrame()
 }
 
+// Helper: cover-crop drawImage — fills dstW×dstH from the center of img
+function drawImageCover(
+  c: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  dstW: number,
+  dstH: number,
+) {
+  const imgAR = img.naturalWidth / img.naturalHeight
+  const dstAR = dstW / dstH
+  let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight
+  if (imgAR > dstAR) {
+    // image wider — crop sides
+    sw = sh * dstAR
+    sx = (img.naturalWidth - sw) / 2
+  } else {
+    // image taller — crop top/bottom
+    sh = sw / dstAR
+    sy = (img.naturalHeight - sh) / 2
+  }
+  c.drawImage(img, sx, sy, sw, sh, 0, 0, dstW, dstH)
+}
+
 async function enterDrawMode() {
   drawMode.value = true
   drawError.value = ''
   await nextTick()
   initCanvas()
-  // Preload any existing saved drawing as the base layer on the committed canvas
-  // so the user can continue drawing on top of it.
+  // Preload any existing saved drawing as the base layer on the committed canvas.
+  // Use cover-crop drawImage so the preview matches what object-fit:cover shows.
   const savedUrl = book.value?.drawing_url
   if (savedUrl && committedCtx && committedCanvas) {
     const dpr = window.devicePixelRatio || 1
@@ -281,7 +303,7 @@ async function enterDrawMode() {
     await new Promise<void>((resolve) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'
-      img.onload = () => { committedCtx!.drawImage(img, 0, 0, w, h); resolve() }
+      img.onload = () => { drawImageCover(committedCtx!, img, w, h); resolve() }
       img.onerror = () => resolve()
       img.src = savedUrl
     })
@@ -301,20 +323,45 @@ function exitDrawMode() {
 }
 
 async function saveAndExit() {
-  const canvas = canvasEl.value
-  if (!canvas || !book.value) return
+  if (!book.value) return
   drawSaving.value = true
   drawError.value = ''
+
+  // Always export at a fixed square resolution.
+  // Both the drawing PNG and the banner photo are 1:1 squares displayed via
+  // object-fit:cover / background-size:cover — so they always crop identically
+  // from center regardless of viewport shape.
+  const EXPORT = 1400
+
   try {
-    // committedCanvas already contains the existing drawing (preloaded on enter)
-    // plus all new strokes — just export it directly.
-    if (!committedCanvas) throw new Error('Canvas not ready')
-    const blob = await new Promise<Blob | null>(resolve => committedCanvas!.toBlob(resolve, 'image/png'))
+    const finalCanvas = document.createElement('canvas')
+    finalCanvas.width = EXPORT
+    finalCanvas.height = EXPORT
+    const fctx = finalCanvas.getContext('2d')!
+
+    // Composite any existing saved drawing first (cover-crop to EXPORT square)
+    const savedUrl = book.value.drawing_url
+    if (savedUrl) {
+      await new Promise<void>((resolve) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => { drawImageCover(fctx, img, EXPORT, EXPORT); resolve() }
+        img.onerror = () => resolve()
+        img.src = savedUrl
+      })
+    }
+
+    // Replay session strokes at EXPORT scale using normalised coordinates
+    for (const s of strokes.value) {
+      drawStroke(fctx, s.pts, EXPORT, EXPORT, s.width)
+    }
+
+    const blob = await new Promise<Blob | null>(resolve => finalCanvas.toBlob(resolve, 'image/png'))
     if (!blob) throw new Error('Could not export canvas')
 
     const url = await saveDrawing(book.value.id, blob)
     if (state.currentBook) state.currentBook.drawing_url = url
-    await nextTick() // let the overlay <img> render before canvas unmounts
+    await nextTick()
     exitDrawMode()
   } catch (e: unknown) {
     drawError.value = e instanceof Error ? e.message : 'Save failed'
