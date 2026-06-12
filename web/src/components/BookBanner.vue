@@ -284,6 +284,7 @@ async function saveAndExit() {
 
     const url = await saveDrawing(book.value.id, blob)
     if (state.currentBook) state.currentBook.drawing_url = url
+    await nextTick() // let the overlay <img> render before canvas unmounts
     exitDrawMode()
   } catch (e: unknown) {
     drawError.value = e instanceof Error ? e.message : 'Save failed'
