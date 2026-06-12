@@ -659,7 +659,31 @@ body {
   white-space: nowrap;
 }
 .draw-toolbar-spacer { flex: 1; min-width: 0.5rem; }
+.draw-toolbar-divider {
+  width: 1px; height: 18px; background: rgba(255,255,255,0.18); flex-shrink: 0;
+}
 .draw-toolbar-error { font-size: 0.72rem; color: #f87171; }
+/* Pen size group */
+.draw-size-group {
+  display: flex; align-items: center; gap: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+  padding: 3px 5px;
+}
+.draw-size-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: transparent; border: none; cursor: pointer;
+  transition: background 0.12s;
+}
+.draw-size-btn:hover { background: rgba(255,255,255,0.12); }
+.draw-size-btn.active { background: rgba(255,255,255,0.22); }
+.draw-size-dot {
+  border-radius: 50%; background: #fff; display: block; flex-shrink: 0;
+}
+.draw-size-dot[data-size="s"] { width: 4px;  height: 4px;  }
+.draw-size-dot[data-size="m"] { width: 7px;  height: 7px;  }
+.draw-size-dot[data-size="l"] { width: 11px; height: 11px; }
 .draw-tool-btn {
   display: inline-flex; align-items: center; gap: 5px;
   font-family: var(--font-body); font-size: 0.78rem; font-weight: 600;

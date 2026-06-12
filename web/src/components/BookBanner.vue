@@ -46,7 +46,13 @@ const drawSaving = ref(false)
 const drawError = ref('')
 
 type Point = { x: number; y: number }
-const strokes = ref<Point[][]>([])
+type Stroke = { pts: Point[]; width: number }
+
+const PEN_SIZES = { s: 2.5, m: 5, l: 10 } as const
+type PenKey = keyof typeof PEN_SIZES
+const penSize = ref<PenKey>('m')
+
+const strokes = ref<Stroke[]>([])
 let currentStroke: Point[] = []
 let isDrawing = false
 let ctx: CanvasRenderingContext2D | null = null
@@ -58,20 +64,21 @@ let ctx: CanvasRenderingContext2D | null = null
 let committedCanvas: HTMLCanvasElement | null = null
 let committedCtx: CanvasRenderingContext2D | null = null
 let rafId: number | null = null
+let antOffset = 0  // animated dash offset for marching ants border
+let antRafId: number | null = null
 
-const LINE_WIDTH = 5
 const STROKE_COLOR = '#ffffff'
 
 // ── Draw a single stroke as one complete smooth bezier path ──────────────────
-function drawStroke(c: CanvasRenderingContext2D, stroke: Point[], w: number, h: number) {
+function drawStroke(c: CanvasRenderingContext2D, stroke: Point[], w: number, h: number, lineWidth: number) {
   if (stroke.length === 0) return
   c.lineCap = 'round'
   c.lineJoin = 'round'
   c.strokeStyle = STROKE_COLOR
-  c.lineWidth = LINE_WIDTH
+  c.lineWidth = lineWidth
   if (stroke.length === 1) {
     c.beginPath()
-    c.arc(stroke[0].x * w, stroke[0].y * h, LINE_WIDTH / 2, 0, Math.PI * 2)
+    c.arc(stroke[0].x * w, stroke[0].y * h, lineWidth / 2, 0, Math.PI * 2)
     c.fillStyle = STROKE_COLOR
     c.fill()
     return
@@ -120,10 +127,22 @@ function replayStrokes() {
   const w = committedCanvas.width / dpr
   const h = committedCanvas.height / dpr
   committedCtx.clearRect(0, 0, w, h)
-  for (const stroke of strokes.value) {
-    drawStroke(committedCtx, stroke, w, h)
+  for (const s of strokes.value) {
+    drawStroke(committedCtx, s.pts, w, h, s.width)
   }
   renderFrame()
+}
+
+// ── Marching ants border ──────────────────────────────────────────────────────
+function drawMarchingAnts(c: CanvasRenderingContext2D, w: number, h: number) {
+  const inset = 6
+  c.save()
+  c.setLineDash([14, 8])
+  c.lineDashOffset = -antOffset
+  c.strokeStyle = 'rgba(255,255,255,0.55)'
+  c.lineWidth = 1.5
+  c.strokeRect(inset, inset, w - inset * 2, h - inset * 2)
+  c.restore()
 }
 
 function renderFrame() {
@@ -135,8 +154,23 @@ function renderFrame() {
   ctx.clearRect(0, 0, w, h)
   ctx.drawImage(committedCanvas, 0, 0, w, h)
   if (currentStroke.length > 0) {
-    drawStroke(ctx, currentStroke, w, h)
+    drawStroke(ctx, currentStroke, w, h, PEN_SIZES[penSize.value])
   }
+  drawMarchingAnts(ctx, w, h)
+}
+
+// Keep the ants moving even when not drawing
+function startAnts() {
+  if (antRafId !== null) return
+  const tick = () => {
+    antOffset = (antOffset + 0.35) % 22
+    renderFrame()
+    antRafId = requestAnimationFrame(tick)
+  }
+  antRafId = requestAnimationFrame(tick)
+}
+function stopAnts() {
+  if (antRafId !== null) { cancelAnimationFrame(antRafId); antRafId = null }
 }
 
 function scheduleRender() {
@@ -178,8 +212,9 @@ function onPointerUp(e: PointerEvent) {
     const dpr = window.devicePixelRatio || 1
     const w = committedCanvas.width / dpr
     const h = committedCanvas.height / dpr
-    drawStroke(committedCtx, currentStroke, w, h)
-    strokes.value.push([...currentStroke])
+    const width = PEN_SIZES[penSize.value]
+    drawStroke(committedCtx, currentStroke, w, h, width)
+    strokes.value.push({ pts: [...currentStroke], width })
     currentStroke = []
     scheduleRender()
   }
@@ -199,14 +234,13 @@ async function clearAll() {
 async function enterDrawMode() {
   drawMode.value = true
   drawError.value = ''
-  // Load existing strokes from drawing_url is not needed client-side —
-  // we just render the saved PNG as an overlay and start fresh on top.
-  // (Existing strokes are flattened into the saved PNG.)
   await nextTick()
   initCanvas()
+  startAnts()
 }
 
 function exitDrawMode() {
+  stopAnts()
   drawMode.value = false
   strokes.value = []
   currentStroke = []
@@ -249,8 +283,8 @@ async function saveAndExit() {
     // Draw current session strokes on top
     const w = canvas.offsetWidth
     const h = canvas.offsetHeight
-    for (const stroke of strokes.value) {
-      drawStroke(fctx, stroke, w, h)
+    for (const s of strokes.value) {
+      drawStroke(fctx, s.pts, w, h, s.width)
     }
 
     const blob = await new Promise<Blob | null>(resolve => finalCanvas.toBlob(resolve, 'image/png'))
@@ -323,6 +357,20 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
       <button class="draw-tool-btn draw-tool-btn--danger" title="Clear all" :disabled="strokes.length === 0" @click="clearAll">
         <i class="fa-solid fa-trash-can"></i>
       </button>
+      <span class="draw-toolbar-divider"></span>
+      <!-- Pen size picker -->
+      <div class="draw-size-group" role="group" aria-label="Pen size">
+        <button
+          v-for="sz in (['s','m','l'] as const)"
+          :key="sz"
+          class="draw-size-btn"
+          :class="{ active: penSize === sz }"
+          :title="{ s: 'Small', m: 'Medium', l: 'Large' }[sz]"
+          @click="penSize = sz"
+        >
+          <span class="draw-size-dot" :data-size="sz"></span>
+        </button>
+      </div>
       <span class="draw-toolbar-spacer"></span>
       <span v-if="drawError" class="draw-toolbar-error">{{ drawError }}</span>
       <button class="draw-tool-btn draw-tool-btn--muted" title="Cancel" @click="exitDrawMode">
