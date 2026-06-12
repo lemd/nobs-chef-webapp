@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth, signOut } from '../composables/useAuth.ts'
 import { state } from '../state.ts'
+import { leaveBook } from '../api.ts'
 
 const router = useRouter()
 const user = computed(() => auth.user)
@@ -14,11 +15,32 @@ const avatarUrl = computed(() => user.value?.user_metadata?.avatar_url ?? null)
 const initial = computed(() => displayName.value.charAt(0).toUpperCase())
 
 const recipeCount = computed(() => state.allRecipes.length)
-const bookCount = computed(() => state.books.length)
+// Only count books the user doesn't own (shared books)
+const sharedBooks = computed(() => state.books.filter(b => b.owner_id !== user.value?.id))
 
 async function handleSignOut() {
   await signOut()
   router.push('/login')
+}
+
+const leavingBookId = ref<number | null>(null)
+const leaveError = ref('')
+
+async function handleLeaveBook(bookId: number) {
+  if (leavingBookId.value) return
+  leavingBookId.value = bookId
+  leaveError.value = ''
+  try {
+    await leaveBook(bookId)
+    state.books = state.books.filter(b => b.id !== bookId)
+    if (state.currentBook?.id === bookId) {
+      state.currentBook = state.books[0] ?? null
+    }
+  } catch (e) {
+    leaveError.value = (e as Error).message
+  } finally {
+    leavingBookId.value = null
+  }
 }
 </script>
 
@@ -39,9 +61,26 @@ async function handleSignOut() {
         </div>
         <div class="profile-stat-divider"></div>
         <div class="profile-stat">
-          <span class="profile-stat-value">{{ bookCount }}</span>
-          <span class="profile-stat-label">{{ bookCount === 1 ? 'Book' : 'Books' }}</span>
+          <span class="profile-stat-value">{{ state.books.length }}</span>
+          <span class="profile-stat-label">{{ state.books.length === 1 ? 'Book' : 'Books' }}</span>
         </div>
+      </div>
+
+      <!-- Shared books you can leave -->
+      <div v-if="sharedBooks.length" class="shared-books">
+        <p class="shared-books-label">Shared with you</p>
+        <div v-for="book in sharedBooks" :key="book.id" class="shared-book-row">
+          <span class="shared-book-name">{{ book.name }}</span>
+          <button
+            class="leave-btn"
+            :disabled="leavingBookId === book.id"
+            @click="handleLeaveBook(book.id)"
+          >
+            <i class="fa-solid" :class="leavingBookId === book.id ? 'fa-spinner fa-spin' : 'fa-right-from-bracket'"></i>
+            Leave
+          </button>
+        </div>
+        <p v-if="leaveError" class="leave-error">{{ leaveError }}</p>
       </div>
 
       <button class="signout-btn" @click="handleSignOut">
@@ -145,4 +184,47 @@ async function handleSignOut() {
   border-color: var(--text);
   color: var(--text);
 }
+.shared-books {
+  width: 100%;
+  margin-bottom: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.shared-books-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 0;
+  padding: 0.6rem 1rem 0.4rem;
+}
+.shared-book-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 1rem;
+  border-top: 1px solid var(--line);
+  gap: 0.5rem;
+}
+.shared-book-name { font-size: 0.88rem; color: var(--text); }
+.leave-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--dim);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.leave-btn:hover { color: #c0392b; border-color: #c0392b; }
+.leave-btn:disabled { opacity: 0.5; cursor: default; }
+.leave-error { font-size: 0.78rem; color: #c0392b; margin: 0.25rem 0.75rem 0.5rem; }
 </style>

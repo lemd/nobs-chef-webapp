@@ -87,6 +87,15 @@ export async function createBook(name: string): Promise<RecipeBook> {
   return data
 }
 
+export async function leaveBook(bookId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/book/leave?book_id=${bookId}`, {
+    method: 'POST',
+    headers: { Authorization: getAuthHeader() },
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Failed to leave book')
+}
+
 export async function createInvite(bookId: number): Promise<{ token: string; url: string }> {
   const res = await fetch(`${API_BASE}/invite/create`, {
     method: 'POST',

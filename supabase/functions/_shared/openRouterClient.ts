@@ -81,7 +81,7 @@ Given raw HTML or JSON-LD from a recipe web page, extract and return ONLY valid 
 Rules:
 - Write the title in neutral form: strip personal names/possessives (e.g. "JB's", "Grandma's", "Jamie's") and remove parenthetical subtitles (e.g. "(Creamy Peppercorn Sauce)"), keeping only the core dish name (e.g. "Chicken au Poivre").
 - Split ingredients into groups if the source has sections (e.g. "For the sauce", "For the crust"). Otherwise use a single group with no "group" key.
-- For each step, include "timingInterval" only when a specific duration is mentioned (e.g. "cook for 5 minutes"). Use human-readable strings like "5 minutes", "2–3 hours", "30 seconds".
+- For each step, include "timingInterval" only when a specific duration is mentioned. Use a single human-readable duration string (e.g. "5 minutes", "2–3 hours", "30 seconds"). If a step covers multiple timed phases, use only the longest duration as a simple value (e.g. "20–30 minutes"). Never combine multiple timings with commas or semicolons into one timingInterval.
 - Normalise quantities to strings (e.g. "1/2", "2", "3–4").
 - Do NOT wrap the JSON in markdown code fences.
 - Respond with ONLY the JSON object, nothing else.

@@ -4,6 +4,7 @@
  * GET  /book                      → list all books the caller belongs to
  * GET  /book/members?book_id=X    → list members of a book with user metadata
  * POST /book                      → create a new book (caller becomes owner + member)
+ * POST /book/leave?book_id=X      → leave a book (not allowed if owner)
  */
 import { createClient } from "npm:@supabase/supabase-js";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
@@ -25,14 +26,14 @@ Deno.serve(async (req: Request) => {
   );
 
   const url = new URL(req.url);
-  const action = url.pathname.split("/").filter(Boolean).pop(); // "book" | "members"
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  const action = pathParts.pop(); // last segment: "book" | "members" | "leave"
 
   // ── GET /book/members?book_id=X ───────────────────────────────────────────
   if (req.method === "GET" && action === "members") {
     const bookId = url.searchParams.get("book_id");
     if (!bookId) return jsonResponse({ error: "book_id required" }, 400);
 
-    // Verify caller is a member
     const { data: membership } = await supabase
       .from("recipe_book_members")
       .select("role")
@@ -49,7 +50,6 @@ Deno.serve(async (req: Request) => {
 
     if (error) return jsonResponse({ error: error.message }, 500);
 
-    // Fetch user metadata for each member via admin API
     const membersWithMeta = await Promise.all(
       (members ?? []).map(async (m: { user_id: string; role: string; joined_at: string }) => {
         const { data: { user: u } } = await supabase.auth.admin.getUserById(m.user_id);
@@ -85,81 +85,40 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(books);
   }
 
-  // ── POST: create book ─────────────────────────────────────────────────────
-  if (req.method === "POST") {
-    const { name } = (await req.json()) as { name?: string };
-    if (!name?.trim()) {
-      return jsonResponse({ error: "name is required" }, 400);
-    }
+  // ── POST /book/leave?book_id=X ────────────────────────────────────────────
+  if (req.method === "POST" && action === "leave") {
+    const bookId = url.searchParams.get("book_id");
+    if (!bookId) return jsonResponse({ error: "book_id required" }, 400);
 
-    const { data: book, error: bookErr } = await supabase
+    // Prevent owner from leaving
+    const { data: book } = await supabase
       .from("recipe_books")
-      .insert({ name: name.trim(), owner_id: user.id })
-      .select("id, name, owner_id, created_at")
-      .single();
+      .select("owner_id")
+      .eq("id", bookId)
+      .maybeSingle();
 
-    if (bookErr || !book) {
-      return jsonResponse({ error: bookErr?.message ?? "Failed to create book" }, 500);
+    if (!book) return jsonResponse({ error: "Book not found" }, 404);
+    if (book.owner_id === user.id) {
+      return jsonResponse({ error: "You cannot leave a book you own." }, 403);
     }
 
-    const { error: memberErr } = await supabase
+    const { error } = await supabase
       .from("recipe_book_members")
-      .insert({ book_id: book.id, user_id: user.id, role: "owner" });
-
-    if (memberErr) {
-      return jsonResponse({ error: memberErr.message }, 500);
-    }
-
-    return jsonResponse({ ...book, role: "owner" }, 201);
-  }
-
-  return jsonResponse({ error: "Method not allowed" }, 405);
-});
-import { createClient } from "npm:@supabase/supabase-js";
-import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { getUserFromRequest } from "../_shared/auth.ts";
-
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  const user = await getUserFromRequest(req);
-  if (!user) {
-    return jsonResponse({ error: "Unauthorized" }, 401);
-  }
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-
-  // ── GET: list books ───────────────────────────────────────────────────────
-  if (req.method === "GET") {
-    const { data, error } = await supabase
-      .from("recipe_book_members")
-      .select("role, joined_at, recipe_books(id, name, owner_id, created_at)")
+      .delete()
+      .eq("book_id", bookId)
       .eq("user_id", user.id);
 
     if (error) return jsonResponse({ error: error.message }, 500);
-
-    const books = (data ?? []).map((row: Record<string, unknown>) => ({
-      ...(row.recipe_books as Record<string, unknown>),
-      role: row.role,
-      joinedAt: row.joined_at,
-    }));
-
-    return jsonResponse(books);
+    return jsonResponse({ ok: true });
   }
 
-  // ── POST: create book ─────────────────────────────────────────────────────
+  // ── POST /book: create book ───────────────────────────────────────────────
   if (req.method === "POST") {
     const { name } = (await req.json()) as { name?: string };
     if (!name?.trim()) {
       return jsonResponse({ error: "name is required" }, 400);
     }
 
-    // Insert book
     const { data: book, error: bookErr } = await supabase
       .from("recipe_books")
       .insert({ name: name.trim(), owner_id: user.id })
@@ -170,14 +129,11 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: bookErr?.message ?? "Failed to create book" }, 500);
     }
 
-    // Add owner as member
     const { error: memberErr } = await supabase
       .from("recipe_book_members")
       .insert({ book_id: book.id, user_id: user.id, role: "owner" });
 
-    if (memberErr) {
-      return jsonResponse({ error: memberErr.message }, 500);
-    }
+    if (memberErr) return jsonResponse({ error: memberErr.message }, 500);
 
     return jsonResponse({ ...book, role: "owner" }, 201);
   }

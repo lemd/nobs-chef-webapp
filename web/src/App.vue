@@ -3,7 +3,7 @@ import { watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { state } from './state.ts'
 import { auth } from './composables/useAuth.ts'
-import { fetchBooks, acceptInvite, fetchBookMembers } from './api.ts'
+import { fetchBooks, acceptInvite, fetchBookMembers, createBook } from './api.ts'
 import MosaicStrip from './components/MosaicStrip.vue'
 import AppHeader from './components/AppHeader.vue'
 import AppDrawer from './components/AppDrawer.vue'
@@ -57,8 +57,16 @@ onMounted(() => {
       }
     }
 
-    // Load books
-    const books = await fetchBooks().catch(() => [])
+    // Load books — auto-create "My Recipes" on first sign-in
+    let books = await fetchBooks().catch(() => [])
+    if (books.length === 0) {
+      try {
+        const newBook = await createBook('My Recipes')
+        books = [newBook]
+      } catch (e) {
+        console.warn('Auto-create book failed:', (e as Error).message)
+      }
+    }
     state.books = books
     if (books.length > 0) state.currentBook = books[0]
 
