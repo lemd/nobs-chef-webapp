@@ -142,6 +142,32 @@ async function onImageFileChange(e) {
       <input ref="imageInputEl" type="file" accept="image/*" style="display:none" @change="onImageFileChange" />
     </div>
 
+    <!-- Floating action pill -->
+    <Teleport to="body">
+      <div v-if="recipe && auth.user" class="fab-pill">
+        <button class="fab-btn" title="Draw (coming soon)" disabled>
+          <i class="fa-solid fa-pen-nib"></i>
+        </button>
+        <button
+          class="fab-btn"
+          :title="recipe.imageUrl ? 'Change photo' : 'Add photo'"
+          :disabled="imageUploading"
+          @click="imageInputEl?.click()"
+        >
+          <i v-if="imageUploading" class="fa-solid fa-spinner fa-spin"></i>
+          <i v-else class="fa-solid fa-camera"></i>
+        </button>
+        <span class="fab-divider"></span>
+        <button
+          class="fab-btn fab-btn--primary"
+          title="Timers"
+          @click="state.panelOpen = true; state.currentPanelTab = 'timers'"
+        >
+          <i class="fa-solid fa-stopwatch"></i>
+        </button>
+      </div>
+    </Teleport>
+
     <!-- Steps -->
     <div class="recipe-body">
       <div class="recipe-steps-col">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { state } from '../state.ts'
 import { createInvite, saveDrawing, clearDrawing, saveBannerImage, clearBannerImage } from '../api.ts'
 import { auth } from '../composables/useAuth.ts'
@@ -8,6 +9,7 @@ import { resizeImage } from '../utils/imageUpload.ts'
 const book = computed(() => state.currentBook)
 const members = computed(() => state.bookMembers)
 const isOwner = computed(() => book.value?.owner_id === auth.user?.id)
+const router = useRouter()
 
 // Dynamic background — uses uploaded banner_url if present, else fallback Pexels photo
 const FALLBACK_BANNER = `url('https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg')`
@@ -503,6 +505,17 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
 
     <div class="book-banner-inner">
       <h2 class="book-banner-title">{{ book.name }}</h2>
+      <!-- Stats: recipe count + member count with separator line -->
+      <div class="meta-row meta-row--hero banner-meta-row">
+        <div class="meta-pill">
+          <span class="label">Recipes</span>
+          <span class="value">{{ state.allRecipes.length }}</span>
+        </div>
+        <div class="meta-pill">
+          <span class="label">Members</span>
+          <span class="value">{{ members.length }}</span>
+        </div>
+      </div>
       <div class="book-banner-row">
         <div class="member-stack">
           <div
@@ -524,16 +537,6 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
           </button>
         </div>
 
-        <!-- Draw toggle (owner only, not in draw mode) -->
-        <button
-          v-if="isOwner && !drawMode"
-          class="banner-draw-btn"
-          :title="book.drawing_url ? 'Edit drawing' : 'Draw on banner'"
-          @click="enterDrawMode"
-        >
-          <i class="fa-solid fa-pen-nib"></i>
-        </button>
-
         <input
           ref="bannerInputEl"
           type="file"
@@ -543,6 +546,30 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
         />
       </div>
     </div>
+
+    <!-- Floating action pill (hidden during draw mode) -->
+    <Teleport to="body">
+      <div v-if="auth.user && book && !drawMode" class="fab-pill">
+        <template v-if="isOwner">
+          <button class="fab-btn" title="Draw on banner" @click="enterDrawMode">
+            <i class="fa-solid fa-pen-nib"></i>
+          </button>
+          <button
+            class="fab-btn"
+            :title="book.banner_url ? 'Change photo' : 'Upload photo'"
+            :disabled="bannerUploading"
+            @click="bannerInputEl?.click()"
+          >
+            <i v-if="bannerUploading" class="fa-solid fa-spinner fa-spin"></i>
+            <i v-else class="fa-solid fa-camera"></i>
+          </button>
+          <span class="fab-divider"></span>
+        </template>
+        <button class="fab-btn fab-btn--primary" title="Add recipe" @click="router.push('/new')">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+    </Teleport>
 
     <!-- Invite modal -->
     <Teleport to="body">

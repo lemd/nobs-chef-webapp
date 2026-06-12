@@ -760,6 +760,47 @@ body {
   .book-banner-inner { padding-left: 1rem; padding-right: 1rem; }
   .book-banner-title { font-size: 2.5rem; }
 }
+.banner-meta-row { margin-bottom: 1.25rem; }
+
+/* ── Floating action pill (FAB) ── */
+.fab-pill {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: rgba(12, 8, 4, 0.84);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 999px;
+  padding: 0.35rem 0.45rem;
+  box-shadow: 0 4px 28px rgba(0,0,0,0.4);
+  white-space: nowrap;
+}
+.fab-btn {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: transparent; border: none;
+  color: rgba(255,255,255,0.78);
+  font-size: 0.95rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.fab-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: #fff; }
+.fab-btn:disabled { opacity: 0.28; cursor: default; }
+.fab-btn--primary { background: var(--amber); color: #fff; }
+.fab-btn--primary:hover:not(:disabled) { opacity: 0.88; background: var(--amber); }
+.fab-divider {
+  width: 1px; height: 22px;
+  background: rgba(255,255,255,0.16);
+  flex-shrink: 0; margin: 0 0.15rem;
+}
 
 /* ── Invite modal ── */
 .invite-modal-backdrop {
