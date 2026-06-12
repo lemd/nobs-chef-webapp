@@ -803,23 +803,11 @@ body {
   background: rgba(255,255,255,0.16);
   flex-shrink: 0; margin: 0 0.15rem;
 }
-/* Draw mode — pill stretches out with a bounce */
+/* Draw mode — width animated via JS FLIP (height stays constant) */
 .fab-pill--draw {
-  animation: fab-draw-enter 0.44s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   max-width: calc(100vw - 2rem);
-  overflow-x: auto;
 }
-@keyframes fab-draw-enter {
-  from {
-    opacity: 0.4;
-    transform: translateX(-50%) scaleX(0.45) scaleY(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) scaleX(1) scaleY(1);
-  }
-}
-/* Smaller buttons inside draw mode pill so it stays compact */
+/* Slightly smaller buttons in draw mode to keep pill compact on mobile */
 .fab-pill--draw .fab-btn {
   width: 38px; height: 38px; font-size: 0.88rem;
 }

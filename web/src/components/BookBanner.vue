@@ -88,6 +88,7 @@ async function copyLink() {
 const drawMode = ref(false)
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const bannerEl = ref<HTMLElement | null>(null)
+const fabPillEl = ref<HTMLElement | null>(null)
 const drawSaving = ref(false)
 const drawError = ref('')
 
@@ -304,10 +305,31 @@ function drawImageCover(
   c.drawImage(img, sx, sy, sw, sh, 0, 0, dstW, dstH)
 }
 
+// ── FLIP pill-width animation ─────────────────────────────────────────────────
+// Captures the pill's current rendered width and, after Vue re-renders, animates
+// from that width to the new natural width. Only width changes — height stays
+// perfectly constant. The spring easing makes it bounce-overshoot at the end.
+function flipPillWidth(pill: HTMLElement, startWidth: number) {
+  const endWidth = pill.getBoundingClientRect().width
+  if (Math.abs(endWidth - startWidth) < 2) return
+  pill.style.overflow = 'hidden'
+  const anim = pill.animate(
+    [{ width: `${startWidth}px` }, { width: `${endWidth}px` }],
+    { duration: 440, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+  )
+  anim.addEventListener('finish', () => { pill.style.overflow = '' })
+}
+
 async function enterDrawMode() {
+  const pill = fabPillEl.value
+  const startWidth = pill?.getBoundingClientRect().width ?? 0
+
   drawMode.value = true
   drawError.value = ''
   await nextTick()
+
+  if (pill && startWidth) flipPillWidth(pill, startWidth)
+
   initCanvas()
   // Preload any existing saved drawing as the base layer on the committed canvas.
   // Use cover-crop drawImage so the preview matches what object-fit:cover shows.
@@ -328,6 +350,9 @@ async function enterDrawMode() {
 }
 
 function exitDrawMode() {
+  const pill = fabPillEl.value
+  const startWidth = pill?.getBoundingClientRect().width ?? 0
+
   stopAnts()
   drawMode.value = false
   strokes.value = []
@@ -336,6 +361,10 @@ function exitDrawMode() {
   committedCtx = null
   committedCanvas = null
   if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null }
+
+  if (pill && startWidth) {
+    nextTick().then(() => flipPillWidth(pill, startWidth))
+  }
 }
 
 async function saveAndExit() {
@@ -490,7 +519,7 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
         {{ drawError || bannerError }}
       </div>
 
-      <div v-if="auth.user && book" class="fab-pill" :class="{ 'fab-pill--draw': drawMode }">
+      <div v-if="auth.user && book" ref="fabPillEl" class="fab-pill" :class="{ 'fab-pill--draw': drawMode }">
         <!-- ── Normal FAB ── -->
         <template v-if="!drawMode">
           <template v-if="isOwner">
