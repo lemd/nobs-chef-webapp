@@ -66,24 +66,27 @@ export function useTimers() {
   function tapTimerBtn(stepNum: number): void {
     const info = stepTimings[stepNum]
     if (!info) return
-    if (timer.stepNum === stepNum) {
-      _stop()
-      timer.remaining = timer.total
-    } else {
-      _stop()
-      timer.stepNum = stepNum
-      timer.label = info.label
-      timer.sublabel = info.sublabel
-      timer.total = info.total
-      timer.remaining = info.total
-      _start()
-    }
+    // Always start fresh — stop any running timer, load the new step, begin
+    _stop()
+    timer.stepNum = stepNum
+    timer.label = info.label
+    timer.sublabel = info.sublabel
+    timer.total = info.total
+    timer.remaining = info.total
+    _start()
     appState.panelOpen = false
   }
 
   function pauseTimer(): void { if (timer.running) _stop() }
   function resumeTimer(): void { if (!timer.running && timer.remaining > 0) _start() }
-  function resetTimer(): void { _stop(); timer.remaining = timer.total }
+  function resetTimer(): void {
+    _stop()
+    timer.stepNum = null
+    timer.remaining = 0
+    timer.total = 0
+    timer.label = ''
+    timer.sublabel = ''
+  }
 
   const tabLabel = computed(() => {
     if (timer.stepNum === null) return null

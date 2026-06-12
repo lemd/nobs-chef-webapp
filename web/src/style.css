@@ -797,13 +797,17 @@ body {
 .fab-btn:disabled { opacity: 0.28; cursor: default; }
 .fab-btn--primary { background: var(--amber); color: #fff; }
 .fab-btn--primary:hover:not(:disabled) { opacity: 0.88; background: var(--amber); }
-.fab-btn--timer-active {
+/* Timer button: always a pill, not a circle */
+.fab-btn--timer {
   width: auto;
-  padding: 0 0.85rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
   gap: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+.fab-btn--timer-active {
   font-size: 0.9rem;
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
 }
 .fab-timer-time { line-height: 1; }

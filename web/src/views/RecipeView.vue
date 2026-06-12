@@ -88,8 +88,8 @@ const imageInputEl = ref(null)
 const imageUploading = ref(false)
 const fabPillEl = ref(null)
 
-// FLIP width animation when timer starts/stops
-watch(() => timer.running, () => {
+// FLIP width animation when timer starts/stops/resets
+watch(() => [timer.running, timer.stepNum], () => {
   const pill = fabPillEl.value
   if (!pill) return
   const startWidth = pill.getBoundingClientRect().width
@@ -177,7 +177,7 @@ async function onImageFileChange(e) {
         </button>
         <span class="fab-divider"></span>
         <button
-          class="fab-btn fab-btn--primary"
+          class="fab-btn fab-btn--primary fab-btn--timer"
           :class="{ 'fab-btn--timer-active': timer.running }"
           :title="timer.running ? 'Stop timer' : 'Timers'"
           @click="timer.running && resetTimer()"
