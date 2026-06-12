@@ -294,7 +294,6 @@ async function saveAndExit() {
 
 async function removeDrawing() {
   if (!book.value) return
-  if (!confirm('Remove the drawing from this banner?')) return
   drawSaving.value = true
   drawError.value = ''
   try {
@@ -364,6 +363,15 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
       </div>
       <span class="draw-toolbar-spacer"></span>
       <span v-if="drawError" class="draw-toolbar-error">{{ drawError }}</span>
+      <button
+        v-if="book.drawing_url || strokes.length > 0"
+        class="draw-tool-btn draw-tool-btn--danger"
+        title="Remove drawing"
+        :disabled="drawSaving"
+        @click="removeDrawing"
+      >
+        <i class="fa-solid fa-eraser"></i> Remove
+      </button>
       <button class="draw-tool-btn draw-tool-btn--muted" title="Cancel" @click="exitDrawMode">
         Cancel
       </button>
@@ -405,16 +413,6 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
           @click="enterDrawMode"
         >
           <i class="fa-solid fa-pen-nib"></i>
-        </button>
-
-        <!-- Remove drawing (owner only, has drawing, not in draw mode) -->
-        <button
-          v-if="isOwner && book.drawing_url && !drawMode"
-          class="banner-draw-btn banner-draw-btn--remove"
-          title="Remove drawing"
-          @click="removeDrawing"
-        >
-          <i class="fa-solid fa-eraser"></i>
         </button>
       </div>
     </div>
