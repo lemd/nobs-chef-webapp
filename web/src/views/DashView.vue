@@ -25,8 +25,8 @@ const SEASONS = ['spring', 'summer', 'autumn', 'winter']
 onMounted(loadRecipes)
 
 async function openRecipe(item) {
-  state.activeFile = item.filename
-  if (!state.currentRecipe || state.activeFile !== item.filename) {
+  if (state.activeFile !== item.filename) {
+    state.activeFile = item.filename
     const data = await fetchRecipe(item.filename)
     state.currentRecipe = data
     state.currentSourceUrl = data.sourceUrl ?? null

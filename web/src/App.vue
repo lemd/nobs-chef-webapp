@@ -34,8 +34,8 @@ watch(
   <GuideModal />
   <div class="app-layout">
     <BookSidebar />
-    <div id="app-scroll" :class="{ 'ing-open': state.panelOpen }">
-      <MosaicStrip :loading="state.loading" />
+    <div id="app-scroll" :class="{ 'ing-open': state.panelOpen, 'recipe-dark': route.name === 'recipe' }">
+      <MosaicStrip v-if="route.name !== 'recipe'" :loading="state.loading" />
       <AppHeader />
       <RouterView />
     </div>

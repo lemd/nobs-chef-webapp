@@ -7,15 +7,13 @@ const router = useRouter()
 
 async function openRecipe(item) {
   state.drawerOpen = false
-  state.activeFile = item.filename
   const slug = item.filename.replace(/\.json$/, '')
-  if (state.currentRecipe && state.activeFile === item.filename) {
-    router.push(`/r/${slug}`)
-    return
+  if (state.activeFile !== item.filename) {
+    state.activeFile = item.filename
+    const data = await fetchRecipe(item.filename)
+    state.currentRecipe = data
+    state.currentSourceUrl = data.sourceUrl ?? null
   }
-  const data = await fetchRecipe(item.filename)
-  state.currentRecipe = data
-  state.currentSourceUrl = data.sourceUrl ?? null
   router.push(`/r/${slug}`)
 }
 </script>

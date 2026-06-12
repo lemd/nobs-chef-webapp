@@ -105,9 +105,43 @@ body {
   gap: 0;
   padding: 10px 0 14px;
   margin-bottom: 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--paper);
 }
 .app-header--recipe {
+  background: transparent;
+  border-bottom: none;
+  margin-bottom: 0;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+.app-header--recipe .header-back {
+  color: rgba(253, 246, 236, 0.90);
+  transition: color 0.3s ease, background 0.3s ease;
+}
+.app-header--recipe .header-back:hover {
+  background: rgba(0,0,0,0.20);
+  color: #fff;
+}
+.app-header--recipe .header-recipe-title {
+  color: rgba(253, 246, 236, 0.85);
+  transition: color 0.3s ease;
+}
+/* Scrolled past hero: restore normal header appearance */
+.app-header--scrolled {
+  background: var(--paper);
   border-bottom: 1px solid var(--line);
+}
+.app-header--scrolled .header-back {
+  color: var(--amber);
+}
+.app-header--scrolled .header-back:hover {
+  background: rgba(0,0,0,0.04);
+  color: var(--text);
+}
+.app-header--scrolled .header-recipe-title {
+  color: var(--text);
 }
 .app-header-left {
   display: flex;
@@ -367,15 +401,67 @@ body {
 .dash-no-results { grid-column: 1 / -1; color: var(--dim); font-size: 0.88rem; padding: 2rem 0; text-align: center; }
 
 /* ── Recipe ── */
+/* Hero intro panel — fills viewport, bleeds to edges, sits under sticky header */
+:root { --hdr: 54px; }
+.recipe-hero {
+  min-height: 100svh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-bottom: 0;
+  margin-bottom: 3rem;
+  border-bottom: none;
+  /* full-bleed past #app-scroll padding */
+  margin-left: -2rem;
+  margin-right: -2rem;
+  /* pull up behind the sticky header */
+  margin-top: calc(-1 * var(--hdr));
+  /* food photo + dark-bottom gradient */
+  background-image:
+    linear-gradient(to top,
+      rgba(0,0,0,0.88) 0%,
+      rgba(0,0,0,0.60) 30%,
+      rgba(0,0,0,0.25) 60%,
+      rgba(0,0,0,0.06) 100%),
+    var(--hero-img, url('https://images.pexels.com/photos/10048690/pexels-photo-10048690.jpeg'));
+  background-color: #1d1108;
+  background-size: cover;
+  background-position: center;
+}
+.recipe-hero-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--hdr) 2rem 2.5rem;
+}
+/* cream text inside hero */
+.recipe-hero .recipe-title { color: #fdf6ec; }
+.recipe-hero .recipe-description { color: rgba(253,246,236,0.78); }
+.recipe-hero .meta-pill .label { color: rgba(253,246,236,0.55); }
+.recipe-hero .meta-pill .value { color: #fdf6ec; }
+.recipe-hero .meta-row { border-bottom-color: rgba(255,255,255,0.14); margin-bottom: 0; }
+.recipe-hero .recipe-hero-scroll-hint { color: rgba(253,246,236,0.55); }
+.recipe-hero-scroll-hint {
+  font-size: 0.9rem;
+  align-self: flex-end;
+  padding-bottom: 0.2rem;
+  animation: hero-bounce 2s ease-in-out infinite;
+}
+@keyframes hero-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
 .recipe-title { font-family: var(--font-display); font-size: 3rem; font-weight: 400; letter-spacing: 0.01em; line-height: 1.15; margin-bottom: 0.4rem; }
-@media (min-width: 900px) { .recipe-title { font-size: 4.5rem; line-height: 1.1; } }
+@media (min-width: 900px) { .recipe-title { font-size: 5.5rem; line-height: 1.05; } }
 .recipe-source-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
 .recipe-source { font-size: 0.72rem; color: var(--dim); text-decoration: none; }
 .recipe-source:hover { color: var(--muted); }
 .refetch-btn { font-size: 0.68rem; font-family: var(--font-body); color: var(--dim); background: none; border: 1px solid var(--dim); border-radius: 3px; padding: 0.15em 0.55em; cursor: pointer; opacity: 0.6; }
 .refetch-btn:hover { opacity: 1; }
 .recipe-description { color: var(--muted); font-size: 1rem; line-height: 1.7; max-width: 560px; margin-bottom: 1.5rem; }
-.meta-row { display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
+.meta-row { display: flex; flex-wrap: wrap; gap: 2rem; align-items: flex-end; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
 .meta-pill { display: flex; flex-direction: column; gap: 0.1rem; }
 .meta-pill .label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .meta-pill .value { font-size: 1rem; font-weight: 600; }
@@ -391,6 +477,18 @@ body {
 @media (min-width: 900px) { .step-instruction { font-size: 1.1rem; line-height: 1.75; } }
 .step-bullets { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.35rem; font-size: 1rem; line-height: 1.6; }
 .step-timing { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; color: var(--amber); align-self: flex-start; display: inline-flex; align-items: center; }
+
+/* ── Dark recipe page ── */
+#app-scroll.recipe-dark {
+  background: #0f0b08;
+}
+#app-scroll.recipe-dark .section-label { color: rgba(200,144,45,0.6); }
+#app-scroll.recipe-dark .step { border-bottom-color: rgba(255,255,255,0.07); }
+#app-scroll.recipe-dark .step-instruction,
+#app-scroll.recipe-dark .step-bullets li { color: rgba(253,246,236,0.82); }
+#app-scroll.recipe-dark .step-num { color: var(--amber); }
+#app-scroll.recipe-dark .step-timing { color: var(--amber); }
+#app-scroll.recipe-dark .conv { color: rgba(253,246,236,0.45); }
 
 /* ── History list (drawer) ── */
 .history-list { list-style: none; padding: 0; }

@@ -85,27 +85,22 @@ const metaPills = computed(() => {
     <span class="spinner"></span> Loading…
   </div>
   <article v-else class="recipe-article pb-16">
-    <!-- Title + source -->
-    <h1 class="recipe-title">{{ recipe.title }}</h1>
-    <div class="recipe-source-row">
-      <a
-        v-if="recipe.sourceUrl || state.currentSourceUrl"
-        :href="recipe.sourceUrl ?? state.currentSourceUrl"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="recipe-source"
-      >{{ (recipe.sourceUrl ?? state.currentSourceUrl).replace(/^https?:\/\//, '').split('/')[0] }}</a>
-      <button class="refetch-btn" @click="refetchRecipe" title="Re-scrape from source">
-        <i class="fa-solid fa-rotate-right"></i>
-      </button>
-    </div>
-    <p v-if="recipe.description" class="recipe-description">{{ recipe.description }}</p>
+    <!-- Intro: full viewport height hero -->
+    <div class="recipe-hero" :style="recipe.imageUrl ? `--hero-img: url('${recipe.imageUrl}')` : ''">
+      <div class="recipe-hero-inner">
+        <h1 class="recipe-title recipe-title--hero">{{ recipe.title }}</h1>
+        <p v-if="recipe.description" class="recipe-description recipe-description--hero">{{ recipe.description }}</p>
 
-    <!-- Meta row -->
-    <div v-if="metaPills.length" class="meta-row">
-      <div v-for="pill in metaPills" :key="pill.label" class="meta-pill">
-        <span class="label">{{ pill.label }}</span>
-        <span class="value">{{ pill.value }}</span>
+        <!-- Meta row + scroll hint inline -->
+        <div class="meta-row meta-row--hero">
+          <div v-for="pill in metaPills" :key="pill.label" class="meta-pill">
+            <span class="label">{{ pill.label }}</span>
+            <span class="value">{{ pill.value }}</span>
+          </div>
+          <div class="recipe-hero-scroll-hint">
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+        </div>
       </div>
     </div>
 
