@@ -5,6 +5,7 @@
 /* ── Custom properties ── */
 :root {
   --bg: #faf6ef;
+  --paper: #ffffff;
   --text: #111;
   --muted: #555;
   --dim: #8a7d72;

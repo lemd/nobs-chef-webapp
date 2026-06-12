@@ -25,19 +25,37 @@ Deno.serve(async (req: Request) => {
 
   const bookIds = (memberships ?? []).map((m: { book_id: number }) => m.book_id);
 
-  let query = supabase
-    .from("recipes")
-    .select("url_hash, title, source_url, saved_at, data");
+  let recipeIds: number[] = [];
 
   if (bookIds.length > 0) {
-    // Recipes in user's books, OR recipes uploaded by this user
-    query = query.or(`book_id.in.(${bookIds.join(",")}),user_id.eq.${user.id}`);
-  } else {
-    // No books yet — just show recipes uploaded by this user
-    query = query.eq("user_id", user.id);
+    // Get recipe IDs from the junction table for all user's books
+    const { data: bookRecipes } = await supabase
+      .from("book_recipes")
+      .select("recipe_id")
+      .in("book_id", bookIds);
+
+    recipeIds = (bookRecipes ?? []).map((r: { recipe_id: number }) => r.recipe_id);
+
+    // Also include legacy recipes uploaded by this user (before junction table)
+    const { data: legacyRecipes } = await supabase
+      .from("recipes")
+      .select("id")
+      .eq("user_id", user.id)
+      .not("id", "in", recipeIds.length > 0 ? `(${recipeIds.join(",")})` : "(0)");
+
+    const legacyIds = (legacyRecipes ?? []).map((r: { id: number }) => r.id);
+    recipeIds = [...new Set([...recipeIds, ...legacyIds])];
   }
 
-  const { data, error } = await query.order("saved_at", { ascending: false });
+  if (recipeIds.length === 0) {
+    return jsonResponse([]);
+  }
+
+  const { data, error } = await supabase
+    .from("recipes")
+    .select("url_hash, title, source_url, saved_at, data")
+    .in("id", recipeIds)
+    .order("saved_at", { ascending: false });
 
   if (error) {
     return jsonResponse({ error: error.message }, 500);

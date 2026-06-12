@@ -106,12 +106,18 @@ Deno.serve(async (req: Request) => {
   if (!force) {
     const { data: cached } = await supabase
       .from("recipes")
-      .select("data")
+      .select("id, data")
       .eq("url_hash", hash)
       .maybeSingle();
 
     if (cached) {
       console.log(`[scrape] cache hit: ${sourceUrl}`);
+      // Still associate this recipe with the requesting book
+      if (book_id && cached.id) {
+        await supabase
+          .from("book_recipes")
+          .upsert({ book_id, recipe_id: cached.id }, { onConflict: "book_id,recipe_id" });
+      }
       return jsonResponse({ ...cached.data, _cached: true, _hash: hash });
     }
   }
@@ -140,13 +146,18 @@ Deno.serve(async (req: Request) => {
         data: recipeWithUrl,
         saved_at: new Date().toISOString(),
         user_id: user.id,
-        ...(book_id ? { book_id } : {}),
       },
       { onConflict: "url_hash" }
     ).select("id").single();
 
     if (upserted) {
       await syncRecipeIngredients(recipe, upserted.id, supabase);
+      // Link to the requesting book via junction table
+      if (book_id) {
+        await supabase
+          .from("book_recipes")
+          .upsert({ book_id, recipe_id: upserted.id }, { onConflict: "book_id,recipe_id" });
+      }
     }
 
     return jsonResponse({ ...recipeWithUrl, _hash: hash });
