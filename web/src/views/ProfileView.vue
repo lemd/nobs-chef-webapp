@@ -15,8 +15,11 @@ const avatarUrl = computed(() => user.value?.user_metadata?.avatar_url ?? null)
 const initial = computed(() => displayName.value.charAt(0).toUpperCase())
 
 const recipeCount = computed(() => state.allRecipes.length)
-// Only count books the user doesn't own (shared books)
-const sharedBooks = computed(() => state.books.filter(b => b.owner_id !== user.value?.id))
+// All books with role info for displaying correct actions
+const allBooks = computed(() => state.books.map(b => ({
+  ...b,
+  isOwner: b.owner_id === user.value?.id,
+})))
 
 async function handleSignOut() {
   await signOut()
@@ -31,10 +34,13 @@ async function handleLeaveBook(bookId: number) {
   leavingBookId.value = bookId
   leaveError.value = ''
   try {
-    await leaveBook(bookId)
+    const { deleted } = await leaveBook(bookId)
     state.books = state.books.filter(b => b.id !== bookId)
     if (state.currentBook?.id === bookId) {
       state.currentBook = state.books[0] ?? null
+    }
+    if (deleted && state.books.length === 0) {
+      router.push('/')
     }
   } catch (e) {
     leaveError.value = (e as Error).message
@@ -66,18 +72,21 @@ async function handleLeaveBook(bookId: number) {
         </div>
       </div>
 
-      <!-- Shared books you can leave -->
-      <div v-if="sharedBooks.length" class="shared-books">
-        <p class="shared-books-label">Shared with you</p>
-        <div v-for="book in sharedBooks" :key="book.id" class="shared-book-row">
+      <!-- All books with leave/delete actions -->
+      <div v-if="allBooks.length" class="shared-books">
+        <p class="shared-books-label">Recipe books</p>
+        <div v-for="book in allBooks" :key="book.id" class="shared-book-row">
           <span class="shared-book-name">{{ book.name }}</span>
+          <span v-if="book.isOwner" class="shared-book-owner-tag">owner</span>
           <button
             class="leave-btn"
+            :class="{ 'leave-btn--delete': book.isOwner }"
             :disabled="leavingBookId === book.id"
+            :title="book.isOwner ? 'Delete this book' : 'Leave this book'"
             @click="handleLeaveBook(book.id)"
           >
-            <i class="fa-solid" :class="leavingBookId === book.id ? 'fa-spinner fa-spin' : 'fa-right-from-bracket'"></i>
-            Leave
+            <i class="fa-solid" :class="leavingBookId === book.id ? 'fa-spinner fa-spin' : book.isOwner ? 'fa-trash' : 'fa-right-from-bracket'"></i>
+            {{ book.isOwner ? 'Delete' : 'Leave' }}
           </button>
         </div>
         <p v-if="leaveError" class="leave-error">{{ leaveError }}</p>
@@ -226,5 +235,11 @@ async function handleLeaveBook(bookId: number) {
 }
 .leave-btn:hover { color: #c0392b; border-color: #c0392b; }
 .leave-btn:disabled { opacity: 0.5; cursor: default; }
+.leave-btn--delete:hover { color: #c0392b; border-color: #c0392b; }
 .leave-error { font-size: 0.78rem; color: #c0392b; margin: 0.25rem 0.75rem 0.5rem; }
+.shared-book-owner-tag {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--amber); border: 1px solid rgba(200,144,45,0.35);
+  border-radius: 999px; padding: 0.1rem 0.5rem; white-space: nowrap;
+}
 </style>

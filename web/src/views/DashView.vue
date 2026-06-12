@@ -60,40 +60,45 @@ function onSearchKeydown(e: KeyboardEvent) {
     <BookBanner />
 
     <div class="max-w-[1080px] mx-auto px-0">
-      <!-- Filter bar -->
-      <div class="mb-6">
-        <!-- Search row -->
-        <div class="flex flex-wrap items-center gap-2 mb-3">
-          <div class="flex items-center gap-1.5 border-b border-[var(--text)] pb-[3px] min-w-[200px] flex-1 max-w-xs">
-            <i class="fa-solid fa-magnifying-glass text-[var(--dim)] text-xs"></i>
-            <input
-              v-model="searchText"
-              type="search"
-              placeholder="Search recipes or ingredients…"
-              autocomplete="off"
-              class="bg-transparent border-0 outline-none text-[0.82rem] font-[var(--font-body)] text-[var(--text)] placeholder-[var(--dim)] w-full"
-              @keydown="onSearchKeydown"
-            />
-          </div>
-          <div class="flex flex-wrap gap-1">
-            <button
-              v-for="chip in [...state.activeIngredients]"
-              :key="chip"
-              class="ingredient-chip"
-              @click="removeIngredientChip(chip)"
-            >{{ chip }} ×</button>
-          </div>
-          <span class="text-[0.72rem] text-[var(--dim)] ml-auto whitespace-nowrap">
+      <!-- Search + Add row -->
+      <div class="dash-search-row">
+        <div class="dash-search-wrap">
+          <i class="fa-solid fa-magnifying-glass dash-search-icon"></i>
+          <input
+            v-model="searchText"
+            type="search"
+            placeholder="Search recipes or ingredients…"
+            autocomplete="off"
+            class="dash-search-input"
+            @keydown="onSearchKeydown"
+          />
+          <span class="dash-recipe-count">
             {{ filteredRecipes.length === state.allRecipes.length
               ? `${state.allRecipes.length} recipe${state.allRecipes.length !== 1 ? 's' : ''}`
               : `${filteredRecipes.length} of ${state.allRecipes.length}` }}
           </span>
-          <button
-            v-if="hasFilters"
-            class="text-[0.72rem] font-[var(--font-body)] font-semibold tracking-wide text-[var(--dim)] border-0 bg-transparent cursor-pointer hover:text-[var(--text)] whitespace-nowrap"
-            @click="clearAllFilters(searchText)"
-          >Clear</button>
         </div>
+        <button class="dash-add-btn" title="Add a recipe" @click="router.push('/new')">
+          <i class="fa-solid fa-plus"></i>
+          Add recipe
+        </button>
+      </div>
+
+      <!-- Active ingredient chips + clear -->
+      <div v-if="hasFilters" class="dash-active-filters">
+        <button
+          v-for="chip in [...state.activeIngredients]"
+          :key="chip"
+          class="ingredient-chip"
+          @click="removeIngredientChip(chip)"
+        >{{ chip }} ×</button>
+        <button class="dash-clear-btn" @click="clearAllFilters(searchText)">
+          <i class="fa-solid fa-xmark"></i> Clear filters
+        </button>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="mb-6">
         <!-- Meal type filters -->
         <div v-if="mealTypes.length" class="flex flex-wrap gap-1 mb-2">
           <button

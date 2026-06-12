@@ -90,7 +90,6 @@ Deno.serve(async (req: Request) => {
     const bookId = url.searchParams.get("book_id");
     if (!bookId) return jsonResponse({ error: "book_id required" }, 400);
 
-    // Prevent owner from leaving
     const { data: book } = await supabase
       .from("recipe_books")
       .select("owner_id")
@@ -98,10 +97,34 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (!book) return jsonResponse({ error: "Book not found" }, 404);
-    if (book.owner_id === user.id) {
-      return jsonResponse({ error: "You cannot leave a book you own." }, 403);
+
+    const isOwner = book.owner_id === user.id;
+
+    if (isOwner) {
+      // Count remaining members
+      const { count } = await supabase
+        .from("recipe_book_members")
+        .select("*", { count: "exact", head: true })
+        .eq("book_id", bookId);
+
+      if ((count ?? 0) > 1) {
+        return jsonResponse(
+          { error: "You cannot leave a book you own while others are members. Transfer ownership first." },
+          403
+        );
+      }
+
+      // Owner is the only member — delete the book (cascades members + book_recipes)
+      const { error: deleteErr } = await supabase
+        .from("recipe_books")
+        .delete()
+        .eq("id", bookId);
+
+      if (deleteErr) return jsonResponse({ error: deleteErr.message }, 500);
+      return jsonResponse({ ok: true, deleted: true });
     }
 
+    // Non-owner: just remove membership
     const { error } = await supabase
       .from("recipe_book_members")
       .delete()
@@ -109,7 +132,7 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", user.id);
 
     if (error) return jsonResponse({ error: error.message }, 500);
-    return jsonResponse({ ok: true });
+    return jsonResponse({ ok: true, deleted: false });
   }
 
   // ── POST /book: create book ───────────────────────────────────────────────
