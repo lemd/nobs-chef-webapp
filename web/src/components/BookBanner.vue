@@ -228,7 +228,12 @@ function undoStroke() {
 
 async function clearAll() {
   strokes.value = []
-  replayStrokes()
+  // Wipe the committed canvas entirely (including any preloaded existing drawing)
+  if (committedCtx && committedCanvas) {
+    const dpr = window.devicePixelRatio || 1
+    committedCtx.clearRect(0, 0, committedCanvas.width / dpr, committedCanvas.height / dpr)
+  }
+  renderFrame()
 }
 
 async function enterDrawMode() {
@@ -236,6 +241,21 @@ async function enterDrawMode() {
   drawError.value = ''
   await nextTick()
   initCanvas()
+  // Preload any existing saved drawing as the base layer on the committed canvas
+  // so the user can continue drawing on top of it.
+  const savedUrl = book.value?.drawing_url
+  if (savedUrl && committedCtx && committedCanvas) {
+    const dpr = window.devicePixelRatio || 1
+    const w = committedCanvas.width / dpr
+    const h = committedCanvas.height / dpr
+    await new Promise<void>((resolve) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => { committedCtx!.drawImage(img, 0, 0, w, h); resolve() }
+      img.onerror = () => resolve()
+      img.src = savedUrl
+    })
+  }
   startAnts()
 }
 
@@ -256,42 +276,13 @@ async function saveAndExit() {
   drawSaving.value = true
   drawError.value = ''
   try {
-    // If there's an existing saved drawing, we need to composite it under our new strokes
-    // so nothing is lost. We do this by drawing the saved PNG onto a temp canvas first.
-    const finalCanvas = document.createElement('canvas')
-    finalCanvas.width = canvas.width
-    finalCanvas.height = canvas.height
-    const fctx = finalCanvas.getContext('2d')!
-    const dpr = window.devicePixelRatio || 1
-    fctx.scale(dpr, dpr)
-
-    // Draw existing saved PNG as base if present
-    const savedUrl = book.value.drawing_url
-    if (savedUrl) {
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-        img.onload = () => {
-          fctx.drawImage(img, 0, 0, canvas.offsetWidth, canvas.offsetHeight)
-          resolve()
-        }
-        img.onerror = () => resolve() // ignore — start fresh if load fails
-        img.src = savedUrl
-      })
-    }
-
-    // Draw current session strokes on top
-    const w = canvas.offsetWidth
-    const h = canvas.offsetHeight
-    for (const s of strokes.value) {
-      drawStroke(fctx, s.pts, w, h, s.width)
-    }
-
-    const blob = await new Promise<Blob | null>(resolve => finalCanvas.toBlob(resolve, 'image/png'))
+    // committedCanvas already contains the existing drawing (preloaded on enter)
+    // plus all new strokes — just export it directly.
+    if (!committedCanvas) throw new Error('Canvas not ready')
+    const blob = await new Promise<Blob | null>(resolve => committedCanvas!.toBlob(resolve, 'image/png'))
     if (!blob) throw new Error('Could not export canvas')
 
     const url = await saveDrawing(book.value.id, blob)
-    // Update state so overlay renders immediately without re-fetch
     if (state.currentBook) state.currentBook.drawing_url = url
     exitDrawMode()
   } catch (e: unknown) {
