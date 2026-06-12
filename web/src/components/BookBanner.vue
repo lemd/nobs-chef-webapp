@@ -446,7 +446,7 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
 </script>
 
 <template>
-  <div v-if="book" ref="bannerEl" class="book-banner" :style="bannerStyle">
+  <div v-if="book" ref="bannerEl" class="book-banner" :class="{ 'draw-active': drawMode }" :style="bannerStyle">
 
     <!-- Saved drawing overlay (shown when NOT in draw mode) -->
     <img

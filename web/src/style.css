@@ -667,6 +667,8 @@ body {
 .book-banner { position: relative; }
 /* UI layer sits above canvas */
 .book-banner-inner { position: relative; z-index: 3; }
+/* In draw mode the inner UI must not intercept pointer events */
+.book-banner.draw-active .book-banner-inner { pointer-events: none; }
 /* Draw toolbar — floats at top of banner */
 .draw-toolbar {
   position: absolute;
@@ -822,10 +824,8 @@ body {
 
 /* ── FAB + invite bouncy tooltips ── */
 @keyframes tip-pop {
-  0%   { opacity: 0; transform: translateX(-50%) translateY(5px) scale(0.75); }
-  55%  { transform: translateX(-50%) translateY(-4px) scale(1.06); }
-  78%  { transform: translateX(-50%) translateY(1px) scale(0.97); }
-  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  0%   { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.9); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1);   }
 }
 /* Shared tooltip base — hidden by default */
 .fab-btn[data-tooltip],
@@ -856,7 +856,7 @@ body {
 }
 .fab-btn[data-tooltip]:hover:not(:disabled)::after,
 .member-invite-btn[data-tooltip]:hover::after {
-  animation: tip-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: tip-pop 0.18s ease-out forwards;
 }
 .fab-btn--danger { color: #f87171; }
 .fab-btn--danger:hover:not(:disabled) { background: rgba(248,113,113,0.15); }
