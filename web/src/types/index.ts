@@ -57,6 +57,7 @@ export interface RecipeBook {
   role: BookRole
   joinedAt?: string
   drawing_url?: string | null
+  banner_url?: string | null
 }
 
 export interface BookMember {

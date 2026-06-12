@@ -73,7 +73,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "GET") {
     const { data, error } = await supabase
       .from("recipe_book_members")
-      .select("role, joined_at, recipe_books(id, name, owner_id, created_at, drawing_url)")
+      .select("role, joined_at, recipe_books(id, name, owner_id, created_at, drawing_url, banner_url)")
       .eq("user_id", user.id);
 
     if (error) return jsonResponse({ error: error.message }, 500);
@@ -135,6 +135,65 @@ Deno.serve(async (req: Request) => {
 
     if (error) return jsonResponse({ error: error.message }, 500);
     return jsonResponse({ ok: true, deleted: false });
+  }
+
+  // ── POST /book/banner?book_id=X — upload/replace banner image (owner only) ──
+  if ((req.method === "POST" || req.method === "DELETE") && action === "banner") {
+    const bookId = url.searchParams.get("book_id");
+    if (!bookId) return jsonResponse({ error: "book_id required" }, 400);
+
+    const { data: book } = await supabase
+      .from("recipe_books")
+      .select("owner_id, banner_url")
+      .eq("id", bookId)
+      .maybeSingle();
+
+    if (!book) return jsonResponse({ error: "Book not found" }, 404);
+    if (book.owner_id !== user.id) return jsonResponse({ error: "Only the book owner can change the banner" }, 403);
+
+    if (req.method === "DELETE") {
+      if (book.banner_url) {
+        const match = (book.banner_url as string).match(/book-banners\/(.+)$/);
+        if (match) await supabase.storage.from("book-banners").remove([match[1]]);
+      }
+      await supabase.from("recipe_books").update({ banner_url: null }).eq("id", bookId);
+      return jsonResponse({ ok: true, banner_url: null });
+    }
+
+    const contentType = req.headers.get("content-type") ?? "";
+    if (!contentType.startsWith("image/")) {
+      return jsonResponse({ error: "Content-Type must be an image type" }, 400);
+    }
+    const ext = contentType.includes("webp") ? "webp" : contentType.includes("png") ? "png" : "jpg";
+
+    const arrayBuffer = await req.arrayBuffer();
+    if (arrayBuffer.byteLength > 5 * 1024 * 1024) {
+      return jsonResponse({ error: "Banner image exceeds 5 MB limit" }, 413);
+    }
+
+    // Remove old banner
+    if (book.banner_url) {
+      const match = (book.banner_url as string).match(/book-banners\/(.+)$/);
+      if (match) await supabase.storage.from("book-banners").remove([match[1]]);
+    }
+
+    const storagePath = `${bookId}/${Date.now()}.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("book-banners")
+      .upload(storagePath, new Uint8Array(arrayBuffer), { contentType, upsert: false });
+
+    if (uploadErr) return jsonResponse({ error: uploadErr.message }, 500);
+
+    const { data: publicData } = supabase.storage.from("book-banners").getPublicUrl(storagePath);
+    const bannerUrl = publicData.publicUrl;
+
+    const { error: updateErr } = await supabase
+      .from("recipe_books")
+      .update({ banner_url: bannerUrl })
+      .eq("id", bookId);
+
+    if (updateErr) return jsonResponse({ error: updateErr.message }, 500);
+    return jsonResponse({ ok: true, banner_url: bannerUrl });
   }
 
   // ── POST /book/drawing?book_id=X — upload PNG overlay (owner only) ─────────

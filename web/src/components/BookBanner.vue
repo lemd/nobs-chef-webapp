@@ -1,12 +1,42 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { state } from '../state.ts'
-import { createInvite, saveDrawing, clearDrawing } from '../api.ts'
+import { createInvite, saveDrawing, clearDrawing, saveBannerImage } from '../api.ts'
 import { auth } from '../composables/useAuth.ts'
+import { resizeImage } from '../utils/imageUpload.ts'
 
 const book = computed(() => state.currentBook)
 const members = computed(() => state.bookMembers)
 const isOwner = computed(() => book.value?.owner_id === auth.user?.id)
+
+// Dynamic background — uses uploaded banner_url if present, else fallback Pexels photo
+const FALLBACK_BANNER = `url('https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg')`
+const bannerStyle = computed(() => {
+  const u = book.value?.banner_url
+  return u ? `--banner-img: url('${u}')` : ''
+})
+
+// ── Banner image upload ───────────────────────────────────────────────────────
+const bannerInputEl = ref<HTMLInputElement | null>(null)
+const bannerUploading = ref(false)
+const bannerError = ref('')
+
+async function onBannerFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file || !book.value) return
+  ;(e.target as HTMLInputElement).value = ''
+  bannerUploading.value = true
+  bannerError.value = ''
+  try {
+    const blob = await resizeImage(file, 1600, 0.85)
+    const url = await saveBannerImage(book.value.id, blob)
+    if (state.currentBook) state.currentBook.banner_url = url
+  } catch (err: unknown) {
+    bannerError.value = err instanceof Error ? err.message : 'Upload failed'
+  } finally {
+    bannerUploading.value = false
+  }
+}
 
 // ── Invite modal ─────────────────────────────────────────────────────────────
 const modalOpen = ref(false)
@@ -318,7 +348,7 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
 </script>
 
 <template>
-  <div v-if="book" ref="bannerEl" class="book-banner">
+  <div v-if="book" ref="bannerEl" class="book-banner" :style="bannerStyle">
 
     <!-- Saved drawing overlay (shown when NOT in draw mode) -->
     <img
@@ -415,6 +445,26 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
         >
           <i class="fa-solid fa-pen-nib"></i>
         </button>
+
+        <!-- Banner image upload (owner only, not in draw mode) -->
+        <button
+          v-if="isOwner && !drawMode"
+          class="banner-draw-btn"
+          :title="book.banner_url ? 'Change banner photo' : 'Upload banner photo'"
+          :disabled="bannerUploading"
+          @click="bannerInputEl?.click()"
+        >
+          <i v-if="bannerUploading" class="fa-solid fa-spinner fa-spin"></i>
+          <i v-else class="fa-solid fa-camera"></i>
+        </button>
+        <input
+          ref="bannerInputEl"
+          type="file"
+          accept="image/*"
+          style="display:none"
+          @change="onBannerFileChange"
+        />
+        <span v-if="bannerError" class="banner-upload-error">{{ bannerError }}</span>
       </div>
     </div>
 

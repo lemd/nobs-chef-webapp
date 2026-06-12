@@ -97,6 +97,28 @@ export async function leaveBook(bookId: number): Promise<{ deleted: boolean }> {
   return { deleted: data.deleted ?? false }
 }
 
+export async function saveBannerImage(bookId: number, blob: Blob): Promise<string> {
+  const res = await fetch(`${API_BASE}/book/banner?book_id=${bookId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': blob.type, Authorization: getAuthHeader() },
+    body: blob,
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Failed to upload banner')
+  return data.banner_url as string
+}
+
+export async function saveRecipeImage(urlHash: string, blob: Blob): Promise<string> {
+  const res = await fetch(`${API_BASE}/recipe/image?hash=${encodeURIComponent(urlHash)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': blob.type, Authorization: getAuthHeader() },
+    body: blob,
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Failed to upload image')
+  return data.image_url as string
+}
+
 export async function saveDrawing(bookId: number, pngBlob: Blob): Promise<string> {
   const res = await fetch(`${API_BASE}/book/drawing?book_id=${bookId}`, {
     method: 'POST',

@@ -487,6 +487,7 @@ body {
 .recipe-hero {
   min-height: 100svh;
   min-height: 100vh;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -536,6 +537,23 @@ body {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(5px); }
 }
+/* Camera button — bottom-right of hero */
+.recipe-hero-img-btn {
+  position: absolute;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(0,0,0,0.38);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.75);
+  font-size: 0.88rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  z-index: 4;
+}
+.recipe-hero-img-btn:hover { background: rgba(0,0,0,0.6); color: #fff; }
+.recipe-hero-img-btn:disabled { opacity: 0.5; cursor: default; }
 .recipe-title { font-family: var(--font-display); font-size: 3rem; font-weight: 400; letter-spacing: 0.01em; line-height: 1.15; margin-bottom: 0.4rem; }
 @media (min-width: 900px) { .recipe-title { font-size: 5.5rem; line-height: 1.05; } }
 .recipe-source-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
@@ -599,7 +617,7 @@ body {
       rgba(0,0,0,0.55) 35%,
       rgba(0,0,0,0.20) 65%,
       rgba(0,0,0,0.04) 100%),
-    url('https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg');
+    var(--banner-img, url('https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg'));
   background-color: #1d1108;
   background-size: cover;
   background-position: center;
@@ -713,6 +731,10 @@ body {
 .banner-draw-btn:hover { background: rgba(255,255,255,0.22); }
 .banner-draw-btn--remove { border-color: rgba(248,113,113,0.35); color: #f87171; }
 .banner-draw-btn--remove:hover { background: rgba(248,113,113,0.15); }
+.banner-upload-error {
+  font-size: 0.7rem; color: #f87171; background: rgba(0,0,0,0.5);
+  border-radius: 6px; padding: 0.2rem 0.5rem; white-space: nowrap;
+}
 .book-banner-row { display: flex; align-items: center; gap: 0.75rem; }
 .member-stack { display: flex; flex-direction: row; align-items: center; }
 .member-circle {

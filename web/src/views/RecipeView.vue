@@ -1,11 +1,13 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { state } from '../state.js'
-import { fetchRecipe, scrapeRecipe } from '../api.js'
+import { fetchRecipe, scrapeRecipe, saveRecipeImage } from '../api.js'
 import { useTimers } from '../composables/useTimers.js'
 import { useServings } from '../composables/useServings.js'
 import { parseTimingToSeconds, splitInstruction } from '../utils.js'
+import { auth } from '../composables/useAuth.ts'
+import { resizeImage } from '../utils/imageUpload.ts'
 
 const props = defineProps({ slug: { type: String, required: true } })
 const router = useRouter()
@@ -80,6 +82,27 @@ const metaPills = computed(() => {
     formatMeta('Difficulty', recipe.value.difficulty),
   ].filter(Boolean)
 })
+
+// ── Recipe image upload ──────────────────────────────────────────────────────
+const imageInputEl = ref(null)
+const imageUploading = ref(false)
+
+async function onImageFileChange(e) {
+  const file = e.target.files?.[0]
+  if (!file || !state.activeFile) return
+  e.target.value = ''
+  imageUploading.value = true
+  try {
+    const blob = await resizeImage(file, 1600, 0.85)
+    const hash = state.activeFile.replace(/\.json$/, '')
+    const url = await saveRecipeImage(hash, blob)
+    if (state.currentRecipe) state.currentRecipe.imageUrl = url
+  } catch (err) {
+    console.error('Image upload failed:', err)
+  } finally {
+    imageUploading.value = false
+  }
+}
 </script>
 
 <template>
@@ -104,6 +127,19 @@ const metaPills = computed(() => {
           </div>
         </div>
       </div>
+
+      <!-- Image upload button (any signed-in member, bottom-right of hero) -->
+      <button
+        v-if="auth.user"
+        class="recipe-hero-img-btn"
+        :title="recipe.imageUrl ? 'Change photo' : 'Add photo'"
+        :disabled="imageUploading"
+        @click="imageInputEl?.click()"
+      >
+        <i v-if="imageUploading" class="fa-solid fa-spinner fa-spin"></i>
+        <i v-else class="fa-solid fa-camera"></i>
+      </button>
+      <input ref="imageInputEl" type="file" accept="image/*" style="display:none" @change="onImageFileChange" />
     </div>
 
     <!-- Steps -->
