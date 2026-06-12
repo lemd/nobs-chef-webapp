@@ -439,70 +439,6 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
       @pointercancel="onPointerUp"
     />
 
-    <!-- Draw mode toolbar -->
-    <div v-if="drawMode" class="draw-toolbar">
-      <button class="draw-tool-btn" title="Undo last stroke" :disabled="strokes.length === 0" @click="undoStroke">
-        <i class="fa-solid fa-rotate-left"></i>
-      </button>
-      <button class="draw-tool-btn draw-tool-btn--danger" title="Clear all" :disabled="strokes.length === 0" @click="clearAll">
-        <i class="fa-solid fa-trash-can"></i>
-      </button>
-      <span class="draw-toolbar-divider"></span>
-      <!-- Pen size picker -->
-      <div class="draw-size-group" role="group" aria-label="Pen size">
-        <button
-          v-for="sz in (['s','m','l'] as const)"
-          :key="sz"
-          class="draw-size-btn"
-          :class="{ active: penSize === sz }"
-          :title="{ s: 'Small', m: 'Medium', l: 'Large' }[sz]"
-          @click="penSize = sz"
-        >
-          <span class="draw-size-dot" :data-size="sz"></span>
-        </button>
-      </div>
-      <span class="draw-toolbar-divider"></span>
-      <!-- Photo upload -->
-      <button
-        class="draw-tool-btn"
-        :title="book.banner_url ? 'Change photo' : 'Upload photo'"
-        :disabled="bannerUploading"
-        @click="bannerInputEl?.click()"
-      >
-        <i v-if="bannerUploading" class="fa-solid fa-spinner fa-spin"></i>
-        <i v-else class="fa-solid fa-camera"></i>
-      </button>
-      <!-- Reset to default photo -->
-      <button
-        v-if="book.banner_url"
-        class="draw-tool-btn draw-tool-btn--danger"
-        title="Remove custom photo"
-        :disabled="bannerUploading"
-        @click="resetBannerPhoto"
-      >
-        <i class="fa-solid fa-image"></i>
-      </button>
-      <span class="draw-toolbar-spacer"></span>
-      <span v-if="drawError || bannerError" class="draw-toolbar-error">{{ drawError || bannerError }}</span>
-      <button
-        v-if="book.drawing_url || strokes.length > 0"
-        class="draw-tool-btn draw-tool-btn--danger"
-        title="Remove drawing"
-        :disabled="drawSaving"
-        @click="removeDrawing"
-      >
-        <i class="fa-solid fa-eraser"></i> Remove
-      </button>
-      <button class="draw-tool-btn draw-tool-btn--muted" title="Cancel" @click="exitDrawMode">
-        Cancel
-      </button>
-      <button class="draw-tool-btn draw-tool-btn--save" :disabled="drawSaving" title="Save drawing" @click="saveAndExit">
-        <i v-if="drawSaving" class="fa-solid fa-spinner fa-spin"></i>
-        <i v-else class="fa-solid fa-check"></i>
-        {{ drawSaving ? 'Saving…' : 'Save' }}
-      </button>
-    </div>
-
     <div class="book-banner-inner">
       <h2 class="book-banner-title">{{ book.name }}</h2>
       <!-- Stats: recipe count + member count with separator line -->
@@ -547,13 +483,58 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
       </div>
     </div>
 
-    <!-- Floating action pill (hidden during draw mode) -->
+    <!-- Unified FAB / draw control pill -->
     <Teleport to="body">
-      <div v-if="auth.user && book && !drawMode" class="fab-pill">
-        <template v-if="isOwner">
-          <button class="fab-btn" title="Draw on banner" @click="enterDrawMode">
-            <i class="fa-solid fa-pen-nib"></i>
+      <!-- Error toast floats above pill in draw mode -->
+      <div v-if="drawMode && (drawError || bannerError)" class="fab-draw-error">
+        {{ drawError || bannerError }}
+      </div>
+
+      <div v-if="auth.user && book" class="fab-pill" :class="{ 'fab-pill--draw': drawMode }">
+        <!-- ── Normal FAB ── -->
+        <template v-if="!drawMode">
+          <template v-if="isOwner">
+            <button class="fab-btn" title="Draw on banner" @click="enterDrawMode">
+              <i class="fa-solid fa-pen-nib"></i>
+            </button>
+            <button
+              class="fab-btn"
+              :title="book.banner_url ? 'Change photo' : 'Upload photo'"
+              :disabled="bannerUploading"
+              @click="bannerInputEl?.click()"
+            >
+              <i v-if="bannerUploading" class="fa-solid fa-spinner fa-spin"></i>
+              <i v-else class="fa-solid fa-camera"></i>
+            </button>
+            <span class="fab-divider"></span>
+          </template>
+          <button class="fab-btn fab-btn--primary" title="Add recipe" @click="router.push('/new')">
+            <i class="fa-solid fa-plus"></i>
           </button>
+        </template>
+
+        <!-- ── Draw controls ── -->
+        <template v-else>
+          <button class="fab-btn" title="Undo" :disabled="strokes.length === 0" @click="undoStroke">
+            <i class="fa-solid fa-rotate-left"></i>
+          </button>
+          <button class="fab-btn" title="Clear all" :disabled="strokes.length === 0" @click="clearAll">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+          <span class="fab-divider"></span>
+          <div class="draw-size-group" role="group" aria-label="Pen size">
+            <button
+              v-for="sz in (['s','m','l'] as const)"
+              :key="sz"
+              class="draw-size-btn"
+              :class="{ active: penSize === sz }"
+              :title="{ s: 'Small', m: 'Medium', l: 'Large' }[sz]"
+              @click="penSize = sz"
+            >
+              <span class="draw-size-dot" :data-size="sz"></span>
+            </button>
+          </div>
+          <span class="fab-divider"></span>
           <button
             class="fab-btn"
             :title="book.banner_url ? 'Change photo' : 'Upload photo'"
@@ -563,11 +544,33 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
             <i v-if="bannerUploading" class="fa-solid fa-spinner fa-spin"></i>
             <i v-else class="fa-solid fa-camera"></i>
           </button>
+          <button
+            v-if="book.banner_url"
+            class="fab-btn fab-btn--danger"
+            title="Remove custom photo"
+            :disabled="bannerUploading"
+            @click="resetBannerPhoto"
+          >
+            <i class="fa-solid fa-image"></i>
+          </button>
           <span class="fab-divider"></span>
+          <button
+            v-if="book.drawing_url || strokes.length > 0"
+            class="fab-btn fab-btn--danger"
+            title="Remove drawing"
+            :disabled="drawSaving"
+            @click="removeDrawing"
+          >
+            <i class="fa-solid fa-eraser"></i>
+          </button>
+          <button class="fab-btn" title="Cancel" @click="exitDrawMode">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <button class="fab-btn fab-btn--primary" :disabled="drawSaving" title="Save" @click="saveAndExit">
+            <i v-if="drawSaving" class="fa-solid fa-spinner fa-spin"></i>
+            <i v-else class="fa-solid fa-check"></i>
+          </button>
         </template>
-        <button class="fab-btn fab-btn--primary" title="Add recipe" @click="router.push('/new')">
-          <i class="fa-solid fa-plus"></i>
-        </button>
       </div>
     </Teleport>
 
