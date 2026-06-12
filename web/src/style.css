@@ -768,7 +768,8 @@ body {
   .book-banner-inner { padding-left: 1rem; padding-right: 1rem; }
   .book-banner-title { font-size: 2.5rem; }
 }
-.banner-meta-row { margin-bottom: 1.25rem; align-items: center; }
+.banner-meta-row { margin-bottom: 1.25rem; align-items: center; border-bottom: none !important; }
+.banner-meta-divider { width: 1px; height: 32px; background: rgba(255,255,255,0.22); flex-shrink: 0; margin: 0 0.5rem; }
 
 /* ── Floating action pill (FAB) ── */
 .fab-pill {

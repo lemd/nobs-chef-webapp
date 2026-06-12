@@ -480,6 +480,7 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
           <span class="label">Members</span>
           <span class="value">{{ members.length }}</span>
         </div>
+        <span class="banner-meta-divider"></span>
         <div class="member-stack">
           <div
             v-for="m in members"
