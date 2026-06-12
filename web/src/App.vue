@@ -1,7 +1,9 @@
 <script setup>
-import { watch } from 'vue'
+import { watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { state } from './state.js'
+import { state } from './state.ts'
+import { auth } from './composables/useAuth.ts'
+import { fetchBooks, acceptInvite } from './api.ts'
 import MosaicStrip from './components/MosaicStrip.vue'
 import AppHeader from './components/AppHeader.vue'
 import AppDrawer from './components/AppDrawer.vue'
@@ -27,6 +29,38 @@ watch(
     m >= 8 && m <= 10 ? 'autumn' : 'winter'
   state.activeFilters.season.add(season)
 })()
+
+onMounted(() => {
+  // Auth is already initialised by main.ts — just watch for sign-in/out
+  watch(() => auth.user, async (user) => {
+    if (!user) {
+      state.books = []
+      state.currentBook = null
+      return
+    }
+
+    // Accept a pending invite (set before OAuth redirect)
+    const pendingToken = sessionStorage.getItem('pendingInviteToken')
+    if (pendingToken) {
+      sessionStorage.removeItem('pendingInviteToken')
+      try {
+        await acceptInvite(pendingToken)
+      } catch (e) {
+        console.warn('Invite accept failed:', e.message)
+      }
+    }
+
+    // Load books
+    const books = await fetchBooks().catch(() => [])
+    state.books = books
+    if (books.length > 0) state.currentBook = books[0]
+
+    // Redirect away from login
+    if (route.name === 'login' || route.name === 'join') {
+      router.push('/')
+    }
+  }, { immediate: true })
+})
 </script>
 
 <template>

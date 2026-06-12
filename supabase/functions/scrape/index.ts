@@ -3,6 +3,7 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { scrapeRecipePage } from "../_shared/scrapeUrl.ts";
 import { parseRecipeWithClaude } from "../_shared/openRouterClient.ts";
 import { matchIngredient, retryUnmatched } from "../_shared/ingredientMatcher.ts";
+import { getUserFromRequest } from "../_shared/auth.ts";
 import type { Recipe } from "../_shared/recipe.ts";
 
 async function urlToHash(url: string): Promise<string> {
@@ -70,16 +71,16 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
-  const authHeader = req.headers.get("Authorization");
-  const secret = Deno.env.get("PERSONAL_SECRET");
-  if (!secret || !authHeader || authHeader !== `Bearer ${secret}`) {
+  const user = await getUserFromRequest(req);
+  if (!user) {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
-  const { url, text, force } = (await req.json()) as {
+  const { url, text, force, book_id } = (await req.json()) as {
     url?: string;
     text?: string;
     force?: boolean;
+    book_id?: number;
   };
 
   const isPasteMode = !url && typeof text === "string" && text.trim().length > 0;
@@ -138,6 +139,8 @@ Deno.serve(async (req: Request) => {
         title: recipe.title,
         data: recipeWithUrl,
         saved_at: new Date().toISOString(),
+        user_id: user.id,
+        ...(book_id ? { book_id } : {}),
       },
       { onConflict: "url_hash" }
     ).select("id").single();

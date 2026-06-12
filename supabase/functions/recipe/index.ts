@@ -1,9 +1,15 @@
 import { createClient } from "npm:@supabase/supabase-js";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { getUserFromRequest } from "../_shared/auth.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  const user = await getUserFromRequest(req);
+  if (!user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
   const supabase = createClient(
@@ -12,7 +18,7 @@ Deno.serve(async (req: Request) => {
   );
 
   const { searchParams } = new URL(req.url);
-  const file = searchParams.get("file"); // e.g. "abc123def456.json"
+  const file = searchParams.get("file");
 
   let query = supabase.from("recipes").select("data");
 

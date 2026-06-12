@@ -27,9 +27,16 @@ file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-site_url = "http://127.0.0.1:3000"
+site_url = "https://nobs-chef-webapp.vercel.app"
+additional_redirect_urls = ["http://127.0.0.1:3000"]
 jwt_expiry = 3600
-enable_signup = false
+enable_signup = true
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+redirect_uri = "https://vcsuynfbykvncenmhjfh.supabase.co/auth/v1/callback"
 
 [edge_runtime]
 enabled = true
@@ -49,4 +56,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.recipe]
+verify_jwt = false
+
+[functions.book]
+verify_jwt = false
+
+[functions.invite]
 verify_jwt = false
