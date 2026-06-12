@@ -163,8 +163,14 @@ async function onImageFileChange(e) {
     <!-- Floating action pill -->
     <Teleport to="body">
       <div v-if="recipe && auth.user" ref="fabPillEl" class="fab-pill">
-        <button class="fab-btn" title="Draw (coming soon)" disabled>
-          <i class="fa-solid fa-pen-nib"></i>
+        <!-- Ingredients toggle -->
+        <button
+          class="fab-btn"
+          :class="{ 'fab-btn--active': state.panelOpen }"
+          :title="state.panelOpen ? 'Hide ingredients' : 'Show ingredients'"
+          @click="state.panelOpen = !state.panelOpen"
+        >
+          <i class="fa-solid fa-list"></i>
         </button>
         <button
           class="fab-btn"
