@@ -16,6 +16,8 @@ const recipe = computed(() => state.currentRecipe)
 const showConverted = computed(() => state.currentUnits === 'converted')
 
 async function loadRecipe() {
+  // Always scroll to top when entering/switching a recipe
+  document.getElementById('app-scroll')?.scrollTo(0, 0)
   const filename = `${props.slug}.json`
   if (!state.currentRecipe || state.activeFile !== filename) {
     try {

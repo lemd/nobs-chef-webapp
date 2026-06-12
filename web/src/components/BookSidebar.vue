@@ -8,13 +8,24 @@ const router = useRouter()
 const books = computed(() => state.books)
 const activeBookId = computed(() => state.currentBook?.id ?? null)
 
+function avatarInitial(name: string) {
+  return name?.charAt(0).toUpperCase() ?? '?'
+}
+
+// Desktop: select book
 function selectBook(book: typeof state.books[0]) {
   state.currentBook = book
   router.push('/')
 }
 
-function avatarInitial(name: string) {
-  return name?.charAt(0).toUpperCase() ?? '?'
+// Mobile drawer
+const mobileOpen = ref(false)
+function openMobile() { mobileOpen.value = true }
+function closeMobile() { mobileOpen.value = false }
+function selectBookMobile(book: typeof state.books[0]) {
+  state.currentBook = book
+  router.push('/')
+  closeMobile()
 }
 
 // Create-book modal
@@ -23,7 +34,8 @@ const newBookName = ref('')
 const creating = ref(false)
 const createError = ref('')
 
-function openCreateModal() {
+function openCreateModal(fromMobile = false) {
+  if (fromMobile) closeMobile()
   newBookName.value = ''
   createError.value = ''
   modalOpen.value = true
@@ -50,9 +62,15 @@ async function submitCreate() {
     creating.value = false
   }
 }
+
+function goProfile(fromMobile = false) {
+  if (fromMobile) closeMobile()
+  router.push('/profile')
+}
 </script>
 
 <template>
+  <!-- Desktop sidebar (hidden on mobile) -->
   <aside id="book-sidebar">
     <div
       v-for="book in books"
@@ -64,28 +82,72 @@ async function submitCreate() {
       @click="selectBook(book)"
     >{{ avatarInitial(book.name) }}</div>
 
-    <!-- Add new book — sits directly under the last book -->
     <button
       class="book-add-btn"
       title="New recipe book"
       aria-label="New recipe book"
-      @click="openCreateModal"
+      @click="openCreateModal()"
     >
       <i class="fa-solid fa-plus"></i>
     </button>
 
     <div class="sidebar-gap"></div>
 
-    <!-- Profile link stays at bottom -->
     <button
       class="book-add-btn sidebar-profile-btn"
       title="Profile"
       aria-label="Profile"
-      @click="router.push('/profile')"
+      @click="goProfile()"
     >
       <i class="fa-solid fa-circle-user"></i>
     </button>
   </aside>
+
+  <!-- Mobile hamburger button (fixed, shown only on mobile) -->
+  <Teleport to="body">
+    <button class="mobile-menu-btn" aria-label="Open books menu" @click="openMobile">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <!-- Mobile drawer overlay -->
+    <Transition name="mobile-drawer">
+      <div v-if="mobileOpen" class="mobile-drawer-backdrop" @click.self="closeMobile">
+        <nav class="mobile-drawer">
+          <div class="mobile-drawer-header">
+            <span class="mobile-drawer-wordmark">Nobs</span>
+            <button class="mobile-drawer-close" aria-label="Close" @click="closeMobile">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <div class="mobile-drawer-books">
+            <button
+              v-for="book in books"
+              :key="book.id"
+              class="mobile-book-row"
+              :class="{ active: book.id === activeBookId }"
+              @click="selectBookMobile(book)"
+            >
+              <span class="mobile-book-initial">{{ avatarInitial(book.name) }}</span>
+              <span class="mobile-book-name">{{ book.name }}</span>
+              <i v-if="book.id === activeBookId" class="fa-solid fa-check mobile-book-check"></i>
+            </button>
+          </div>
+
+          <div class="mobile-drawer-actions">
+            <button class="mobile-drawer-action-btn" @click="openCreateModal(true)">
+              <i class="fa-solid fa-plus"></i>
+              New recipe book
+            </button>
+            <button class="mobile-drawer-action-btn" @click="goProfile(true)">
+              <i class="fa-solid fa-circle-user"></i>
+              Profile
+            </button>
+          </div>
+        </nav>
+      </div>
+    </Transition>
+  </Teleport>
 
   <!-- Create book modal -->
   <Teleport to="body">
