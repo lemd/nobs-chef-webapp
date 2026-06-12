@@ -250,6 +250,7 @@ body {
 
 /* ── Ingredient panel — shared ── */
 #ingPanel { background: #fff; display: flex; flex-direction: column; }
+.ing-panel-inner-wrap { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 
 .ing-outer-tabs { position: absolute; display: flex; }
 .ing-outer-tab {
@@ -796,6 +797,16 @@ body {
 .fab-btn:disabled { opacity: 0.28; cursor: default; }
 .fab-btn--primary { background: var(--amber); color: #fff; }
 .fab-btn--primary:hover:not(:disabled) { opacity: 0.88; background: var(--amber); }
+.fab-btn--timer-active {
+  width: auto;
+  padding: 0 0.85rem;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+.fab-timer-time { line-height: 1; }
 .fab-btn--danger { color: #f87171; }
 .fab-btn--danger:hover:not(:disabled) { background: rgba(248,113,113,0.15); }
 .fab-divider {
@@ -905,8 +916,8 @@ body {
 
 /* ── Desktop panel layout (≥761px) ── */
 @media (min-width: 761px) {
-  /* Push content clear of panel (400px) + its tab strip (80px) */
-  #app-scroll.ing-open { padding-right: 500px; }
+  /* Push content clear of panel */
+  #app-scroll.ing-open { padding-right: 400px; }
 
   #ingPanel {
     position: fixed; top: 0; right: 0; bottom: 0; width: 400px;
@@ -915,12 +926,8 @@ body {
   }
   #ingPanel.open {
     transform: translateX(0);
-    box-shadow: -80px 0 40px -20px rgba(0,0,0,0.12), -8px 0 32px rgba(0,0,0,0.13);
+    box-shadow: -8px 0 32px rgba(0,0,0,0.13);
   }
-  .ing-outer-tabs { left: -80px; top: 0; bottom: 0; width: 80px; flex-direction: column; }
-  .ing-outer-tab { flex: 1; writing-mode: horizontal-tb; transform: none; border-radius: 0; border: 1px solid var(--line); border-right: none; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.35rem; padding: 0; font-size: 1.1rem; }
-  .ing-outer-tab + .ing-outer-tab { border-top: none; }
-  .ing-outer-tab.active { color: var(--amber); background: #fff; }
   .ing-panel-inner { flex: 1; overflow-y: auto; padding: 1.5rem 1.5rem 2.5rem; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
   .ing-panel-head { margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.25); }
   .ing-panel-title-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.75rem; }

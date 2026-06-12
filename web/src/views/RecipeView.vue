@@ -1,17 +1,17 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { state } from '../state.js'
 import { fetchRecipe, scrapeRecipe, saveRecipeImage } from '../api.js'
 import { useTimers } from '../composables/useTimers.js'
 import { useServings } from '../composables/useServings.js'
-import { parseTimingToSeconds, splitInstruction } from '../utils.js'
+import { parseTimingToSeconds, splitInstruction, formatTime } from '../utils.js'
 import { auth } from '../composables/useAuth.ts'
 import { resizeImage } from '../utils/imageUpload.ts'
 
 const props = defineProps({ slug: { type: String, required: true } })
 const router = useRouter()
-const { initTimers, tapTimerBtn } = useTimers()
+const { initTimers, tapTimerBtn, timer, resetTimer } = useTimers()
 const { initServings } = useServings()
 
 const recipe = computed(() => state.currentRecipe)
@@ -86,6 +86,24 @@ const metaPills = computed(() => {
 // ── Recipe image upload ──────────────────────────────────────────────────────
 const imageInputEl = ref(null)
 const imageUploading = ref(false)
+const fabPillEl = ref(null)
+
+// FLIP width animation when timer starts/stops
+watch(() => timer.running, () => {
+  const pill = fabPillEl.value
+  if (!pill) return
+  const startWidth = pill.getBoundingClientRect().width
+  nextTick().then(() => {
+    const endWidth = pill.getBoundingClientRect().width
+    if (Math.abs(endWidth - startWidth) < 2) return
+    pill.style.overflow = 'hidden'
+    const anim = pill.animate(
+      [{ width: `${startWidth}px` }, { width: `${endWidth}px` }],
+      { duration: 260, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+    )
+    anim.addEventListener('finish', () => { pill.style.overflow = '' })
+  })
+})
 
 async function onImageFileChange(e) {
   const file = e.target.files?.[0]
@@ -144,7 +162,7 @@ async function onImageFileChange(e) {
 
     <!-- Floating action pill -->
     <Teleport to="body">
-      <div v-if="recipe && auth.user" class="fab-pill">
+      <div v-if="recipe && auth.user" ref="fabPillEl" class="fab-pill">
         <button class="fab-btn" title="Draw (coming soon)" disabled>
           <i class="fa-solid fa-pen-nib"></i>
         </button>
@@ -160,10 +178,15 @@ async function onImageFileChange(e) {
         <span class="fab-divider"></span>
         <button
           class="fab-btn fab-btn--primary"
-          title="Timers"
-          @click="state.panelOpen = true; state.currentPanelTab = 'timers'"
+          :class="{ 'fab-btn--timer-active': timer.running }"
+          :title="timer.running ? 'Stop timer' : 'Timers'"
+          @click="timer.running && resetTimer()"
         >
-          <i class="fa-solid fa-stopwatch"></i>
+          <i v-if="!timer.running" class="fa-solid fa-stopwatch"></i>
+          <template v-else>
+            <i class="fa-solid fa-stop"></i>
+            <span class="fab-timer-time">{{ formatTime(timer.remaining) }}</span>
+          </template>
         </button>
       </div>
     </Teleport>

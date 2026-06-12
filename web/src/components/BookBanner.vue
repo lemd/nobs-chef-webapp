@@ -315,7 +315,7 @@ function flipPillWidth(pill: HTMLElement, startWidth: number) {
   pill.style.overflow = 'hidden'
   const anim = pill.animate(
     [{ width: `${startWidth}px` }, { width: `${endWidth}px` }],
-    { duration: 440, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+    { duration: 260, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
   )
   anim.addEventListener('finish', () => { pill.style.overflow = '' })
 }

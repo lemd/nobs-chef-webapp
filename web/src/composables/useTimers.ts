@@ -78,8 +78,7 @@ export function useTimers() {
       timer.remaining = info.total
       _start()
     }
-    appState.panelOpen = true
-    appState.currentPanelTab = 'timers'
+    appState.panelOpen = false
   }
 
   function pauseTimer(): void { if (timer.running) _stop() }
