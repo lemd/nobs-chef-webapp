@@ -59,8 +59,53 @@
 
 ---
 
+## Phase 6 — Social & UX Polish
+- [x] Book banner — full-height hero matching recipe detail view
+- [x] Member avatar circles + invite modal (copy link, 7-day token)
+- [x] Mobile hamburger drawer — pill button top-left with book initial
+- [x] Leave / delete book from Profile (cascade deletes if last member)
+- [x] Auto-create "My Recipes" on first sign-in
+- [x] Dashboard: "Add recipe" CTA button → `/new`
+- [x] Improved search bar (boxed, bigger) + visible "Clear filters" pill
+- [x] Recipe URL uniqueness per book (`book_recipes` junction table)
+- [x] Fix: CORS for edge functions (always deploy `--no-verify-jwt`)
+- [x] Fix: timer compound timing (pick max duration, not sum)
+- [x] Fix: scroll-to-top on recipe navigation
+
+---
+
+## Phase 7 — Book Banner Drawing (in progress)
+**Architecture — three independent layers:**
+```
+[ background layer ] ← book photo + dark gradient (existing .book-banner CSS)
+[ drawing layer    ] ← transparent PNG with white ink lines (new overlay)
+[ UI layer         ] ← book title, member circles, buttons
+```
+
+### Drawing feature plan
+- [ ] DB: add `drawing_url` column to `recipe_books` (nullable text)
+- [ ] Storage: create `book-drawings` Supabase Storage bucket (private, service-role only)
+- [ ] Edge fn: `POST /book/drawing` — accepts multipart PNG, uploads to Storage, saves public URL on `recipe_books.drawing_url`; only book owner can write
+- [ ] Edge fn: include `drawing_url` in `GET /book` response
+- [ ] Frontend: `BookBanner.vue` — pencil toggle button (owner only, top-right of banner)
+  - Enter draw mode: transparent `<canvas>` overlaid on banner at full size
+  - White brush only, ~3px, smooth bezier curves
+  - DPR-aware canvas sizing for retina sharpness
+  - Per-stroke undo stack
+  - Touch + mouse support
+  - Save button: `canvas.toBlob()` → upload via `/book/drawing` → store URL in state
+  - Exit draw mode: canvas hides, saved PNG rendered as `<img>` overlay
+- [ ] `RecipeBook` type: add `drawingUrl?: string | null`
+- [ ] `state.currentBook` will carry `drawingUrl`; banner re-renders overlay on book switch
+
+### Future layers (phase 8+)
+- [ ] Background picker: swap photo for paper textures (linen, kraft, chalkboard…)
+- [ ] Brush colour selector (beyond white)
+- [ ] Per-member drawings / layers
+
+---
+
 ## Next / Future
-- [ ] Invite modal UI in the app (generate + copy link from within a book)
 - [ ] `imageUrl` field scraped and stored — recipe hero shows real food photos
 - [ ] Recipe edit / re-scrape UI
 - [ ] Push notifications for shared book activity

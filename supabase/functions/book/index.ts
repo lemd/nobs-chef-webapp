@@ -5,6 +5,8 @@
  * GET  /book/members?book_id=X    → list members of a book with user metadata
  * POST /book                      → create a new book (caller becomes owner + member)
  * POST /book/leave?book_id=X      → leave a book (not allowed if owner)
+ * POST /book/drawing?book_id=X    → upload/replace transparent PNG drawing overlay (owner only)
+ * DELETE /book/drawing?book_id=X  → remove drawing overlay (owner only)
  */
 import { createClient } from "npm:@supabase/supabase-js";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
@@ -71,7 +73,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "GET") {
     const { data, error } = await supabase
       .from("recipe_book_members")
-      .select("role, joined_at, recipe_books(id, name, owner_id, created_at)")
+      .select("role, joined_at, recipe_books(id, name, owner_id, created_at, drawing_url)")
       .eq("user_id", user.id);
 
     if (error) return jsonResponse({ error: error.message }, 500);
@@ -133,6 +135,79 @@ Deno.serve(async (req: Request) => {
 
     if (error) return jsonResponse({ error: error.message }, 500);
     return jsonResponse({ ok: true, deleted: false });
+  }
+
+  // ── POST /book/drawing?book_id=X — upload PNG overlay (owner only) ─────────
+  if ((req.method === "POST" || req.method === "DELETE") && action === "drawing") {
+    const bookId = url.searchParams.get("book_id");
+    if (!bookId) return jsonResponse({ error: "book_id required" }, 400);
+
+    const { data: book } = await supabase
+      .from("recipe_books")
+      .select("owner_id, drawing_url")
+      .eq("id", bookId)
+      .maybeSingle();
+
+    if (!book) return jsonResponse({ error: "Book not found" }, 404);
+    if (book.owner_id !== user.id) return jsonResponse({ error: "Only the book owner can edit the drawing" }, 403);
+
+    // DELETE — clear drawing
+    if (req.method === "DELETE") {
+      if (book.drawing_url) {
+        // Extract storage path from the URL: ...storage/v1/object/public/book-drawings/<path>
+        const match = (book.drawing_url as string).match(/book-drawings\/(.+)$/);
+        if (match) await supabase.storage.from("book-drawings").remove([match[1]]);
+      }
+      const { error: clearErr } = await supabase
+        .from("recipe_books")
+        .update({ drawing_url: null })
+        .eq("id", bookId);
+      if (clearErr) return jsonResponse({ error: clearErr.message }, 500);
+      return jsonResponse({ ok: true, drawing_url: null });
+    }
+
+    // POST — upload new PNG
+    const contentType = req.headers.get("content-type") ?? "";
+    if (!contentType.includes("image/png")) {
+      return jsonResponse({ error: "Content-Type must be image/png" }, 400);
+    }
+
+    const arrayBuffer = await req.arrayBuffer();
+    if (arrayBuffer.byteLength > 2 * 1024 * 1024) {
+      return jsonResponse({ error: "Drawing exceeds 2 MB limit" }, 413);
+    }
+
+    const storagePath = `${bookId}/${Date.now()}.png`;
+
+    // Remove old drawing if present
+    if (book.drawing_url) {
+      const match = (book.drawing_url as string).match(/book-drawings\/(.+)$/);
+      if (match) await supabase.storage.from("book-drawings").remove([match[1]]);
+    }
+
+    const { error: uploadErr } = await supabase.storage
+      .from("book-drawings")
+      .upload(storagePath, new Uint8Array(arrayBuffer), {
+        contentType: "image/png",
+        upsert: false,
+      });
+
+    if (uploadErr) return jsonResponse({ error: uploadErr.message }, 500);
+
+    const { data: publicData } = supabase.storage
+      .from("book-drawings")
+      .getPublicUrl(storagePath);
+
+    const drawingUrl = publicData.publicUrl;
+
+    const { error: updateErr } = await supabase
+      .from("recipe_books")
+      .update({ drawing_url: drawingUrl })
+      .eq("id", bookId);
+
+    if (updateErr) return jsonResponse({ error: updateErr.message }, 500);
+
+    return jsonResponse({ ok: true, drawing_url: drawingUrl });
   }
 
   // ── POST /book: create book ───────────────────────────────────────────────

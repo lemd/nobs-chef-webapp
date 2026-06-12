@@ -618,6 +618,77 @@ body {
   margin: 0 0 1.25rem;
 }
 @media (min-width: 900px) { .book-banner-title { font-size: 5.5rem; line-height: 1.05; } }
+/* ── Book banner drawing layer ── */
+.book-banner-drawing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  z-index: 1;
+}
+.book-banner-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  cursor: crosshair;
+  touch-action: none;
+}
+/* Banner needs position:relative for the absolute children */
+.book-banner { position: relative; }
+/* UI layer sits above canvas */
+.book-banner-inner { position: relative; z-index: 3; }
+/* Draw toolbar — floats at top of banner */
+.draw-toolbar {
+  position: absolute;
+  top: calc(var(--hdr) + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0,0,0,0.62);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  white-space: nowrap;
+}
+.draw-toolbar-spacer { flex: 1; min-width: 0.5rem; }
+.draw-toolbar-error { font-size: 0.72rem; color: #f87171; }
+.draw-tool-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-body); font-size: 0.78rem; font-weight: 600;
+  padding: 0.3rem 0.65rem; border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,0.22);
+  background: transparent; color: rgba(255,255,255,0.85);
+  cursor: pointer; transition: background 0.12s, opacity 0.12s;
+}
+.draw-tool-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+.draw-tool-btn:disabled { opacity: 0.35; cursor: default; }
+.draw-tool-btn--danger { border-color: rgba(248,113,113,0.4); color: #f87171; }
+.draw-tool-btn--danger:hover:not(:disabled) { background: rgba(248,113,113,0.15); }
+.draw-tool-btn--muted { color: rgba(255,255,255,0.55); }
+.draw-tool-btn--save {
+  background: var(--amber); border-color: transparent; color: #fff;
+}
+.draw-tool-btn--save:hover:not(:disabled) { opacity: 0.85; background: var(--amber); }
+/* Pencil + eraser buttons beside member stack */
+.banner-draw-btn {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.25);
+  color: rgba(253,246,236,0.85); font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.15s;
+  margin-left: 0.5rem;
+}
+.banner-draw-btn:hover { background: rgba(255,255,255,0.22); }
+.banner-draw-btn--remove { border-color: rgba(248,113,113,0.35); color: #f87171; }
+.banner-draw-btn--remove:hover { background: rgba(248,113,113,0.15); }
 .book-banner-row { display: flex; align-items: center; gap: 0.75rem; }
 .member-stack { display: flex; flex-direction: row; align-items: center; }
 .member-circle {

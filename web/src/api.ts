@@ -97,6 +97,29 @@ export async function leaveBook(bookId: number): Promise<{ deleted: boolean }> {
   return { deleted: data.deleted ?? false }
 }
 
+export async function saveDrawing(bookId: number, pngBlob: Blob): Promise<string> {
+  const res = await fetch(`${API_BASE}/book/drawing?book_id=${bookId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'image/png',
+      Authorization: getAuthHeader(),
+    },
+    body: pngBlob,
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Failed to save drawing')
+  return data.drawing_url as string
+}
+
+export async function clearDrawing(bookId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/book/drawing?book_id=${bookId}`, {
+    method: 'DELETE',
+    headers: { Authorization: getAuthHeader() },
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Failed to clear drawing')
+}
+
 export async function createInvite(bookId: number): Promise<{ token: string; url: string }> {
   const res = await fetch(`${API_BASE}/invite/create`, {
     method: 'POST',
