@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="ts">
 import { watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { state } from './state.ts'
 import { auth } from './composables/useAuth.ts'
-import { fetchBooks, acceptInvite } from './api.ts'
+import { fetchBooks, acceptInvite, fetchBookMembers } from './api.ts'
 import MosaicStrip from './components/MosaicStrip.vue'
 import AppHeader from './components/AppHeader.vue'
 import AppDrawer from './components/AppDrawer.vue'
@@ -30,12 +30,19 @@ watch(
   state.activeFilters.season.add(season)
 })()
 
+// Load members whenever the active book changes
+watch(() => state.currentBook, async (book) => {
+  if (!book) { state.bookMembers = []; return }
+  state.bookMembers = await fetchBookMembers(book.id).catch(() => [])
+})
+
 onMounted(() => {
   // Auth is already initialised by main.ts — just watch for sign-in/out
   watch(() => auth.user, async (user) => {
     if (!user) {
       state.books = []
       state.currentBook = null
+      state.bookMembers = []
       return
     }
 
@@ -46,7 +53,7 @@ onMounted(() => {
       try {
         await acceptInvite(pendingToken)
       } catch (e) {
-        console.warn('Invite accept failed:', e.message)
+        console.warn('Invite accept failed:', (e as Error).message)
       }
     }
 

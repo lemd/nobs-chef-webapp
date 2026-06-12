@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import type { Recipe, RecipeBook, RecipeListItem } from './types/index.ts'
+import type { Recipe, RecipeBook, RecipeListItem, BookMember } from './types/index.ts'
 
 type FilterKey = 'mealType' | 'dietary' | 'season'
 type PanelTab = 'ingredients' | 'timers'
@@ -11,6 +11,7 @@ export const state = reactive({
   // Books
   books: [] as RecipeBook[],
   currentBook: null as RecipeBook | null,
+  bookMembers: [] as BookMember[],
 
   // Current recipe context
   currentRecipe: null as Recipe | null,

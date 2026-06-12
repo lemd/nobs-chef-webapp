@@ -493,6 +493,124 @@ body {
 #app-scroll.recipe-dark .step-timing { color: rgba(253,246,236,0.55); }
 #app-scroll.recipe-dark .conv { color: rgba(253,246,236,0.35); }
 
+/* ── Book banner (dashboard) ── */
+.book-banner {
+  min-height: 100svh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  margin-left: -2rem;
+  margin-right: -2rem;
+  margin-bottom: 3rem;
+  max-width: calc(100% + 4rem);
+  margin-top: calc(-1 * var(--hdr));
+  background-image:
+    linear-gradient(to top,
+      rgba(0,0,0,0.88) 0%,
+      rgba(0,0,0,0.55) 35%,
+      rgba(0,0,0,0.20) 65%,
+      rgba(0,0,0,0.04) 100%),
+    url('https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg');
+  background-color: #1d1108;
+  background-size: cover;
+  background-position: center;
+}
+.book-banner-inner {
+  padding: var(--hdr) 2rem 2.5rem;
+  max-width: 1080px;
+  width: 100%;
+}
+.book-banner-title {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 400;
+  color: #fdf6ec;
+  line-height: 1.1;
+  margin: 0 0 1.25rem;
+}
+@media (min-width: 900px) { .book-banner-title { font-size: 5.5rem; line-height: 1.05; } }
+.book-banner-row { display: flex; align-items: center; gap: 0.75rem; }
+.member-stack { display: flex; flex-direction: row; align-items: center; }
+.member-circle {
+  width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+  background: var(--amber); display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem; font-weight: 700; color: #fff;
+  border: 2.5px solid rgba(0,0,0,0.6);
+  margin-right: -10px; flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.member-circle img { width: 100%; height: 100%; object-fit: cover; }
+.member-invite-btn {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(200,144,45,0.22); border: 2px solid rgba(200,144,45,0.5);
+  color: rgba(253,246,236,0.9); font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.15s;
+  margin-left: 18px; /* clear the overlap */
+}
+.member-invite-btn:hover { background: rgba(200,144,45,0.4); }
+@media (max-width: 760px) {
+  .book-banner { margin-left: -1rem; margin-right: -1rem; max-width: calc(100% + 2rem); }
+  .book-banner-inner { padding-left: 1rem; padding-right: 1rem; }
+  .book-banner-title { font-size: 2.5rem; }
+}
+
+/* ── Invite modal ── */
+.invite-modal-backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.invite-modal {
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 2rem;
+  max-width: 460px; width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  position: relative;
+}
+.invite-modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: none; border: none; font-size: 1rem;
+  color: var(--dim); cursor: pointer; padding: 4px 8px;
+}
+.invite-modal-close:hover { color: var(--text); }
+.invite-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem; font-weight: 400;
+  color: var(--text); margin: 0 0 0.4rem;
+}
+.invite-modal-hint {
+  font-size: 0.82rem; color: var(--dim);
+  margin: 0 0 1.25rem; line-height: 1.5;
+}
+.invite-link-row { display: flex; flex-direction: column; gap: 0.6rem; }
+.invite-link-loading { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--dim); padding: 0.5rem 0; }
+.invite-link-input {
+  width: 100%; padding: 0.55rem 0.75rem;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-body); font-size: 0.8rem;
+  outline: none; cursor: text;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+.invite-copy-btn {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0.55rem 1.25rem;
+  background: var(--amber); color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 0.82rem; font-weight: 600; font-family: var(--font-body);
+  cursor: pointer; transition: opacity 0.15s;
+}
+.invite-copy-btn:hover { opacity: 0.88; }
+.invite-copy-btn.copied { background: #3ab46a; }
+.invite-copy-btn:disabled { opacity: 0.45; cursor: default; }
+.invite-modal-error { font-size: 0.8rem; color: #c0392b; margin: 0.5rem 0 0; }
+
 /* ── History list (drawer) ── */
 .history-list { list-style: none; padding: 0; }
 .history-list li { margin-bottom: 0.15rem; }

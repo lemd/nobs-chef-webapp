@@ -3,6 +3,7 @@ import DashView from './views/DashView.vue'
 import NewView from './views/NewView.vue'
 import RecipeView from './views/RecipeView.vue'
 import LoginView from './views/LoginView.vue'
+import ProfileView from './views/ProfileView.vue'
 import { auth } from './composables/useAuth.ts'
 
 const router = createRouter({
@@ -13,6 +14,7 @@ const router = createRouter({
     { path: '/r/:slug', name: 'recipe', component: RecipeView, props: true },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/join', name: 'join', component: LoginView },
+    { path: '/profile', name: 'profile', component: ProfileView },
   ],
 })
 

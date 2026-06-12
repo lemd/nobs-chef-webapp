@@ -5,6 +5,8 @@
         { "src": "/new", "dest": "/index.html" },
         { "src": "/r/[^/]+", "dest": "/index.html" },
         { "src": "/join", "dest": "/index.html" },
+        { "src": "/login", "dest": "/index.html" },
+        { "src": "/profile", "dest": "/index.html" },
         { "handle": "filesystem" }
     ]
 }

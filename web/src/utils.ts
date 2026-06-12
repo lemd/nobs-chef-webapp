@@ -1,13 +1,27 @@
 export function parseTimingToSeconds(str: string | null | undefined): number | null {
   if (!str) return null
-  let secs = 0
-  const h = str.match(/(\d+)\s*h(?:our|r)?s?/i)
-  if (h) secs += parseInt(h[1]) * 3600
-  const m = str.match(/(?:\d+[–\-])?((\d+))\s*min/i)
-  if (m) secs += parseInt(m[1]) * 60
-  const s = str.match(/(\d+)\s*sec/i)
-  if (s) secs += parseInt(s[1])
-  return secs > 0 ? secs : null
+  // Split compound timings (e.g. "5 min for onion, 20 min simmering") and use the largest
+  const segments = str.split(/[,;]/)
+  let maxSecs = 0
+  for (const seg of segments) {
+    let secs = 0
+    const h = seg.match(/(\d+)\s*h(?:our|r)?s?/i)
+    if (h) secs += parseInt(h[1]) * 3600
+    // Cross-unit range like "30 seconds–1 minute" → use the minutes value only
+    const crossUnit = seg.match(/\d+\s*s(?:ec)?[a-z]*\s*[–\-]\s*(\d+)\s*min/i)
+    if (crossUnit) {
+      secs += parseInt(crossUnit[1]) * 60
+    } else {
+      // Range like "20–30 minutes" → use the high end (30)
+      const m = seg.match(/(?:\d+[–\-])?(\d+)\s*min/i)
+      if (m) secs += parseInt(m[1]) * 60
+      // Range like "30–45 seconds" → use the high end (45)
+      const s = seg.match(/(?:\d+[–\-])?(\d+)\s*sec/i)
+      if (s) secs += parseInt(s[1])
+    }
+    if (secs > maxSecs) maxSecs = secs
+  }
+  return maxSecs > 0 ? maxSecs : null
 }
 
 export function formatTime(secs: number): string {

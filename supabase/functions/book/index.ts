@@ -1,9 +1,120 @@
 /**
  * book function — manage recipe books
  *
- * GET  /book           → list all books the caller belongs to
- * POST /book           → create a new book (caller becomes owner + member)
+ * GET  /book                      → list all books the caller belongs to
+ * GET  /book/members?book_id=X    → list members of a book with user metadata
+ * POST /book                      → create a new book (caller becomes owner + member)
  */
+import { createClient } from "npm:@supabase/supabase-js";
+import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { getUserFromRequest } from "../_shared/auth.ts";
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  const user = await getUserFromRequest(req);
+  if (!user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const url = new URL(req.url);
+  const action = url.pathname.split("/").filter(Boolean).pop(); // "book" | "members"
+
+  // ── GET /book/members?book_id=X ───────────────────────────────────────────
+  if (req.method === "GET" && action === "members") {
+    const bookId = url.searchParams.get("book_id");
+    if (!bookId) return jsonResponse({ error: "book_id required" }, 400);
+
+    // Verify caller is a member
+    const { data: membership } = await supabase
+      .from("recipe_book_members")
+      .select("role")
+      .eq("book_id", bookId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!membership) return jsonResponse({ error: "Not a member" }, 403);
+
+    const { data: members, error } = await supabase
+      .from("recipe_book_members")
+      .select("user_id, role, joined_at")
+      .eq("book_id", bookId);
+
+    if (error) return jsonResponse({ error: error.message }, 500);
+
+    // Fetch user metadata for each member via admin API
+    const membersWithMeta = await Promise.all(
+      (members ?? []).map(async (m: { user_id: string; role: string; joined_at: string }) => {
+        const { data: { user: u } } = await supabase.auth.admin.getUserById(m.user_id);
+        return {
+          userId: m.user_id,
+          role: m.role,
+          joinedAt: m.joined_at,
+          email: u?.email ?? null,
+          name: u?.user_metadata?.full_name ?? u?.email ?? null,
+          avatarUrl: u?.user_metadata?.avatar_url ?? null,
+        };
+      })
+    );
+
+    return jsonResponse(membersWithMeta);
+  }
+
+  // ── GET /book: list books ─────────────────────────────────────────────────
+  if (req.method === "GET") {
+    const { data, error } = await supabase
+      .from("recipe_book_members")
+      .select("role, joined_at, recipe_books(id, name, owner_id, created_at)")
+      .eq("user_id", user.id);
+
+    if (error) return jsonResponse({ error: error.message }, 500);
+
+    const books = (data ?? []).map((row: Record<string, unknown>) => ({
+      ...(row.recipe_books as Record<string, unknown>),
+      role: row.role,
+      joinedAt: row.joined_at,
+    }));
+
+    return jsonResponse(books);
+  }
+
+  // ── POST: create book ─────────────────────────────────────────────────────
+  if (req.method === "POST") {
+    const { name } = (await req.json()) as { name?: string };
+    if (!name?.trim()) {
+      return jsonResponse({ error: "name is required" }, 400);
+    }
+
+    const { data: book, error: bookErr } = await supabase
+      .from("recipe_books")
+      .insert({ name: name.trim(), owner_id: user.id })
+      .select("id, name, owner_id, created_at")
+      .single();
+
+    if (bookErr || !book) {
+      return jsonResponse({ error: bookErr?.message ?? "Failed to create book" }, 500);
+    }
+
+    const { error: memberErr } = await supabase
+      .from("recipe_book_members")
+      .insert({ book_id: book.id, user_id: user.id, role: "owner" });
+
+    if (memberErr) {
+      return jsonResponse({ error: memberErr.message }, 500);
+    }
+
+    return jsonResponse({ ...book, role: "owner" }, 201);
+  }
+
+  return jsonResponse({ error: "Method not allowed" }, 405);
+});
 import { createClient } from "npm:@supabase/supabase-js";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { getUserFromRequest } from "../_shared/auth.ts";

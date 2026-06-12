@@ -1,5 +1,5 @@
 import { getAccessToken } from './composables/useAuth.ts'
-import type { Recipe, RecipeBook, RecipeListItem, InviteInfo, InviteResult } from './types/index.ts'
+import type { Recipe, RecipeBook, RecipeListItem, InviteInfo, InviteResult, BookMember } from './types/index.ts'
 
 export const API_BASE = import.meta.env.VITE_SUPABASE_URL
   ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
@@ -56,6 +56,14 @@ export async function scrapeRecipe({
 }
 
 // ── Book API ──────────────────────────────────────────────────────────────────
+
+export async function fetchBookMembers(bookId: number): Promise<BookMember[]> {
+  const res = await fetch(`${API_BASE}/book/members?book_id=${bookId}`, {
+    headers: { Authorization: getAuthHeader() },
+  })
+  if (!res.ok) return []
+  return res.json()
+}
 
 export async function fetchBooks(): Promise<RecipeBook[]> {
   const res = await fetch(`${API_BASE}/book`, {

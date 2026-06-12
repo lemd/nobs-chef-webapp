@@ -58,6 +58,15 @@ export interface RecipeBook {
   joinedAt?: string
 }
 
+export interface BookMember {
+  userId: string
+  role: BookRole
+  joinedAt: string
+  email: string | null
+  name: string | null
+  avatarUrl: string | null
+}
+
 export interface InviteInfo {
   bookId: number
   bookName: string
