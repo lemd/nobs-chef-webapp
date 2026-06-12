@@ -106,15 +106,15 @@ body {
   align-items: center;
   gap: 0;
   padding: 10px 0 14px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--paper);
+  background: transparent;
+  pointer-events: none;
 }
 .app-header--recipe {
-  background: transparent;
-  border-bottom: none;
+  pointer-events: auto;
   margin-bottom: 0;
   transition: background 0.3s ease, border-color 0.3s ease;
 }
@@ -134,6 +134,7 @@ body {
 .app-header--scrolled {
   background: var(--paper);
   border-bottom: 1px solid var(--line);
+  pointer-events: auto;
 }
 .app-header--scrolled .header-back {
   color: var(--amber);

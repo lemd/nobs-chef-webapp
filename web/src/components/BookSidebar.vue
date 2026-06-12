@@ -64,9 +64,7 @@ async function submitCreate() {
       @click="selectBook(book)"
     >{{ avatarInitial(book.name) }}</div>
 
-    <div class="sidebar-gap"></div>
-
-    <!-- Add new book -->
+    <!-- Add new book — sits directly under the last book -->
     <button
       class="book-add-btn"
       title="New recipe book"
@@ -76,7 +74,9 @@ async function submitCreate() {
       <i class="fa-solid fa-plus"></i>
     </button>
 
-    <!-- Profile link -->
+    <div class="sidebar-gap"></div>
+
+    <!-- Profile link stays at bottom -->
     <button
       class="book-add-btn sidebar-profile-btn"
       title="Profile"
