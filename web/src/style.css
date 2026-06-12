@@ -939,8 +939,9 @@ body {
   }
   #ingPanel.open {
     transform: translateX(0);
-    box-shadow: -20px 0 60px rgba(0,0,0,0.22), -1px 0 0 var(--line);
   }
+  /* Shadow cast by main content onto the panel — makes steps look elevated */
+  #app-scroll.ing-open { box-shadow: inset -20px 0 40px -10px rgba(0,0,0,0.18); }
   /* Collapse toggle — sits on the left edge of the panel, desktop only */
   .panel-collapse-btn {
     display: flex;
