@@ -1,9 +1,10 @@
 {
-    "outputDirectory": "web/public",
-    "buildCommand": "",
+    "buildCommand": "cd web && npm install && npm run build",
+    "outputDirectory": "web/dist",
     "routes": [
         { "src": "/new", "dest": "/index.html" },
         { "src": "/r/[^/]+", "dest": "/index.html" },
+        { "src": "/join", "dest": "/index.html" },
         { "handle": "filesystem" }
     ]
 }

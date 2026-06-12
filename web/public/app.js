@@ -1,131 +1,21 @@
-const API_BASE = 'https://vcsuynfbykvncenmhjfh.supabase.co/functions/v1';
+import { API_BASE, getPersonalSecret, clearPersonalSecret, els, state } from './modules/state.js';
+import { esc } from './modules/utils.js';
+import { setStatus, mosaicLoading } from './modules/ui.js';
+import { showView } from './modules/views.js';
+import { renderRecipe } from './modules/recipe.js';
+import { loadHistory, loadFile } from './modules/dashboard.js';
+import { closeGuide } from './modules/panel.js';
 
-function getPersonalSecret() {
-    let secret = localStorage.getItem('nobs_secret');
-    if (!secret) {
-        secret = prompt('Enter access password:');
-        if (!secret) throw new Error('Password required.');
-        localStorage.setItem('nobs_secret', secret);
-    }
-    return secret;
-}
-
-function clearPersonalSecret() {
-    localStorage.removeItem('nobs_secret');
-}
-
-const form = document.getElementById('scrapeForm');
-const urlInput = document.getElementById('urlInput');
-const btn = document.getElementById('scrapeBtn');
-const status = document.getElementById('status');
-const recipeEl = document.getElementById('recipe');
-const emptyEl = document.getElementById('empty');
-const historyEl = document.getElementById('historyList');
-const newViewEl = document.getElementById('newView');
-const recipeLayoutEl = document.getElementById('recipeLayout');
-const dashViewEl = document.getElementById('dashView');
-const dashGridEl = document.getElementById('dashGrid');
-const appScroll = document.getElementById('app-scroll');
-
-let activeFile = null;
-let currentSourceUrl = null;
-let currentRecipe = null;
-let currentUnits = 'original';
-let originalServings = null;
-let currentServings = null;
-let currentPanelTab = 'ingredients';
-const activeTimers = [];
-let timerIdCounter = 0;
-let timerCarouselIndex = 0;
-
-const PANEL_TAB_CONFIG = {}; // kept for safety, no longer used
-
-function initTimers(steps) {
-    // Clear any running timers
-    activeTimers.forEach((t) => clearInterval(t.interval));
-    activeTimers.length = 0;
-    timerIdCounter = 0;
-    timerCarouselIndex = 0;
-    (steps ?? []).forEach((s) => {
-        const secs = parseTimingToSeconds(s.timingInterval);
-        if (!secs) return;
-        activeTimers.push({
-            id: ++timerIdCounter,
-            stepNum: s.stepNumber,
-            label: `Step ${s.stepNumber}`,
-            sublabel: s.timingInterval,
-            total: secs,
-            remaining: secs,
-            running: false,
-            interval: null,
-        });
-    });
-    renderTimers();
-}
-
-function tapTimerBtn(stepNum) {
-    const idx = activeTimers.findIndex((t) => t.stepNum === stepNum);
-    if (idx === -1) return;
-    timerCarouselIndex = idx;
-    const t = activeTimers[idx];
-    // Reset if already done so tapping always restarts
-    if (t.remaining === 0) {
-        clearInterval(t.interval);
-        t.interval = null;
-        t.running = false;
-        t.remaining = t.total;
-    }
-    const panel = document.getElementById('ingPanel');
-    if (!panel.classList.contains('open')) {
-        panel.classList.add('open');
-        document.body.classList.add('ing-open');
-    }
-    switchPanelTab('timers');
-    startTimer(t.id);
-    // Scroll carousel to this timer (even if panel was already open)
-    requestAnimationFrame(() => {
-        const carousel = document.getElementById('timerCarousel');
-        if (carousel)
-            carousel.scrollTo({
-                left: idx * carousel.clientWidth,
-                behavior: 'smooth',
-            });
-        document
-            .querySelectorAll('.timer-dot')
-            .forEach((d, i) => d.classList.toggle('active', i === idx));
-    });
-}
-
-function carouselNav(dir) {
-    const n = activeTimers.length;
-    if (n < 2) return;
-    timerCarouselIndex = Math.max(0, Math.min(timerCarouselIndex + dir, n - 1));
-    const carousel = document.getElementById('timerCarousel');
-    if (carousel)
-        carousel.scrollTo({
-            left: timerCarouselIndex * carousel.clientWidth,
-            behavior: 'smooth',
-        });
-    document
-        .querySelectorAll('.timer-dot')
-        .forEach((d, i) =>
-            d.classList.toggle('active', i === timerCarouselIndex),
-        );
-}
-
-const drawer = document.getElementById('drawer');
-const backdrop = document.getElementById('drawerBackdrop');
-document.getElementById('drawerToggle').addEventListener('click', () => {
-    drawer.classList.add('open');
-    backdrop.classList.add('open');
+// ── Guide modal close handlers ────────────────────────────────────────────────
+document.getElementById('guideClose').addEventListener('click', closeGuide);
+document.getElementById('guideBackdrop').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('guideBackdrop')) closeGuide();
 });
-document.getElementById('drawerClose').addEventListener('click', closeDrawer);
-backdrop.addEventListener('click', closeDrawer);
-function closeDrawer() {
-    drawer.classList.remove('open');
-    backdrop.classList.remove('open');
-}
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeGuide();
+});
 
+// ── Nav ───────────────────────────────────────────────────────────────────────
 document.getElementById('homeBtn').addEventListener('click', (e) => {
     e.preventDefault();
     history.pushState({}, '', '/');
@@ -137,526 +27,52 @@ document.getElementById('newBtn').addEventListener('click', () => {
     showView('new');
 });
 
-function switchPanelTab(tab) {
-    currentPanelTab = tab;
-    ['Ingredients', 'Timers', 'Servings'].forEach((name) => {
-        const t = name.toLowerCase();
-        const sec = document.getElementById(`panel${name}`);
-        const outerBtn = document.getElementById(`otab-${t}`);
-        if (sec) sec.style.display = t === tab ? '' : 'none';
-        if (outerBtn) outerBtn.classList.toggle('active', t === tab);
-    });
+// ── Input mode toggle ────────────────────────────────────────────────────────
+const pasteInput = document.getElementById('pasteInput');
+
+function setInputMode(mode) {
+    const urlForm = document.getElementById('scrapeForm');
+    const pasteFormEl = document.getElementById('pasteForm');
+    const btnUrl = document.getElementById('modeUrl');
+    const btnPaste = document.getElementById('modePaste');
+    const isUrl = mode === 'url';
+    urlForm.classList.toggle('hidden', !isUrl);
+    pasteFormEl.classList.toggle('hidden', isUrl);
+    btnUrl.classList.toggle('text-[#111]', isUrl);
+    btnUrl.classList.toggle('border-[#111]', isUrl);
+    btnUrl.classList.toggle('text-[#8a7d72]', !isUrl);
+    btnUrl.classList.toggle('border-transparent', !isUrl);
+    btnPaste.classList.toggle('text-[#111]', !isUrl);
+    btnPaste.classList.toggle('border-[#111]', !isUrl);
+    btnPaste.classList.toggle('text-[#8a7d72]', isUrl);
+    btnPaste.classList.toggle('border-transparent', isUrl);
+    setTimeout(() => (isUrl ? els.urlInput : pasteInput)?.focus(), 50);
 }
+window.setInputMode = setInputMode;
 
-function tapOuterTab(tab) {
-    const panel = document.getElementById('ingPanel');
-    const isOpen = panel.classList.contains('open');
-    if (isOpen && currentPanelTab === tab) {
-        panel.classList.remove('open');
-        document.body.classList.remove('ing-open');
-    } else {
-        switchPanelTab(tab);
-        panel.classList.add('open');
-        document.body.classList.add('ing-open');
-    }
-}
+// ── Scrape forms ─────────────────────────────────────────────────────────────
+const pasteForm = document.getElementById('pasteForm');
 
-function parseTimingToSeconds(str) {
-    if (!str) return null;
-    let secs = 0;
-    const h = str.match(/(\d+)\s*h(?:our|r)?s?/i);
-    if (h) secs += parseInt(h[1]) * 3600;
-    const m = str.match(/(?:\d+[\u2013\-])?((\d+))\s*min/i);
-    if (m) secs += parseInt(m[1]) * 60;
-    const s = str.match(/(\d+)\s*sec/i);
-    if (s) secs += parseInt(s[1]);
-    return secs > 0 ? secs : null;
-}
-
-function formatTime(secs) {
-    const h = Math.floor(secs / 3600);
-    const m = Math.floor((secs % 3600) / 60);
-    const s = secs % 60;
-    if (h > 0)
-        return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-function addTimer(stepNum, seconds) {
-    // Legacy shim — just call tapTimerBtn if the timer already exists
-    tapTimerBtn(stepNum);
-}
-
-function startTimer(id) {
-    const t = activeTimers.find((t) => t.id === id);
-    if (!t || t.running || t.remaining === 0) return;
-    t.running = true;
-    t.interval = setInterval(() => {
-        t.remaining = Math.max(0, t.remaining - 1);
-        if (t.remaining === 0) {
-            t.running = false;
-            clearInterval(t.interval);
-            t.interval = null;
-        }
-        renderTimers();
-    }, 1000);
-    renderTimers();
-}
-
-function pauseTimer(id) {
-    const t = activeTimers.find((t) => t.id === id);
-    if (!t || !t.running) return;
-    t.running = false;
-    clearInterval(t.interval);
-    t.interval = null;
-    renderTimers();
-}
-
-function resetTimer(id) {
-    const t = activeTimers.find((t) => t.id === id);
-    if (!t) return;
-    clearInterval(t.interval);
-    t.interval = null;
-    t.running = false;
-    t.remaining = t.total;
-    renderTimers();
-}
-
-function removeTimer(id) {
-    const idx = activeTimers.findIndex((t) => t.id === id);
-    if (idx === -1) return;
-    clearInterval(activeTimers[idx].interval);
-    activeTimers.splice(idx, 1);
-    renderTimers();
-}
-
-function buildCarouselHTML() {
-    const hasMultiple = activeTimers.length > 1;
-    const navPrev = hasMultiple
-        ? '<button class="timer-nav-btn" onclick="carouselNav(-1)" aria-label="Previous timer">&#8249;</button>'
-        : '';
-    const navNext = hasMultiple
-        ? '<button class="timer-nav-btn" onclick="carouselNav(1)" aria-label="Next timer">&#8250;</button>'
-        : '';
-    return `
-        <div class="timer-carousel-nav-wrap">
-            ${navPrev}
-            <div class="timer-carousel" id="timerCarousel">
-                ${activeTimers
-                    .map((t) => {
-                        const done = t.remaining === 0;
-                        const toggleFn = t.running
-                            ? `pauseTimer(${t.id})`
-                            : `startTimer(${t.id})`;
-                        const toggleIcon = t.running
-                            ? '<i class="fa-solid fa-pause"></i>'
-                            : '<i class="fa-solid fa-play"></i>';
-                        return `<div class="timer-card${done ? ' timer-done' : ''}" data-timer-id="${t.id}">
-                        <div class="timer-card-label">${esc(t.label)}</div>
-                        ${t.sublabel ? `<div class="timer-card-sublabel">${esc(t.sublabel)}</div>` : ''}
-                        <div class="timer-card-display">${done ? 'Done' : formatTime(t.remaining)}</div>
-                        <div class="timer-card-controls">
-                            ${!done ? `<button class="timer-toggle-btn" onclick="${toggleFn}" aria-label="${t.running ? 'Pause' : 'Start'}">${toggleIcon}</button>` : ''}
-                            <button onclick="resetTimer(${t.id})" aria-label="Reset"><i class="fa-solid fa-rotate-right"></i></button>
-                        </div>
-                    </div>`;
-                    })
-                    .join('')}
-            </div>
-            ${navNext}
-        </div>
-        ${
-            hasMultiple
-                ? `<div class="timer-dots" id="timerDots">
-            ${activeTimers.map((_, i) => `<div class="timer-dot${i === timerCarouselIndex ? ' active' : ''}"></div>`).join('')}
-        </div>`
-                : ''
-        }
-    `;
-}
-
-function attachCarouselScroll() {
-    const carousel = document.getElementById('timerCarousel');
-    if (!carousel) return;
-    carousel.addEventListener(
-        'scroll',
-        () => {
-            const idx = Math.round(carousel.scrollLeft / carousel.clientWidth);
-            if (idx !== timerCarouselIndex) {
-                timerCarouselIndex = idx;
-                document
-                    .querySelectorAll('.timer-dot')
-                    .forEach((d, i) => d.classList.toggle('active', i === idx));
-            }
-        },
-        { passive: true },
-    );
-}
-
-function renderTimers() {
-    const listEl = document.getElementById('timersList');
-    const hintEl = document.getElementById('timerEmptyHint');
-    if (!listEl) return;
-    if (!activeTimers.length) {
-        if (hintEl) hintEl.style.display = '';
-        listEl.innerHTML = '';
-        // Reset tab label
-        const btn = document.getElementById('otab-timers');
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-stopwatch"></i>';
-        return;
-    }
-    if (hintEl) hintEl.style.display = 'none';
-
-    // Update timers tab label
-    const timerTabBtn = document.getElementById('otab-timers');
-    if (timerTabBtn) {
-        const running = activeTimers.find((t) => t.running);
-        timerTabBtn.innerHTML = running
-            ? `<i class="fa-solid fa-stopwatch"></i><span style="font-size:0.6rem;font-weight:700;letter-spacing:0.04em;margin-top:0.1rem">${formatTime(running.remaining)}</span>`
-            : '<i class="fa-solid fa-stopwatch"></i>';
-    }
-
-    // Clamp carousel index
-    timerCarouselIndex = Math.max(
-        0,
-        Math.min(timerCarouselIndex, activeTimers.length - 1),
-    );
-
-    // In-place update if carousel already has the right cards — preserves swipe state
-    const existingCarousel = document.getElementById('timerCarousel');
-    if (
-        existingCarousel &&
-        existingCarousel.children.length === activeTimers.length
-    ) {
-        activeTimers.forEach((t, i) => {
-            const card = existingCarousel.children[i];
-            if (!card) return;
-            const done = t.remaining === 0;
-            card.classList.toggle('timer-done', done);
-            const disp = card.querySelector('.timer-card-display');
-            if (disp)
-                disp.textContent = done ? 'Done' : formatTime(t.remaining);
-            const controls = card.querySelector('.timer-card-controls');
-            if (controls) {
-                const toggleBtn = controls.querySelector('.timer-toggle-btn');
-                if (done) {
-                    if (toggleBtn) toggleBtn.remove();
-                } else if (toggleBtn) {
-                    toggleBtn.setAttribute(
-                        'onclick',
-                        t.running
-                            ? `pauseTimer(${t.id})`
-                            : `startTimer(${t.id})`,
-                    );
-                    toggleBtn.setAttribute(
-                        'aria-label',
-                        t.running ? 'Pause' : 'Start',
-                    );
-                    toggleBtn.innerHTML = t.running
-                        ? '<i class="fa-solid fa-pause"></i>'
-                        : '<i class="fa-solid fa-play"></i>';
-                }
-            }
-        });
-        return;
-    }
-
-    // Full rebuild (first render or timer count changed)
-    listEl.innerHTML = buildCarouselHTML();
-    requestAnimationFrame(() => {
-        const carousel = document.getElementById('timerCarousel');
-        if (!carousel) return;
-        const card = carousel.children[timerCarouselIndex];
-        if (card)
-            card.scrollIntoView({
-                block: 'nearest',
-                inline: 'center',
-                behavior: 'instant',
-            });
-        attachCarouselScroll();
-    });
-}
-
-function showView(view) {
-    const isNew = view === 'new';
-    const isDash = view === 'dash';
-    newViewEl.classList.toggle('hidden', !isNew);
-    dashViewEl.classList.toggle('hidden', !isDash);
-    recipeLayoutEl.classList.toggle('hidden', isDash || isNew);
-    document.body.classList.toggle('new-view', isNew);
-    document.body.classList.toggle('dash-view', isDash);
-    const panel = document.getElementById('ingPanel');
-    if (isNew || isDash) {
-        panel.classList.remove('open');
-        document.body.classList.remove('ing-open');
-        if (isNew) setTimeout(() => urlInput?.focus(), 100);
-    } else if (document.getElementById('ingPanelBody')?.children.length > 0) {
-        panel.style.transition = 'none';
-        if (appScroll) appScroll.style.transition = 'none';
-        panel.classList.add('open');
-        document.body.classList.add('ing-open');
-        requestAnimationFrame(() => {
-            panel.style.transition = '';
-            if (appScroll) appScroll.style.transition = '';
-        });
-    }
-}
-
-// ── Filter state ──────────────────────────────
-let allRecipes = [];
-const activeFilters = {
-    mealType: new Set(),
-    dietary: new Set(),
-    season: new Set(),
-};
-const activeIngredients = new Set();
-
-function toggleFilter(type, value) {
-    const set = activeFilters[type];
-    if (set.has(value)) {
-        set.delete(value);
-    } else {
-        set.add(value);
-    }
-    const btn = document.querySelector(`[data-filter="${type}:${value}"]`);
-    if (btn) btn.classList.toggle('active', set.has(value));
-    renderDashGrid();
-}
-
-function onIngredientInput(e) {
-    renderDashGrid();
-}
-
-function onIngredientKeydown(e) {
-    if (e.key !== 'Enter' && e.key !== ',') return;
+els.form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const val = e.target.value.trim().toLowerCase();
-    if (!val) return;
-    addIngredientChip(val);
-    e.target.value = '';
-}
-
-function addIngredientChip(val) {
-    if (activeIngredients.has(val)) return;
-    activeIngredients.add(val);
-    const chip = document.createElement('button');
-    chip.className = 'ingredient-chip';
-    chip.innerHTML = `${esc(val)} <span aria-hidden="true">×</span>`;
-    chip.onclick = () => {
-        activeIngredients.delete(val);
-        chip.remove();
-        renderDashGrid();
-    };
-    document.getElementById('ingredientChips').appendChild(chip);
-    renderDashGrid();
-}
-
-function buildMealTypeFilters(recipes) {
-    const el = document.getElementById('mealTypeFilters');
-    if (!el) return;
-    const types = [
-        ...new Set(recipes.map((r) => r.tags?.mealType).filter(Boolean)),
-    ].sort();
-    el.innerHTML = types
-        .map(
-            (t) =>
-                `<button onclick="toggleFilter('mealType','${esc(t)}')" data-filter="mealType:${esc(t)}" class="filter-chip${activeFilters.mealType.has(t) ? ' active' : ''}">${esc(t)}</button>`,
-        )
-        .join('');
-}
-
-function recipeMatchesFilters(item) {
-    const tags = item.tags ?? {};
-    // Meal type: multi-select OR
-    if (
-        activeFilters.mealType.size > 0 &&
-        !activeFilters.mealType.has(tags.mealType)
-    )
-        return false;
-    if (activeFilters.dietary.size > 0) {
-        const d = tags.dietary ?? [];
-        if (![...activeFilters.dietary].every((v) => d.includes(v)))
-            return false;
-    }
-    if (activeFilters.season.size > 0) {
-        const s = tags.season ?? [];
-        const isAllYear = s.includes('all year');
-        if (!isAllYear && ![...activeFilters.season].some((v) => s.includes(v)))
-            return false;
-    }
-    const typed =
-        document
-            .getElementById('ingredientSearch')
-            ?.value.trim()
-            .toLowerCase() ?? '';
-    if (activeIngredients.size > 0 || typed) {
-        // Search both ingredient names and recipe title
-        const haystack =
-            (item._ingredientNames ?? '').toLowerCase() +
-            ' ' +
-            item.title.toLowerCase();
-        const allTerms = [...activeIngredients, ...(typed ? [typed] : [])];
-        if (!allTerms.every((v) => haystack.includes(v))) return false;
-    }
-    return true;
-}
-
-function hasActiveFilters() {
-    return (
-        activeFilters.mealType.size > 0 ||
-        activeFilters.dietary.size > 0 ||
-        activeFilters.season.size > 0 ||
-        activeIngredients.size > 0 ||
-        !!document.getElementById('ingredientSearch')?.value.trim()
-    );
-}
-
-function clearAllFilters() {
-    activeFilters.mealType.clear();
-    activeFilters.dietary.clear();
-    activeFilters.season.clear();
-    activeIngredients.clear();
-    const search = document.getElementById('ingredientSearch');
-    if (search) search.value = '';
-    document.getElementById('ingredientChips').innerHTML = '';
-    document
-        .querySelectorAll('.filter-chip.active')
-        .forEach((b) => b.classList.remove('active'));
-    renderDashGrid();
-}
-
-function renderDashGrid() {
-    if (!dashGridEl) return;
-    const filtered = allRecipes.filter(recipeMatchesFilters);
-    // Count badge
-    const countEl = document.getElementById('dashCount');
-    if (countEl) {
-        countEl.textContent =
-            filtered.length === allRecipes.length
-                ? `${allRecipes.length} recipe${allRecipes.length !== 1 ? 's' : ''}`
-                : `${filtered.length} of ${allRecipes.length}`;
-    }
-    // Clear button visibility
-    const clearBtn = document.getElementById('clearFiltersBtn');
-    if (clearBtn) clearBtn.classList.toggle('hidden', !hasActiveFilters());
-    if (filtered.length === 0) {
-        dashGridEl.innerHTML = `<p class="dash-no-results">No recipes match the current filters.</p>`;
-        return;
-    }
-    dashGridEl.innerHTML = filtered
-        .map((item) => {
-            const date = new Date(item.savedAt).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-            });
-            const mealType = item.tags?.mealType
-                ? `<span class="dash-card-tag">${esc(item.tags.mealType)}</span>`
-                : '';
-            return `<button class="dash-card" onclick="loadFile('${esc(item.filename)}')">
-            <span class="dash-card-title">${esc(item.title)}</span>
-            <span class="dash-card-meta">${mealType}${esc(date)}</span>
-        </button>`;
-        })
-        .join('');
-}
-
-async function loadHistory() {
-    const res = await fetch(`${API_BASE}/recipes`).catch(() => null);
-    if (!res || !res.ok) return;
-    const list = await res.json();
-    // Cache all recipes with flat ingredient name string for search
-    allRecipes = list.map((item) => ({
-        ...item,
-        _ingredientNames: item.ingredientNames ?? '',
-    }));
-    // Sidebar
-    if (list.length) {
-        historyEl.innerHTML = list
-            .map(
-                (item) => `
-        <li>
-            <button onclick="loadFile('${esc(item.filename)}')"
-                    class="${item.filename === activeFile ? 'active' : ''}"
-                    id="hist-${esc(item.filename)}">
-                ${esc(item.title)}
-                <span class="hist-date">${new Date(item.savedAt).toLocaleDateString()}</span>
-            </button>
-        </li>`,
-            )
-            .join('');
-    }
-    // Dashboard grid + meal type chips
-    buildMealTypeFilters(list);
-    renderDashGrid();
-}
-
-async function loadFile(filename) {
-    activeFile = filename;
-    const res = await fetch(
-        `${API_BASE}/recipe?file=${encodeURIComponent(filename)}`,
-    );
-    const data = await res.json();
-    if (!res.ok) {
-        setStatus(data.error, true);
-        return;
-    }
-    showView('recipe');
-    renderRecipe(data);
-    loadHistory();
-    closeDrawer();
-    // Push clean URL without the .json extension
-    const slug = filename.replace(/\.json$/, '');
-    if (window.location.pathname !== `/r/${slug}`) {
-        history.pushState({ slug }, '', `/r/${slug}`);
-    }
-}
-
-// ── Startup routing ──────────────────────────────────────────────────────────
-// Auto-activate current season
-(function initSeasonFilter() {
-    const month = new Date().getMonth(); // 0=Jan
-    const season =
-        month >= 2 && month <= 4
-            ? 'spring'
-            : month >= 5 && month <= 7
-              ? 'summer'
-              : month >= 8 && month <= 10
-                ? 'autumn'
-                : 'winter';
-    activeFilters.season.add(season);
-    const btn = document.querySelector(`[data-filter="season:${season}"]`);
-    if (btn) btn.classList.add('active');
-})();
-
-const routeMatch = window.location.pathname.match(/^\/r\/([a-zA-Z0-9_-]+)$/);
-if (routeMatch) {
-    showView('recipe');
-    loadFile(routeMatch[1] + '.json');
-} else if (window.location.pathname === '/new') {
-    showView('new');
-} else {
-    showView('dash');
-}
-loadHistory();
-
-// Handle browser back/forward
-window.addEventListener('popstate', (e) => {
-    if (window.location.pathname === '/new') {
-        showView('new');
-    } else if (e.state?.slug) {
-        showView('recipe');
-        loadFile(e.state.slug + '.json');
-    } else {
-        showView('dash');
-        activeFile = null;
-        document.getElementById('ingPanel').classList.remove('open');
-        document.body.classList.remove('ing-open');
-    }
+    const url = els.urlInput.value.trim();
+    if (!url) return;
+    els.urlInput.value = '';
+    els.urlInput.focus();
+    queueAdd({ url });
 });
 
-// ── Scrape queue ──────────────────────────────
-const scrapeQueue = []; // { url?, text?, label, el }
+pasteForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = pasteInput.value.trim();
+    if (!text) return;
+    pasteInput.value = '';
+    pasteInput.focus();
+    queueAdd({ text });
+});
+
+// ── Scrape queue ──────────────────────────────────────────────────────────────
+const scrapeQueue = [];
 let queueRunning = false;
 const queueListEl = document.getElementById('scrapeQueue');
 
@@ -668,7 +84,6 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 function queueAdd(item) {
-    // item: { url } or { text }
     const label = item.url ?? 'Pasted text';
     const li = document.createElement('li');
     li.className = 'queue-item';
@@ -681,6 +96,7 @@ function queueAdd(item) {
 
 async function queueProcess() {
     queueRunning = true;
+    mosaicLoading(true);
     while (scrapeQueue.length > 0) {
         const item = scrapeQueue[0];
         item.el.dataset.state = 'processing';
@@ -710,7 +126,6 @@ async function queueProcess() {
             item.el.dataset.state = 'done';
             item.el.querySelector('.queue-item-state').textContent = 'Done';
             loadHistory();
-            // Silently cache the recipe but stay on the add page
             renderRecipe(data);
             if (hash) history.replaceState({ slug: hash }, '', `/new`);
         } catch (err) {
@@ -722,63 +137,14 @@ async function queueProcess() {
         scrapeQueue.shift();
     }
     queueRunning = false;
+    mosaicLoading(false);
     setStatus('');
 }
 
-form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const url = urlInput.value.trim();
-    if (!url) return;
-    urlInput.value = '';
-    urlInput.focus();
-    queueAdd({ url });
-});
-
-const pasteForm = document.getElementById('pasteForm');
-const pasteInput = document.getElementById('pasteInput');
-pasteForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const text = pasteInput.value.trim();
-    if (!text) return;
-    pasteInput.value = '';
-    pasteInput.focus();
-    queueAdd({ text });
-});
-
-let currentInputMode = 'url';
-function setInputMode(mode) {
-    currentInputMode = mode;
-    const urlForm = document.getElementById('scrapeForm');
-    const pasteFormEl = document.getElementById('pasteForm');
-    const btnUrl = document.getElementById('modeUrl');
-    const btnPaste = document.getElementById('modePaste');
-    const isUrl = mode === 'url';
-    urlForm.classList.toggle('hidden', !isUrl);
-    pasteFormEl.classList.toggle('hidden', isUrl);
-    btnUrl.classList.toggle('text-[#111]', isUrl);
-    btnUrl.classList.toggle('border-[#111]', isUrl);
-    btnUrl.classList.toggle('text-[#8a7d72]', !isUrl);
-    btnUrl.classList.toggle('border-transparent', !isUrl);
-    btnPaste.classList.toggle('text-[#111]', !isUrl);
-    btnPaste.classList.toggle('border-[#111]', !isUrl);
-    btnPaste.classList.toggle('text-[#8a7d72]', isUrl);
-    btnPaste.classList.toggle('border-transparent', isUrl);
-    setTimeout(() => (isUrl ? urlInput : pasteInput)?.focus(), 50);
-}
-
-function setStatus(msg, isError = false, loading = false) {
-    btn.disabled = loading;
-    status.className = isError ? 'error' : '';
-    status.innerHTML = loading
-        ? `<span class="spinner"></span>${msg}`
-        : isError
-          ? `${msg}`
-          : msg;
-}
-
+// ── Refetch recipe ────────────────────────────────────────────────────────────
 async function refetchRecipe() {
-    if (!currentSourceUrl) return;
-    setStatus('Re-fetching…', false, true);
+    if (!state.currentSourceUrl) return;
+    setStatus('Re-fetching\u2026', false, true);
     try {
         const secret = getPersonalSecret();
         const res = await fetch(`${API_BASE}/scrape`, {
@@ -787,7 +153,7 @@ async function refetchRecipe() {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${secret}`,
             },
-            body: JSON.stringify({ url: currentSourceUrl, force: true }),
+            body: JSON.stringify({ url: state.currentSourceUrl, force: true }),
         });
         if (res.status === 401) {
             clearPersonalSecret();
@@ -806,374 +172,45 @@ async function refetchRecipe() {
         setStatus(err.message, true);
     }
 }
+window.refetchRecipe = refetchRecipe;
 
-function renderRecipe(r) {
-    emptyEl.classList.add('hidden');
-    recipeEl.classList.remove('hidden');
-    currentSourceUrl = r.sourceUrl ?? null;
+// ── Startup routing ───────────────────────────────────────────────────────────
+(function initSeasonFilter() {
+    const month = new Date().getMonth(); // 0=Jan
+    const season =
+        month >= 2 && month <= 4
+            ? 'spring'
+            : month >= 5 && month <= 7
+              ? 'summer'
+              : month >= 8 && month <= 10
+                ? 'autumn'
+                : 'winter';
+    state.activeFilters.season.add(season);
+    const btn = document.querySelector(`[data-filter="season:${season}"]`);
+    if (btn) btn.classList.add('active');
+})();
 
-    const meta = [
-        r.prepTime && { label: 'Prep', value: r.prepTime },
-        r.cookTime && { label: 'Cook', value: r.cookTime },
-        r.totalTime && { label: 'Total', value: r.totalTime },
-        r.servings && { label: 'Serves', value: r.servings },
-    ].filter(Boolean);
+const routeMatch = window.location.pathname.match(/^\/r\/([a-zA-Z0-9_-]+)$/);
+if (routeMatch) {
+    showView('recipe');
+    loadFile(routeMatch[1] + '.json');
+} else if (window.location.pathname === '/new') {
+    showView('new');
+} else {
+    showView('dash');
+}
+loadHistory();
 
-    const hasConversions =
-        (r.ingredientGroups ?? []).some((g) =>
-            (g.items ?? []).some((i) => i.conversion),
-        ) || (r.steps ?? []).some((s) => s.temperatureConversion);
-
-    const hasHints = (r.ingredientGroups ?? []).some((g) =>
-        (g.items ?? []).some((i) => i.hint),
-    );
-
-    currentRecipe = r;
-
-    recipeEl.innerHTML = `
-        <h1 class="recipe-title">${esc(r.title)}</h1>
-        <div class="recipe-source-row">
-            ${r.sourceUrl && /^https?:\/\//i.test(r.sourceUrl) ? `<a class="recipe-source" href="${esc(r.sourceUrl)}" target="_blank" rel="noopener">source ↗</a>` : ''}
-            ${r.sourceUrl ? `<button class="refetch-btn" onclick="refetchRecipe()">Re-fetch</button>` : ''}
-        </div>
-        ${r.description ? `<p class="recipe-description">${esc(r.description)}</p>` : ''}
-        ${
-            meta.length
-                ? `
-        <div class="meta-row">
-            ${meta
-                .map(
-                    (m) => `
-            <div class="meta-pill">
-                <span class="label">${esc(m.label)}</span>
-                <span class="value">${esc(m.value)}</span>
-            </div>`,
-                )
-                .join('')}
-        </div>`
-                : ''
-        }
-        <div class="recipe-body">
-            <div class="recipe-steps-col">
-                <div class="section-label">Method</div>
-                <ol class="steps-list">
-                    ${(r.steps ?? [])
-                        .map(
-                            (s) => `
-                    <li class="step">
-                        <span class="step-num">${s.stepNumber}</span>
-                        <div class="step-body">
-                            ${renderStepInstruction(s.instruction)}
-                            ${s.temperatureConversion ? `<span class="conv step-temp-conv" style="display:none">→ ${esc(s.temperatureConversion)}</span>` : ''}
-                            ${renderStepTiming(s.stepNumber, s.timingInterval)}
-                        </div>
-                    </li>`,
-                        )
-                        .join('')}
-                </ol>
-            </div>
-        </div>`;
-
-    populateIngPanel(r, hasConversions, hasHints);
-    // Open panel instantly on first load (suppress transition)
-    const panel = document.getElementById('ingPanel');
-    if (!panel.classList.contains('open')) {
-        panel.style.transition = 'none';
-        if (appScroll) appScroll.style.transition = 'none';
-        panel.classList.add('open');
-        document.body.classList.add('ing-open');
-        requestAnimationFrame(() => {
-            panel.style.transition = '';
-            if (appScroll) appScroll.style.transition = '';
-        });
+window.addEventListener('popstate', (e) => {
+    if (window.location.pathname === '/new') {
+        showView('new');
+    } else if (e.state?.slug) {
+        showView('recipe');
+        loadFile(e.state.slug + '.json');
+    } else {
+        showView('dash');
+        state.activeFile = null;
+        document.getElementById('ingPanel').classList.remove('open');
+        document.body.classList.remove('ing-open');
     }
-}
-
-function setUnits(mode) {
-    currentUnits = mode;
-    document.querySelectorAll('.ing-qty-original').forEach((el) => {
-        el.style.display = mode === 'original' ? '' : 'none';
-    });
-    document.querySelectorAll('.ing-qty-converted').forEach((el) => {
-        el.style.display = mode === 'converted' ? '' : 'none';
-    });
-    document.querySelectorAll('.step-temp-conv').forEach((el) => {
-        el.style.display = mode === 'converted' ? '' : 'none';
-    });
-    ['btnOriginal', 'btnOriginalPanel'].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.className = mode === 'original' ? 'active' : '';
-    });
-    ['btnConverted', 'btnConvertedPanel'].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.className = mode === 'converted' ? 'active' : '';
-    });
-}
-
-function renderIngredientGroups(groups) {
-    return (groups ?? [])
-        .map(
-            (g) => `
-        <div class="ing-group">
-            ${g.group ? `<div class="ing-group-name">${esc(g.group)}</div>` : ''}
-            <ul class="ing-list">
-                ${(g.items ?? [])
-                    .map((i) => {
-                        const orig =
-                            [i.quantity, i.unit].filter(Boolean).join(' ') ||
-                            '—';
-                        const conv = i.conversion
-                            ? [i.conversion.quantity, i.conversion.unit]
-                                  .filter(Boolean)
-                                  .join(' ')
-                            : null;
-                        const origClass = conv
-                            ? 'ing-qty ing-qty-original'
-                            : 'ing-qty';
-                        return `
-                <li>
-                    <span class="${origClass}">${orig}</span>
-                    ${conv ? `<span class="ing-qty ing-qty-converted conv" style="display:none">${conv}</span>` : ''}
-                    <span class="ing-name">
-                        ${esc(i.name)}${i.notes ? ` <span class="ing-notes">(${esc(i.notes)})</span>` : ''}
-                        ${i.hint ? `<span class="ing-hint">${esc(i.hint)}</span>` : ''}
-                    </span>
-                </li>`;
-                    })
-                    .join('')}
-            </ul>
-        </div>`,
-        )
-        .join('');
-}
-
-// ── Guide modal ──────────────────────────────────────────────────────────────
-function openGuide() {
-    if (!currentRecipe) return;
-    const body = document.getElementById('guideModalBody');
-    body.innerHTML = renderGuideGroups(currentRecipe.ingredientGroups);
-    document.getElementById('guideBackdrop').classList.add('open');
-}
-
-function closeGuide() {
-    document.getElementById('guideBackdrop').classList.remove('open');
-}
-
-document.getElementById('guideClose').addEventListener('click', closeGuide);
-document.getElementById('guideBackdrop').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('guideBackdrop')) closeGuide();
 });
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeGuide();
-});
-
-function renderGuideGroups(groups) {
-    return (groups ?? [])
-        .map(
-            (g) => `
-        <div class="guide-group">
-            ${g.group ? `<div class="guide-group-name">${esc(g.group)}</div>` : ''}
-            ${(g.items ?? [])
-                .map((i) => {
-                    const qty =
-                        [i.quantity, i.unit].filter(Boolean).join('\u00a0') ||
-                        '—';
-                    return `
-        <div class="guide-row">
-            <span class="guide-qty">${qty}</span>
-            <span class="guide-name">${esc(i.name)}${i.notes ? ` <span class="guide-notes">(${esc(i.notes)})</span>` : ''}</span>
-            <span class="guide-hint-cell">${i.hint ? esc(i.hint) : ''}</span>
-        </div>`;
-                })
-                .join('')}
-        </div>`,
-        )
-        .join('');
-}
-
-function renderStepTiming(stepNum, interval) {
-    if (!interval) return '';
-    const secs = parseTimingToSeconds(interval);
-    const btn = secs
-        ? ` <button class="timer-start-btn" onclick="tapTimerBtn(${stepNum})" aria-label="Start timer"><i class="fa-solid fa-stopwatch"></i></button>`
-        : '';
-    return `<span class="step-timing">${esc(interval)}${btn}</span>`;
-}
-
-function renderStepInstruction(instruction) {
-    if (!instruction) return '';
-    const lines = instruction
-        .split('\n')
-        .flatMap((line) => line.trim().split(/(?<=[.!?])\s+(?=[A-Z])/))
-        .map((l) => l.trim())
-        .filter(Boolean);
-    if (lines.length <= 1) {
-        return `<span class="step-instruction">${esc(instruction)}</span>`;
-    }
-    return `<ul class="step-bullets">${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
-}
-
-function esc(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
-// ── Ingredient panel (desktop) ───────────────────────────────────────────────
-function toggleIngPanel() {
-    const panel = document.getElementById('ingPanel');
-    const isOpen = panel.classList.toggle('open');
-    document.body.classList.toggle('ing-open', isOpen);
-}
-
-function populateIngPanel(r, hasConversions, hasHints) {
-    const headEl = document.getElementById('ingPanelHead');
-    const bodyEl = document.getElementById('ingPanelBody');
-    const servingsEl = document.getElementById('servingsSection');
-    if (!headEl || !bodyEl) return;
-    originalServings = parseServingsNum(r.servings);
-    currentServings = originalServings;
-
-    // Servings tab content
-    if (servingsEl) {
-        const count = originalServings ?? 1;
-        servingsEl.innerHTML = `<div class="servings-card">
-            <div class="servings-card-label">Servings</div>
-            <div class="servings-card-display" id="servingsCount">${count}</div>
-            <div class="servings-card-unit">people</div>
-            <div class="servings-card-controls">
-                <button onclick="changeServings(-1)" aria-label="Fewer">−</button>
-                <button onclick="changeServings(1)" aria-label="More">+</button>
-            </div>
-            ${originalServings ? '<p class="servings-card-hint">Ingredient quantities scale automatically.</p>' : '<p class="servings-card-hint">No serving info for this recipe.</p>'}
-        </div>`;
-    }
-
-    // Ingredients head: guide + unit toggle
-    const headContent = [
-        hasHints
-            ? '<button class="guide-btn" onclick="openGuide()" style="display:block;margin-bottom:0.75rem">Guide</button>'
-            : '',
-        hasConversions
-            ? `<div class="unit-toggle">
-            <button id="btnOriginalPanel" class="active" onclick="setUnits('original')">Imperial</button>
-            <button id="btnConvertedPanel" onclick="setUnits('converted')">Metric</button>
-        </div>
-        <p class="unit-toggle-note">Weights &amp; temperatures only</p>`
-            : '',
-    ].join('');
-    headEl.innerHTML = headContent;
-    headEl.style.display = headContent.trim() ? '' : 'none';
-
-    bodyEl.innerHTML = renderIngredientGroupsScaled(r.ingredientGroups, 1);
-
-    // Pre-load timers for all timed steps
-    initTimers(r.steps);
-}
-
-// ── Servings scaler ──────────────────────────────────────────────────────────
-function parseServingsNum(str) {
-    if (!str) return null;
-    const m = String(str).match(/\d+/);
-    return m ? parseInt(m[0]) : null;
-}
-
-function parseFraction(str) {
-    if (!str) return null;
-    const s = String(str).trim();
-    const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/);
-    if (mixed)
-        return parseInt(mixed[1]) + parseInt(mixed[2]) / parseInt(mixed[3]);
-    const frac = s.match(/^(\d+)\/(\d+)$/);
-    if (frac) return parseInt(frac[1]) / parseInt(frac[2]);
-    const range = s.match(/^(\d+(?:\.\d+)?)[–\-](\d+(?:\.\d+)?)$/);
-    if (range) return (parseFloat(range[1]) + parseFloat(range[2])) / 2;
-    const num = parseFloat(s);
-    return isNaN(num) ? null : num;
-}
-
-function formatFraction(val) {
-    if (val === null || val <= 0) return '0';
-    const eighths = Math.round(val * 8);
-    if (eighths === 0) return '0';
-    const whole = Math.floor(eighths / 8);
-    const rem = eighths % 8;
-    const f = { 0: '', 1: '⅛', 2: '¼', 3: '⅜', 4: '½', 5: '⅝', 6: '¾', 7: '⅞' };
-    const fStr = f[rem] ?? `${rem}/8`;
-    if (whole === 0) return fStr;
-    return fStr ? `${whole} ${fStr}` : `${whole}`;
-}
-
-function scaleQty(qty, factor) {
-    if (!qty || factor === 1) return qty;
-    const val = parseFraction(qty);
-    if (val === null) return qty;
-    return formatFraction(val * factor);
-}
-
-function changeServings(delta) {
-    if (!currentServings || !originalServings) return;
-    const next = Math.max(1, currentServings + delta);
-    if (next === currentServings) return;
-    currentServings = next;
-    const factor = currentServings / originalServings;
-    const scEl = document.getElementById('servingsCount');
-    if (scEl) scEl.textContent = currentServings;
-    const bodyEl = document.getElementById('ingPanelBody');
-    if (bodyEl) {
-        bodyEl.innerHTML = renderIngredientGroupsScaled(
-            currentRecipe.ingredientGroups,
-            factor,
-        );
-        document
-            .querySelectorAll('#ingPanelBody .ing-qty-original')
-            .forEach((el) => {
-                el.style.display = currentUnits === 'original' ? '' : 'none';
-            });
-        document
-            .querySelectorAll('#ingPanelBody .ing-qty-converted')
-            .forEach((el) => {
-                el.style.display = currentUnits === 'converted' ? '' : 'none';
-            });
-    }
-}
-
-function renderIngredientGroupsScaled(groups, factor) {
-    return (groups ?? [])
-        .map(
-            (g) => `
-        <div class="ing-group">
-            ${g.group ? `<div class="ing-group-name">${esc(g.group)}</div>` : ''}
-            <ul class="ing-list">
-                ${(g.items ?? [])
-                    .map((i) => {
-                        const scaledQty = scaleQty(i.quantity, factor);
-                        const orig =
-                            [scaledQty, i.unit].filter(Boolean).join(' ') ||
-                            '—';
-                        const conv = i.conversion
-                            ? [i.conversion.quantity, i.conversion.unit]
-                                  .filter(Boolean)
-                                  .join(' ')
-                            : null;
-                        const origClass = conv
-                            ? 'ing-qty ing-qty-original'
-                            : 'ing-qty';
-                        return `<li>
-                    <span class="${origClass}">${orig}</span>
-                    ${conv ? `<span class="ing-qty ing-qty-converted conv" style="display:none">${conv}</span>` : ''}
-                    <span class="ing-name">
-                        ${esc(i.name)}${i.notes ? ` <span class="ing-notes">(${esc(i.notes)})</span>` : ''}
-                        ${i.hint ? `<span class="ing-hint">${esc(i.hint)}</span>` : ''}
-                    </span>
-                </li>`;
-                    })
-                    .join('')}
-            </ul>
-        </div>`,
-        )
-        .join('');
-}

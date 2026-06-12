@@ -246,7 +246,7 @@
                                 type="text"
                                 placeholder="Search recipes or ingredients…"
                                 class="bg-transparent border-0 outline-none text-[0.82rem] text-[#111] font-body placeholder-[#8a7d72] w-full"
-                                oninput="onIngredientInput(event)"
+                                oninput="renderDashGrid()"
                                 onkeydown="onIngredientKeydown(event)" />
                         </div>
                         <div
@@ -395,6 +395,6 @@
             </div>
         </div>
 
-        <script src="/app.js"></script>
+        <script type="module" src="/app.js"></script>
     </body>
 </html>
