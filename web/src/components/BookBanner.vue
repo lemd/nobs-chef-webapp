@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { state } from '../state.ts'
-import { createInvite, saveDrawing, clearDrawing, saveBannerImage } from '../api.ts'
+import { createInvite, saveDrawing, clearDrawing, saveBannerImage, clearBannerImage } from '../api.ts'
 import { auth } from '../composables/useAuth.ts'
 import { resizeImage } from '../utils/imageUpload.ts'
 
@@ -33,6 +33,20 @@ async function onBannerFileChange(e: Event) {
     if (state.currentBook) state.currentBook.banner_url = url
   } catch (err: unknown) {
     bannerError.value = err instanceof Error ? err.message : 'Upload failed'
+  } finally {
+    bannerUploading.value = false
+  }
+}
+
+async function resetBannerPhoto() {
+  if (!book.value) return
+  bannerUploading.value = true
+  bannerError.value = ''
+  try {
+    await clearBannerImage(book.value.id)
+    if (state.currentBook) state.currentBook.banner_url = null
+  } catch (err: unknown) {
+    bannerError.value = err instanceof Error ? err.message : 'Remove failed'
   } finally {
     bannerUploading.value = false
   }
@@ -361,7 +375,13 @@ async function saveAndExit() {
 
     const url = await saveDrawing(book.value.id, blob)
     if (state.currentBook) state.currentBook.drawing_url = url
-    await nextTick()
+    // Preload the new image so the overlay <img> is ready before canvas unmounts
+    await new Promise<void>((resolve) => {
+      const img = new Image()
+      img.onload = () => resolve()
+      img.onerror = () => resolve()
+      img.src = url
+    })
     exitDrawMode()
   } catch (e: unknown) {
     drawError.value = e instanceof Error ? e.message : 'Save failed'
@@ -449,6 +469,16 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
       >
         <i v-if="bannerUploading" class="fa-solid fa-spinner fa-spin"></i>
         <i v-else class="fa-solid fa-camera"></i>
+      </button>
+      <!-- Reset to default photo -->
+      <button
+        v-if="book.banner_url"
+        class="draw-tool-btn draw-tool-btn--danger"
+        title="Remove custom photo"
+        :disabled="bannerUploading"
+        @click="resetBannerPhoto"
+      >
+        <i class="fa-solid fa-image"></i>
       </button>
       <span class="draw-toolbar-spacer"></span>
       <span v-if="drawError || bannerError" class="draw-toolbar-error">{{ drawError || bannerError }}</span>

@@ -97,6 +97,15 @@ export async function leaveBook(bookId: number): Promise<{ deleted: boolean }> {
   return { deleted: data.deleted ?? false }
 }
 
+export async function clearBannerImage(bookId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/book/banner?book_id=${bookId}`, {
+    method: 'DELETE',
+    headers: { Authorization: getAuthHeader() },
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Failed to remove banner')
+}
+
 export async function saveBannerImage(bookId: number, blob: Blob): Promise<string> {
   const res = await fetch(`${API_BASE}/book/banner?book_id=${bookId}`, {
     method: 'POST',
