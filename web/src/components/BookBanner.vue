@@ -45,12 +45,47 @@ const bannerEl = ref<HTMLElement | null>(null)
 const drawSaving = ref(false)
 const drawError = ref('')
 
-// Each stroke is an array of {x,y} normalised to [0..1] so we can replay at any DPR
 type Point = { x: number; y: number }
 const strokes = ref<Point[][]>([])
 let currentStroke: Point[] = []
 let isDrawing = false
 let ctx: CanvasRenderingContext2D | null = null
+
+// Offscreen canvas holds all committed (completed) strokes.
+// Only the current in-progress stroke is drawn on top each rAF frame.
+// This means each stroke is painted exactly once as a full bezier path —
+// no per-segment overlap, so the line is perfectly solid.
+let committedCanvas: HTMLCanvasElement | null = null
+let committedCtx: CanvasRenderingContext2D | null = null
+let rafId: number | null = null
+
+const LINE_WIDTH = 5
+const STROKE_COLOR = '#ffffff'
+
+// ── Draw a single stroke as one complete smooth bezier path ──────────────────
+function drawStroke(c: CanvasRenderingContext2D, stroke: Point[], w: number, h: number) {
+  if (stroke.length === 0) return
+  c.lineCap = 'round'
+  c.lineJoin = 'round'
+  c.strokeStyle = STROKE_COLOR
+  c.lineWidth = LINE_WIDTH
+  if (stroke.length === 1) {
+    c.beginPath()
+    c.arc(stroke[0].x * w, stroke[0].y * h, LINE_WIDTH / 2, 0, Math.PI * 2)
+    c.fillStyle = STROKE_COLOR
+    c.fill()
+    return
+  }
+  c.beginPath()
+  c.moveTo(stroke[0].x * w, stroke[0].y * h)
+  for (let i = 1; i < stroke.length - 1; i++) {
+    const mx = ((stroke[i].x + stroke[i + 1].x) / 2) * w
+    const my = ((stroke[i].y + stroke[i + 1].y) / 2) * h
+    c.quadraticCurveTo(stroke[i].x * w, stroke[i].y * h, mx, my)
+  }
+  c.lineTo(stroke[stroke.length - 1].x * w, stroke[stroke.length - 1].y * h)
+  c.stroke()
+}
 
 function initCanvas() {
   const canvas = canvasEl.value
@@ -66,99 +101,87 @@ function initCanvas() {
   ctx = canvas.getContext('2d')
   if (!ctx) return
   ctx.scale(dpr, dpr)
+
+  // Mirror size on offscreen committed canvas
+  committedCanvas = document.createElement('canvas')
+  committedCanvas.width = w * dpr
+  committedCanvas.height = h * dpr
+  committedCtx = committedCanvas.getContext('2d')
+  if (!committedCtx) return
+  committedCtx.scale(dpr, dpr)
+
+  // Replay any existing strokes onto the committed canvas
   replayStrokes()
 }
 
 function replayStrokes() {
-  const canvas = canvasEl.value
-  if (!ctx || !canvas) return
+  if (!committedCtx || !committedCanvas) return
   const dpr = window.devicePixelRatio || 1
-  ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr)
-  const w = canvas.offsetWidth
-  const h = canvas.offsetHeight
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
-  ctx.strokeStyle = 'rgba(255,255,255,0.92)'
-  ctx.lineWidth = 3
+  const w = committedCanvas.width / dpr
+  const h = committedCanvas.height / dpr
+  committedCtx.clearRect(0, 0, w, h)
   for (const stroke of strokes.value) {
-    if (stroke.length < 2) continue
-    ctx.beginPath()
-    ctx.moveTo(stroke[0].x * w, stroke[0].y * h)
-    for (let i = 1; i < stroke.length; i++) {
-      // Smooth bezier through midpoints
-      const prev = stroke[i - 1]
-      const curr = stroke[i]
-      const mx = ((prev.x + curr.x) / 2) * w
-      const my = ((prev.y + curr.y) / 2) * h
-      ctx.quadraticCurveTo(prev.x * w, prev.y * h, mx, my)
-    }
-    const last = stroke[stroke.length - 1]
-    ctx.lineTo(last.x * w, last.y * h)
-    ctx.stroke()
+    drawStroke(committedCtx, stroke, w, h)
+  }
+  renderFrame()
+}
+
+function renderFrame() {
+  const canvas = canvasEl.value
+  if (!ctx || !canvas || !committedCanvas) return
+  const dpr = window.devicePixelRatio || 1
+  const w = canvas.width / dpr
+  const h = canvas.height / dpr
+  ctx.clearRect(0, 0, w, h)
+  ctx.drawImage(committedCanvas, 0, 0, w, h)
+  if (currentStroke.length > 0) {
+    drawStroke(ctx, currentStroke, w, h)
   }
 }
 
-function getPos(e: MouseEvent | TouchEvent): Point | null {
+function scheduleRender() {
+  if (rafId !== null) return
+  rafId = requestAnimationFrame(() => { rafId = null; renderFrame() })
+}
+
+function getPosFromPointer(e: PointerEvent): Point | null {
   const canvas = canvasEl.value
   if (!canvas) return null
   const rect = canvas.getBoundingClientRect()
-  if (e instanceof TouchEvent) {
-    const t = e.touches[0]
-    if (!t) return null
-    return { x: (t.clientX - rect.left) / rect.width, y: (t.clientY - rect.top) / rect.height }
-  }
   return { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height }
 }
 
-function onPointerDown(e: MouseEvent | TouchEvent) {
+function onPointerDown(e: PointerEvent) {
   if (!drawMode.value) return
   e.preventDefault()
+  ;(e.target as HTMLCanvasElement).setPointerCapture(e.pointerId)
   isDrawing = true
   currentStroke = []
-  const p = getPos(e)
-  if (p) {
-    currentStroke.push(p)
-    // draw a dot for taps
-    if (ctx && canvasEl.value) {
-      ctx.beginPath()
-      ctx.arc(p.x * canvasEl.value.offsetWidth, p.y * canvasEl.value.offsetHeight, 1.5, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(255,255,255,0.92)'
-      ctx.fill()
-    }
-  }
+  const p = getPosFromPointer(e)
+  if (p) { currentStroke.push(p); scheduleRender() }
 }
 
-function onPointerMove(e: MouseEvent | TouchEvent) {
+function onPointerMove(e: PointerEvent) {
   if (!isDrawing || !drawMode.value) return
   e.preventDefault()
-  const p = getPos(e)
-  if (!p || !ctx || !canvasEl.value) return
+  const p = getPosFromPointer(e)
+  if (!p) return
   currentStroke.push(p)
-  const w = canvasEl.value.offsetWidth
-  const h = canvasEl.value.offsetHeight
-  if (currentStroke.length >= 2) {
-    const prev = currentStroke[currentStroke.length - 2]
-    const curr = currentStroke[currentStroke.length - 1]
-    const mx = ((prev.x + curr.x) / 2) * w
-    const my = ((prev.y + curr.y) / 2) * h
-    ctx.beginPath()
-    ctx.moveTo(prev.x * w, prev.y * h)
-    ctx.quadraticCurveTo(prev.x * w, prev.y * h, mx, my)
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-    ctx.strokeStyle = 'rgba(255,255,255,0.92)'
-    ctx.lineWidth = 3
-    ctx.stroke()
-  }
+  scheduleRender()
 }
 
-function onPointerUp(e: MouseEvent | TouchEvent) {
+function onPointerUp(e: PointerEvent) {
   if (!isDrawing) return
   e.preventDefault()
   isDrawing = false
-  if (currentStroke.length > 0) {
+  if (currentStroke.length > 0 && committedCtx && committedCanvas) {
+    const dpr = window.devicePixelRatio || 1
+    const w = committedCanvas.width / dpr
+    const h = committedCanvas.height / dpr
+    drawStroke(committedCtx, currentStroke, w, h)
     strokes.value.push([...currentStroke])
     currentStroke = []
+    scheduleRender()
   }
 }
 
@@ -188,6 +211,9 @@ function exitDrawMode() {
   strokes.value = []
   currentStroke = []
   ctx = null
+  committedCtx = null
+  committedCanvas = null
+  if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null }
 }
 
 async function saveAndExit() {
@@ -221,26 +247,10 @@ async function saveAndExit() {
     }
 
     // Draw current session strokes on top
-    fctx.lineCap = 'round'
-    fctx.lineJoin = 'round'
-    fctx.strokeStyle = 'rgba(255,255,255,0.92)'
-    fctx.lineWidth = 3
     const w = canvas.offsetWidth
     const h = canvas.offsetHeight
     for (const stroke of strokes.value) {
-      if (stroke.length < 2) continue
-      fctx.beginPath()
-      fctx.moveTo(stroke[0].x * w, stroke[0].y * h)
-      for (let i = 1; i < stroke.length; i++) {
-        const prev = stroke[i - 1]
-        const curr = stroke[i]
-        const mx = ((prev.x + curr.x) / 2) * w
-        const my = ((prev.y + curr.y) / 2) * h
-        fctx.quadraticCurveTo(prev.x * w, prev.y * h, mx, my)
-      }
-      const last = stroke[stroke.length - 1]
-      fctx.lineTo(last.x * w, last.y * h)
-      fctx.stroke()
+      drawStroke(fctx, stroke, w, h)
     }
 
     const blob = await new Promise<Blob | null>(resolve => finalCanvas.toBlob(resolve, 'image/png'))
@@ -299,14 +309,10 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
       v-if="drawMode"
       ref="canvasEl"
       class="book-banner-canvas"
-      @mousedown="onPointerDown"
-      @mousemove="onPointerMove"
-      @mouseup="onPointerUp"
-      @mouseleave="onPointerUp"
-      @touchstart.passive="false"
-      @touchmove.passive="false"
-      @touchend.passive="false"
-      v-on="{ touchstart: onPointerDown, touchmove: onPointerMove, touchend: onPointerUp }"
+      @pointerdown="onPointerDown"
+      @pointermove="onPointerMove"
+      @pointerup="onPointerUp"
+      @pointercancel="onPointerUp"
     />
 
     <!-- Draw mode toolbar -->
