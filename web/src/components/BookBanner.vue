@@ -496,7 +496,7 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
             />
             <span v-else>{{ (m.name || m.email || '?').charAt(0).toUpperCase() }}</span>
           </div>
-          <button class="member-invite-btn" title="Invite someone" aria-label="Invite someone" @click="openModal">
+          <button class="member-invite-btn" title="Invite someone" data-tooltip="Invite" aria-label="Invite someone" @click="openModal">
             <i class="fa-solid fa-plus"></i>
           </button>
         </div>
@@ -522,12 +522,13 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
         <!-- ── Normal FAB ── -->
         <template v-if="!drawMode">
           <template v-if="isOwner">
-            <button class="fab-btn" title="Draw on banner" @click="enterDrawMode">
+            <button class="fab-btn" title="Draw on banner" data-tooltip="Draw" @click="enterDrawMode">
               <i class="fa-solid fa-pen-nib"></i>
             </button>
             <button
               class="fab-btn"
               :title="book.banner_url ? 'Change photo' : 'Upload photo'"
+              :data-tooltip="book.banner_url ? 'Change photo' : 'Add photo'"
               :disabled="bannerUploading"
               @click="bannerInputEl?.click()"
             >
@@ -536,7 +537,7 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
             </button>
             <span class="fab-divider"></span>
           </template>
-          <button class="fab-btn fab-btn--primary" title="Add recipe" @click="router.push('/new')">
+          <button class="fab-btn fab-btn--primary" title="Add recipe" data-tooltip="Add recipe" @click="router.push('/new')">
             <i class="fa-solid fa-plus"></i>
           </button>
         </template>

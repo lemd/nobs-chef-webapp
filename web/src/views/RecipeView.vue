@@ -157,16 +157,18 @@ async function onImageFileChange(e) {
           class="fab-btn"
           :class="{ 'fab-btn--active': state.panelOpen }"
           :title="state.panelOpen ? 'Hide ingredients' : 'Show ingredients'"
+          :data-tooltip="state.panelOpen ? 'Hide' : 'Ingredients'"
           @click="state.panelOpen = !state.panelOpen"
         >
           <i class="fa-solid fa-list"></i>
         </button>
-        <button class="fab-btn" title="Draw (coming soon)" disabled>
+        <button class="fab-btn" title="Draw (coming soon)" data-tooltip="Draw" disabled>
           <i class="fa-solid fa-pen-nib"></i>
         </button>
         <button
           class="fab-btn"
           :title="recipe.imageUrl ? 'Change photo' : 'Add photo'"
+          :data-tooltip="recipe.imageUrl ? 'Change photo' : 'Add photo'"
           :disabled="imageUploading"
           @click="imageInputEl?.click()"
         >
@@ -178,6 +180,7 @@ async function onImageFileChange(e) {
           class="fab-btn fab-btn--primary fab-btn--timer"
           :class="{ 'fab-btn--timer-active': timer.running }"
           :title="timer.running ? 'Stop timer' : 'Timers'"
+          :data-tooltip="timer.running ? 'Stop' : 'Timer'"
           @click="timer.running && resetTimer()"
         >
           <i v-if="!timer.running" class="fa-solid fa-stopwatch"></i>
