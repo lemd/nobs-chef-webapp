@@ -439,8 +439,19 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
           <span class="draw-size-dot" :data-size="sz"></span>
         </button>
       </div>
+      <span class="draw-toolbar-divider"></span>
+      <!-- Photo upload -->
+      <button
+        class="draw-tool-btn"
+        :title="book.banner_url ? 'Change photo' : 'Upload photo'"
+        :disabled="bannerUploading"
+        @click="bannerInputEl?.click()"
+      >
+        <i v-if="bannerUploading" class="fa-solid fa-spinner fa-spin"></i>
+        <i v-else class="fa-solid fa-camera"></i>
+      </button>
       <span class="draw-toolbar-spacer"></span>
-      <span v-if="drawError" class="draw-toolbar-error">{{ drawError }}</span>
+      <span v-if="drawError || bannerError" class="draw-toolbar-error">{{ drawError || bannerError }}</span>
       <button
         v-if="book.drawing_url || strokes.length > 0"
         class="draw-tool-btn draw-tool-btn--danger"
@@ -493,17 +504,6 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
           <i class="fa-solid fa-pen-nib"></i>
         </button>
 
-        <!-- Banner image upload (owner only, not in draw mode) -->
-        <button
-          v-if="isOwner && !drawMode"
-          class="banner-draw-btn"
-          :title="book.banner_url ? 'Change banner photo' : 'Upload banner photo'"
-          :disabled="bannerUploading"
-          @click="bannerInputEl?.click()"
-        >
-          <i v-if="bannerUploading" class="fa-solid fa-spinner fa-spin"></i>
-          <i v-else class="fa-solid fa-camera"></i>
-        </button>
         <input
           ref="bannerInputEl"
           type="file"
@@ -511,7 +511,6 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
           style="display:none"
           @change="onBannerFileChange"
         />
-        <span v-if="bannerError" class="banner-upload-error">{{ bannerError }}</span>
       </div>
     </div>
 
