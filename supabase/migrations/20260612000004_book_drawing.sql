@@ -15,17 +15,26 @@ on conflict (id) do nothing;
 
 -- Only authenticated users can upload to their own book folder
 -- (edge function uses service_role so this just guards direct uploads)
-create policy "Authenticated upload to book-drawings"
-  on storage.objects for insert
-  to authenticated
-  with check (bucket_id = 'book-drawings');
+do $$ begin
+  create policy "Authenticated upload to book-drawings"
+    on storage.objects for insert
+    to authenticated
+    with check (bucket_id = 'book-drawings');
+exception when duplicate_object then null;
+end $$;
 
-create policy "Public read from book-drawings"
-  on storage.objects for select
-  to public
-  using (bucket_id = 'book-drawings');
+do $$ begin
+  create policy "Public read from book-drawings"
+    on storage.objects for select
+    to public
+    using (bucket_id = 'book-drawings');
+exception when duplicate_object then null;
+end $$;
 
-create policy "Authenticated delete from book-drawings"
-  on storage.objects for delete
-  to authenticated
-  using (bucket_id = 'book-drawings');
+do $$ begin
+  create policy "Authenticated delete from book-drawings"
+    on storage.objects for delete
+    to authenticated
+    using (bucket_id = 'book-drawings');
+exception when duplicate_object then null;
+end $$;
