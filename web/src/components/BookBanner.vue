@@ -470,7 +470,7 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
 
     <div class="book-banner-inner">
       <h2 class="book-banner-title">{{ book.name }}</h2>
-      <!-- Stats: recipe count + member count with separator line -->
+      <!-- Stats + members on one line -->
       <div class="meta-row meta-row--hero banner-meta-row">
         <div class="meta-pill">
           <span class="label">Recipes</span>
@@ -480,8 +480,6 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
           <span class="label">Members</span>
           <span class="value">{{ members.length }}</span>
         </div>
-      </div>
-      <div class="book-banner-row">
         <div class="member-stack">
           <div
             v-for="m in members"
@@ -501,15 +499,15 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
             <i class="fa-solid fa-plus"></i>
           </button>
         </div>
-
-        <input
-          ref="bannerInputEl"
-          type="file"
-          accept="image/*"
-          style="display:none"
-          @change="onBannerFileChange"
-        />
       </div>
+
+      <input
+        ref="bannerInputEl"
+        type="file"
+        accept="image/*"
+        style="display:none"
+        @change="onBannerFileChange"
+      />
     </div>
 
     <!-- Unified FAB / draw control pill -->

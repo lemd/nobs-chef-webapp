@@ -74,7 +74,6 @@ export function useTimers() {
     timer.total = info.total
     timer.remaining = info.total
     _start()
-    appState.panelOpen = false
   }
 
   function pauseTimer(): void { if (timer.running) _stop() }
