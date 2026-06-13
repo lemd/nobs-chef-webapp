@@ -250,9 +250,10 @@ body {
 
 /* Collapse handle hidden on mobile */
 .panel-collapse-btn { display: none; }
+.ing-panel-backdrop { display: none; }
 
 /* \u2500\u2500 Ingredient panel \u2014 shared \u2500\u2500 */
-#ingPanel { background: #fff; display: flex; flex-direction: column; }
+#ingPanel { background: #fff; display: flex; flex-direction: column; transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
 .ing-panel-inner-wrap { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 
 .ing-outer-tabs { position: absolute; display: flex; }
@@ -779,7 +780,7 @@ body {
   bottom: 1.75rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 100;
+  z-index: 200;
   display: flex;
   align-items: center;
   gap: 0.2rem;
@@ -1011,8 +1012,9 @@ body {
   #book-sidebar { display: none; }
   #app-scroll { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
   .recipe-hero { margin-left: -1rem; margin-right: -1rem; max-width: calc(100% + 2rem); }
-  #ingPanel { position: fixed; top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 40vh; border-left: none; border-top: none; border-radius: 0; z-index: 200; transform: translateY(100%); display: flex; flex-direction: column; filter: drop-shadow(0 -5px 16px rgba(0,0,0,0.15)); }
-  #ingPanel.open { transform: translateY(0); }
+  #ingPanel { position: fixed; top: 0; right: 0; bottom: 0; left: auto; width: min(320px, 100vw); height: auto; border-left: 1px solid var(--line); border-top: none; border-radius: 0; z-index: 140; transform: translateX(100%); display: flex; flex-direction: column; filter: drop-shadow(-5px 0 16px rgba(0,0,0,0.15)); }
+  #ingPanel.open { transform: translateX(0); }
+  .ing-panel-backdrop { display: block; position: fixed; inset: 0; z-index: 135; background: rgba(0,0,0,0.35); }
   .ing-outer-tabs { top: -40px; left: 0; right: 0; flex-direction: row; border-radius: 0; overflow: hidden; white-space: nowrap; border: 1px solid var(--line); border-bottom: none; }
   .ing-outer-tab { flex: 1; padding: 0.55rem 0; height: 40px; display: flex; align-items: center; justify-content: center; writing-mode: horizontal-tb; transform: none; border-radius: 0; border: none; }
   .ing-outer-tab + .ing-outer-tab { border-left: 1px solid var(--line); }
