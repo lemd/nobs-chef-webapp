@@ -93,7 +93,8 @@ const drawSaving = ref(false)
 const drawError = ref('')
 
 type Point = { x: number; y: number }
-type Stroke = { pts: Point[]; width: number }
+// cw/ch = canvas CSS dimensions when the stroke was recorded (needed for cover-crop export)
+type Stroke = { pts: Point[]; width: number; cw: number; ch: number }
 
 const PEN_SIZES = { s: 2.5, m: 5, l: 10 } as const
 type PenKey = keyof typeof PEN_SIZES
@@ -175,7 +176,8 @@ function replayStrokes() {
   const h = committedCanvas.height / dpr
   committedCtx.clearRect(0, 0, w, h)
   for (const s of strokes.value) {
-    drawStroke(committedCtx, s.pts, w, h, s.width)
+    // Use stored dimensions so replay is correct even if canvas was resized
+    drawStroke(committedCtx, s.pts, s.cw || w, s.ch || h, s.width)
   }
   renderFrame()
 }
@@ -261,7 +263,7 @@ function onPointerUp(e: PointerEvent) {
     const h = committedCanvas.height / dpr
     const width = PEN_SIZES[penSize.value]
     drawStroke(committedCtx, currentStroke, w, h, width)
-    strokes.value.push({ pts: [...currentStroke], width })
+    strokes.value.push({ pts: [...currentStroke], width, cw: w, ch: h })
     currentStroke = []
     scheduleRender()
   }
@@ -281,6 +283,45 @@ async function clearAll() {
     committedCtx.clearRect(0, 0, committedCanvas.width / dpr, committedCanvas.height / dpr)
   }
   renderFrame()
+}
+
+// ── Draw stroke onto export square using cover-crop mapping ─────────────────
+// Maps normalized coords recorded on srcW×srcH viewport to a dstS×dstS square,
+// using the same math as object-fit:cover — so strokes appear in the exact same
+// position and shape as drawn, regardless of the original viewport aspect ratio.
+function drawStrokeCover(
+  c: CanvasRenderingContext2D,
+  stroke: Point[],
+  srcW: number, srcH: number,
+  dstS: number,
+  lineWidth: number,
+) {
+  if (stroke.length === 0) return
+  const scale = dstS / Math.min(srcW, srcH)
+  const offX = (srcW * scale - dstS) / 2
+  const offY = (srcH * scale - dstS) / 2
+  const px = (nx: number) => nx * srcW * scale - offX
+  const py = (ny: number) => ny * srcH * scale - offY
+  c.lineCap = 'round'
+  c.lineJoin = 'round'
+  c.strokeStyle = STROKE_COLOR
+  c.lineWidth = lineWidth
+  if (stroke.length === 1) {
+    c.beginPath()
+    c.arc(px(stroke[0].x), py(stroke[0].y), lineWidth / 2, 0, Math.PI * 2)
+    c.fillStyle = STROKE_COLOR
+    c.fill()
+    return
+  }
+  c.beginPath()
+  c.moveTo(px(stroke[0].x), py(stroke[0].y))
+  for (let i = 1; i < stroke.length - 1; i++) {
+    const mx = (px(stroke[i].x) + px(stroke[i + 1].x)) / 2
+    const my = (py(stroke[i].y) + py(stroke[i + 1].y)) / 2
+    c.quadraticCurveTo(px(stroke[i].x), py(stroke[i].y), mx, my)
+  }
+  c.lineTo(px(stroke[stroke.length - 1].x), py(stroke[stroke.length - 1].y))
+  c.stroke()
 }
 
 // Helper: cover-crop drawImage — fills dstW×dstH from the center of img
@@ -396,9 +437,10 @@ async function saveAndExit() {
       })
     }
 
-    // Replay session strokes at EXPORT scale using normalised coordinates
+    // Replay strokes using cover-crop mapping so they land at the same position
+    // as drawn, regardless of the viewport aspect ratio when the stroke was made.
     for (const s of strokes.value) {
-      drawStroke(fctx, s.pts, EXPORT, EXPORT, s.width)
+      drawStrokeCover(fctx, s.pts, s.cw || EXPORT, s.ch || EXPORT, EXPORT, s.width)
     }
 
     const blob = await new Promise<Blob | null>(resolve => finalCanvas.toBlob(resolve, 'image/png'))
