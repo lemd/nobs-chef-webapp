@@ -1,6 +1,13 @@
 import { reactive } from 'vue'
 import { scrapeRecipe } from '../api.ts'
 import { state as appState } from '../state.ts'
+import { auth } from './useAuth.ts'
+import {
+  recipeToListItem,
+  setRecipe,
+  upsertRecipeInList,
+} from './dataCache.ts'
+import { applyCachedRecipeList } from './useRecipeList.ts'
 import type { Recipe } from '../types/index.ts'
 
 interface QueueItem {
@@ -37,9 +44,24 @@ export function useQueue() {
       if (!item) break
       item.qstate = 'processing'
       try {
-        const data = await scrapeRecipe(item.url ? { url: item.url } : { text: item.text })
+        const data = await scrapeRecipe({
+          ...(item.url ? { url: item.url } : { text: item.text }),
+          bookId: appState.currentBook?.id ?? null,
+        })
         const hash = data._hash
         delete (data as Partial<typeof data>)._hash
+        const filename = `${hash}.json`
+        setRecipe(filename, data)
+        const bookId = appState.currentBook?.id
+        const userId = auth.user?.id
+        if (userId && bookId) {
+          upsertRecipeInList(
+            userId,
+            bookId,
+            recipeToListItem(filename, data),
+          )
+          applyCachedRecipeList(bookId)
+        }
         item.qstate = 'done'
         item.result = { data, hash }
         window.dispatchEvent(new CustomEvent('recipe-scraped', { detail: { data, hash } }))

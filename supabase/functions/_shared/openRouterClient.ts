@@ -21,6 +21,7 @@ const RECIPE_JSON_SCHEMA = {
         mealType: { type: "string" },
         dietary: { type: "array", items: { type: "string" } },
         season: { type: "array", items: { type: "string" } },
+        timeOfDay: { type: "array", items: { type: "string", enum: ["morning", "noon", "evening"] } },
       },
     },
     ingredientGroups: {
@@ -118,13 +119,14 @@ Temperature conversion rules ("temperatureConversion" field on steps):
 Ingredient hint rules ("hint" field on ingredients):
 - Provide a colloquial real-world equivalent ONLY when the original measurement is in grams or ounces and a plain-English description helps a home cook visualise the amount. Examples: "~½ small onion", "~1 medium clove", "~4 cups loosely packed", "~¾ cup or ~12 tomatoes", "~2 tbsp".
 - Prefer count descriptions for produce (e.g. "~2 medium carrots") and volume for loose/leafy items (e.g. "~3 cups baby spinach").
+- Omit for: items already expressed as a count or volume, seasonings/spices where grams is standard (flour, sugar, salt), or items where no intuitive equivalent exists.
+- Keep hints to ≤5 words and always prefix with "~" to signal approximation.
 
 Tags rules ("tags" object):
 - "mealType": a single lowercase string. You MUST pick from this exact list: "salad", "soup", "pasta", "rice", "noodles", "pizza", "bread", "sandwich", "burger", "taco", "curry", "stew", "roast", "steak", "chicken", "fish", "seafood", "eggs", "breakfast", "dessert", "cake", "cookies", "snack", "side dish", "sauce", "dip", "drink". Do NOT invent new values outside this list. If a vegetarian main course doesn't fit another category, use the most relevant protein/dish type (e.g. "roast", "steak", "eggs") or "side dish".
 - "dietary": an array of applicable labels. Choose from: "vegetarian", "vegan", "pescatarian", "gluten-free", "dairy-free", "nut-free", "low-carb", "keto". Only include labels that are clearly true for the whole dish. Omit if none apply — do NOT include an empty array.
 - "season": an array of seasons this dish is best suited to. Choose from: "spring", "summer", "autumn", "winter". Use ["all year"] if genuinely seasonal-neutral. Err toward the seasons where the dish's main ingredients are most available or where the dish is most appealing (e.g. hot soups → winter, cold salads → summer).
-- Omit for: items already expressed as a count or volume, seasonings/spices where grams is standard (flour, sugar, salt), or items where no intuitive equivalent exists.
-- Keep hints to ≤5 words and always prefix with "~" to signal approximation.`;
+- "timeOfDay": an array of when this dish is typically eaten. Choose from: "morning" (breakfast/brunch), "noon" (lunch), "evening" (dinner/supper). Include ALL that genuinely apply — e.g. pancakes → ["morning"], quiche → ["morning", "noon"], roast chicken → ["evening"], soup could be ["noon", "evening"]. Omit if unclear.`;
 
 function buildClient(): OpenAI {
   const apiKey = Deno.env.get("OPENROUTER_API_KEY");

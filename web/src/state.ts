@@ -1,7 +1,7 @@
 import { reactive } from 'vue'
 import type { Recipe, RecipeBook, RecipeListItem, BookMember } from './types/index.ts'
 
-type FilterKey = 'mealType' | 'dietary' | 'season'
+type FilterKey = 'mealType' | 'dietary' | 'season' | 'timeOfDay'
 type PanelTab = 'ingredients' | 'timers'
 
 export const state = reactive({
@@ -24,11 +24,16 @@ export const state = reactive({
 
   // Dashboard
   allRecipes: [] as RecipeListItem[],
+  recipesLoading: false,
+  recipesLoaded: false,
+  recipesError: null as string | null,
+  pinnedFilenames: new Set<string>(),
   activeFile: null as string | null,
   activeFilters: {
     mealType: new Set<string>(),
     dietary: new Set<string>(),
     season: new Set<string>(),
+    timeOfDay: new Set<string>(),
   } as Record<FilterKey, Set<string>>,
   activeIngredients: new Set<string>(),
 
@@ -36,4 +41,5 @@ export const state = reactive({
   drawerOpen: false,
   guideOpen: false,
   loading: false,
+  mobileBookMenuOpen: false,
 })

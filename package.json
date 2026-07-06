@@ -1,12 +1,12 @@
 {
     "name": "nobs",
     "version": "1.0.0",
-    "description": "Recipe scraper and parser using OpenRouter + Claude",
-    "main": "dist/index.js",
+    "description": "Nobs recipe books — Vue frontend + Supabase backend",
+    "private": true,
     "scripts": {
-        "start": "tsx src/index.ts",
-        "dev": "tsx watch src/index.ts",
-        "build": "tsc"
+        "dev": "npm run dev --prefix web",
+        "build": "npm run build --prefix web",
+        "preview": "npm run preview --prefix web"
     },
     "dependencies": {
         "axios": "^1.7.0",

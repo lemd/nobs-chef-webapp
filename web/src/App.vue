@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { watch, onMounted } from 'vue'
+import { watch, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { state } from './state.ts'
 import { auth } from './composables/useAuth.ts'
+import { usePinnedRecipes } from './composables/usePinnedRecipes.ts'
+import { useRecipeList } from './composables/useRecipeList.ts'
 import { fetchBooks, acceptInvite, fetchBookMembers, createBook } from './api.ts'
+import { clearCache, getBooks, setBooks, invalidateBooks } from './composables/dataCache.ts'
 import MosaicStrip from './components/MosaicStrip.vue'
 import AppHeader from './components/AppHeader.vue'
 import AppDrawer from './components/AppDrawer.vue'
@@ -13,6 +16,12 @@ import BookSidebar from './components/BookSidebar.vue'
 
 const route = useRoute()
 const router = useRouter()
+usePinnedRecipes()
+useRecipeList()
+
+const bookInitial = computed(() =>
+  state.currentBook?.name?.charAt(0).toUpperCase() ?? 'B',
+)
 
 // Close panel when leaving the recipe view
 watch(
@@ -38,8 +47,9 @@ watch(() => state.currentBook, async (book) => {
 
 onMounted(() => {
   // Auth is already initialised by main.ts — just watch for sign-in/out
-  watch(() => auth.user, async (user) => {
-    if (!user) {
+  watch(() => auth.user?.id, async (userId) => {
+    if (!userId) {
+      clearCache()
       state.books = []
       state.currentBook = null
       state.bookMembers = []
@@ -52,23 +62,38 @@ onMounted(() => {
       sessionStorage.removeItem('pendingInviteToken')
       try {
         await acceptInvite(pendingToken)
+        invalidateBooks(userId)
       } catch (e) {
         console.warn('Invite accept failed:', (e as Error).message)
       }
     }
 
-    // Load books — auto-create "My Recipes" on first sign-in
-    let books = await fetchBooks().catch(() => [])
-    if (books.length === 0) {
-      try {
-        const newBook = await createBook('My Recipes')
-        books = [newBook]
-      } catch (e) {
-        console.warn('Auto-create book failed:', (e as Error).message)
-      }
+    const previousBookId = state.currentBook?.id
+    const cachedBooks = getBooks(userId)
+    if (cachedBooks?.length) {
+      state.books = cachedBooks
+      state.currentBook =
+        cachedBooks.find((b) => b.id === previousBookId) ?? cachedBooks[0]
     }
+
+    let books = cachedBooks
+    if (!books?.length) {
+      books = await fetchBooks().catch(() => [])
+      if (books.length === 0) {
+        try {
+          const newBook = await createBook('My Recipes')
+          books = [newBook]
+        } catch (e) {
+          console.warn('Auto-create book failed:', (e as Error).message)
+        }
+      }
+      if (books.length) setBooks(userId, books)
+    }
+
     state.books = books
-    if (books.length > 0) state.currentBook = books[0]
+    if (books.length > 0) {
+      state.currentBook = books.find((b) => b.id === previousBookId) ?? books[0]
+    }
 
     // Redirect away from login
     if (route.name === 'login' || route.name === 'join') {
@@ -83,10 +108,22 @@ onMounted(() => {
   <GuideModal />
   <div class="app-layout">
     <BookSidebar />
-    <div id="app-scroll" :class="{ 'ing-open': state.panelOpen, 'recipe-dark': route.name === 'recipe' }">
-      <MosaicStrip v-if="route.name !== 'recipe'" :loading="state.loading" />
-      <AppHeader />
-      <RouterView />
+    <div class="app-main">
+      <div id="app-scroll" :class="{ 'ing-open': state.panelOpen, 'recipe-view': route.name === 'recipe' }">
+        <header class="mobile-top-bar">
+          <button
+            class="mobile-menu-btn"
+            aria-label="Open books menu"
+            @click="state.mobileBookMenuOpen = true"
+          >
+            <span class="menu-book-label">{{ bookInitial }}</span>
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </header>
+        <MosaicStrip v-if="route.name !== 'recipe'" :loading="state.loading" />
+        <AppHeader v-if="route.name !== 'recipe'" />
+        <RouterView />
+      </div>
     </div>
     <IngPanel v-if="route.name === 'recipe'" />
   </div>

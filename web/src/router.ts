@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashView from './views/DashView.vue'
 import NewView from './views/NewView.vue'
 import RecipeView from './views/RecipeView.vue'
+import RecipeEditView from './views/RecipeEditView.vue'
 import LoginView from './views/LoginView.vue'
 import ProfileView from './views/ProfileView.vue'
 import { auth } from './composables/useAuth.ts'
@@ -11,6 +12,7 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'dash', component: DashView },
     { path: '/new', name: 'new', component: NewView },
+    { path: '/r/:slug/edit', name: 'recipe-edit', component: RecipeEditView, props: true },
     { path: '/r/:slug', name: 'recipe', component: RecipeView, props: true },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/join', name: 'join', component: LoginView },

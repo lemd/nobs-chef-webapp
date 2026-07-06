@@ -1,15 +1,21 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node10",
-    "ignoreDeprecations": "5.0",
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "preserve",
     "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "composite": true,
+    "ignoreDeprecations": "5.0",
+    "types": ["vite/client"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*.ts", "src/**/*.vue"],
+  "exclude": ["src/server.ts"]
 }

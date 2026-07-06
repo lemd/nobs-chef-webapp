@@ -6,7 +6,7 @@
  * POST /book                      → create a new book (caller becomes owner + member)
  * POST /book/leave?book_id=X      → leave a book (not allowed if owner)
  * POST /book/drawing?book_id=X    → upload/replace transparent PNG drawing overlay (owner only)
- * DELETE /book/drawing?book_id=X  → remove drawing overlay (owner only)
+ * POST /book/visibility?book_id=X → set public/private (owner only)
  */
 import { createClient } from "npm:@supabase/supabase-js";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
@@ -73,7 +73,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "GET") {
     const { data, error } = await supabase
       .from("recipe_book_members")
-      .select("role, joined_at, recipe_books(id, name, owner_id, created_at, drawing_url, banner_url)")
+      .select("role, joined_at, recipe_books(id, name, owner_id, created_at, drawing_url, banner_url, visibility)")
       .eq("user_id", user.id);
 
     if (error) return jsonResponse({ error: error.message }, 500);
@@ -196,6 +196,38 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ ok: true, banner_url: bannerUrl });
   }
 
+  // ── POST /book/visibility?book_id=X ────────────────────────────────────────
+  if (req.method === "POST" && action === "visibility") {
+    const bookId = url.searchParams.get("book_id");
+    if (!bookId) return jsonResponse({ error: "book_id required" }, 400);
+
+    const { visibility } = (await req.json()) as { visibility?: string };
+    if (visibility !== "public" && visibility !== "private") {
+      return jsonResponse({ error: "visibility must be public or private" }, 400);
+    }
+
+    const { data: book } = await supabase
+      .from("recipe_books")
+      .select("owner_id")
+      .eq("id", bookId)
+      .maybeSingle();
+
+    if (!book) return jsonResponse({ error: "Book not found" }, 404);
+    if (book.owner_id !== user.id) {
+      return jsonResponse({ error: "Only the book owner can change visibility" }, 403);
+    }
+
+    const { data: updated, error } = await supabase
+      .from("recipe_books")
+      .update({ visibility })
+      .eq("id", bookId)
+      .select("id, name, owner_id, created_at, drawing_url, banner_url, visibility")
+      .single();
+
+    if (error || !updated) return jsonResponse({ error: error?.message ?? "Update failed" }, 500);
+    return jsonResponse({ ...updated, role: "owner" });
+  }
+
   // ── POST /book/drawing?book_id=X — upload PNG overlay (owner only) ─────────
   if ((req.method === "POST" || req.method === "DELETE") && action === "drawing") {
     const bookId = url.searchParams.get("book_id");
@@ -278,8 +310,8 @@ Deno.serve(async (req: Request) => {
 
     const { data: book, error: bookErr } = await supabase
       .from("recipe_books")
-      .insert({ name: name.trim(), owner_id: user.id })
-      .select("id, name, owner_id, created_at")
+      .insert({ name: name.trim(), owner_id: user.id, visibility: "private" })
+      .select("id, name, owner_id, created_at, visibility")
       .single();
 
     if (bookErr || !book) {

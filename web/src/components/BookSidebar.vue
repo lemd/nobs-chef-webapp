@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { state } from '../state.ts'
 import { createBook } from '../api.ts'
+import { setBooks } from '../composables/dataCache.ts'
+import { auth } from '../composables/useAuth.ts'
 
 const router = useRouter()
 const books = computed(() => state.books)
@@ -19,9 +21,7 @@ function selectBook(book: typeof state.books[0]) {
 }
 
 // Mobile drawer
-const mobileOpen = ref(false)
-function openMobile() { mobileOpen.value = true }
-function closeMobile() { mobileOpen.value = false }
+function closeMobile() { state.mobileBookMenuOpen = false }
 function selectBookMobile(book: typeof state.books[0]) {
   state.currentBook = book
   router.push('/')
@@ -55,6 +55,8 @@ async function submitCreate() {
     const book = await createBook(name)
     state.books.push(book)
     state.currentBook = book
+    const userId = auth.user?.id
+    if (userId) setBooks(userId, state.books)
     closeCreateModal()
     router.push('/')
   } catch (e) {
@@ -103,16 +105,10 @@ function goProfile(fromMobile = false) {
     </button>
   </aside>
 
-  <!-- Mobile hamburger button (fixed, shown only on mobile) -->
+  <!-- Mobile drawer overlay -->
   <Teleport to="body">
-    <button class="mobile-menu-btn" aria-label="Open books menu" @click="openMobile">
-      <span class="menu-book-label">B</span>
-      <i class="fa-solid fa-bars"></i>
-    </button>
-
-    <!-- Mobile drawer overlay -->
     <Transition name="mobile-drawer">
-      <div v-if="mobileOpen" class="mobile-drawer-backdrop" @click.self="closeMobile">
+      <div v-if="state.mobileBookMenuOpen" class="mobile-drawer-backdrop" @click.self="closeMobile">
         <nav class="mobile-drawer">
           <div class="mobile-drawer-header">
             <span class="mobile-drawer-wordmark">Nobs</span>
@@ -165,7 +161,6 @@ function goProfile(fromMobile = false) {
             class="invite-link-input"
             placeholder="e.g. Weekend Dinners"
             maxlength="60"
-            autofocus
             @keydown.enter="submitCreate"
             @keydown.esc="closeCreateModal"
           />

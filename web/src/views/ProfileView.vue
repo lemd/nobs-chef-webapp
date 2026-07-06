@@ -3,7 +3,11 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth, signOut } from '../composables/useAuth.ts'
 import { state } from '../state.ts'
-import { leaveBook } from '../api.ts'
+import { leaveBook, updateBookVisibility } from '../api.ts'
+import {
+  invalidateRecipeList,
+  setBooks,
+} from '../composables/dataCache.ts'
 
 const router = useRouter()
 const user = computed(() => auth.user)
@@ -28,6 +32,29 @@ async function handleSignOut() {
 
 const leavingBookId = ref<number | null>(null)
 const leaveError = ref('')
+const updatingVisibilityId = ref<number | null>(null)
+
+async function toggleVisibility(book: typeof allBooks.value[0]) {
+  if (updatingVisibilityId.value) return
+  const next = book.visibility === 'public' ? 'private' : 'public'
+  updatingVisibilityId.value = book.id
+  try {
+    const updated = await updateBookVisibility(book.id, next)
+    const idx = state.books.findIndex((b) => b.id === book.id)
+    if (idx >= 0) {
+      state.books[idx] = { ...state.books[idx], ...updated, role: 'owner' }
+    }
+    if (state.currentBook?.id === book.id) {
+      state.currentBook = { ...state.currentBook, visibility: next }
+    }
+    const userId = auth.user?.id
+    if (userId) setBooks(userId, state.books)
+  } catch (e) {
+    leaveError.value = (e as Error).message
+  } finally {
+    updatingVisibilityId.value = null
+  }
+}
 
 async function handleLeaveBook(bookId: number) {
   if (leavingBookId.value) return
@@ -36,6 +63,11 @@ async function handleLeaveBook(bookId: number) {
   try {
     const { deleted } = await leaveBook(bookId)
     state.books = state.books.filter(b => b.id !== bookId)
+    const userId = auth.user?.id
+    if (userId) {
+      setBooks(userId, state.books)
+      invalidateRecipeList(userId, bookId)
+    }
     if (state.currentBook?.id === bookId) {
       state.currentBook = state.books[0] ?? null
     }
@@ -78,6 +110,21 @@ async function handleLeaveBook(bookId: number) {
         <div v-for="book in allBooks" :key="book.id" class="shared-book-row">
           <span class="shared-book-name">{{ book.name }}</span>
           <span v-if="book.isOwner" class="shared-book-owner-tag">owner</span>
+          <button
+            v-if="book.isOwner"
+            type="button"
+            class="visibility-btn"
+            :class="{ 'visibility-btn--public': book.visibility === 'public' }"
+            :disabled="updatingVisibilityId === book.id"
+            :title="book.visibility === 'public' ? 'Public — anyone can view and fork recipes' : 'Private — only members can view'"
+            @click="toggleVisibility(book)"
+          >
+            <i v-if="updatingVisibilityId === book.id" class="fa-solid fa-spinner fa-spin"></i>
+            <template v-else>
+              <i class="fa-solid" :class="book.visibility === 'public' ? 'fa-globe' : 'fa-lock'"></i>
+              {{ book.visibility === 'public' ? 'Public' : 'Private' }}
+            </template>
+          </button>
           <button
             class="leave-btn"
             :class="{ 'leave-btn--delete': book.isOwner }"
@@ -242,4 +289,26 @@ async function handleLeaveBook(bookId: number) {
   color: var(--amber); border: 1px solid rgba(200,144,45,0.35);
   border-radius: 999px; padding: 0.1rem 0.5rem; white-space: nowrap;
 }
+.visibility-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.visibility-btn--public {
+  color: var(--amber);
+  border-color: rgba(200, 144, 45, 0.45);
+}
+.visibility-btn:disabled { opacity: 0.6; cursor: default; }
 </style>

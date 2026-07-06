@@ -22,12 +22,14 @@ export interface RecipeStep {
   instruction: string
   timingInterval?: string | null
   temperatureConversion?: string | null
+  userNote?: string | null
 }
 
 export interface RecipeTags {
   mealType?: string | null
   dietary?: string[]
   season?: string[]
+  timeOfDay?: ('morning' | 'noon' | 'evening')[]
 }
 
 export interface Recipe {
@@ -43,11 +45,20 @@ export interface Recipe {
   ingredientGroups: IngredientGroup[]
   steps: RecipeStep[]
   tags?: RecipeTags | null
+  forkedFrom?: ForkSource | null
 }
 
 // ── Book / auth types ────────────────────────────────────────────────────────
 
+export type BookVisibility = 'public' | 'private'
 export type BookRole = 'owner' | 'member'
+
+export interface ForkSource {
+  bookId: number
+  bookName: string
+  recipeHash: string
+  recipeTitle: string
+}
 
 export interface RecipeBook {
   id: number
@@ -58,6 +69,7 @@ export interface RecipeBook {
   joinedAt?: string
   drawing_url?: string | null
   banner_url?: string | null
+  visibility?: BookVisibility
 }
 
 export interface BookMember {
@@ -89,6 +101,8 @@ export interface RecipeListItem {
   savedAt: string
   tags?: RecipeTags | null
   ingredientNames: string
+  pinned?: boolean
+  forkedFrom?: ForkSource | null
   // internal
   _ingredientNames?: string
 }

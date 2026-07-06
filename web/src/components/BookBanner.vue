@@ -11,10 +11,10 @@ const members = computed(() => state.bookMembers)
 const isOwner = computed(() => book.value?.owner_id === auth.user?.id)
 const router = useRouter()
 
-const bannerStyle = computed(() => {
-  const u = book.value?.banner_url
-  return u ? `--banner-img: url('${u}')` : ''
-})
+const DEFAULT_BANNER =
+  'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1400&h=1400&fit=crop'
+
+const bannerPhotoUrl = computed(() => book.value?.banner_url || DEFAULT_BANNER)
 
 // ── Banner image upload ───────────────────────────────────────────────────────
 const bannerInputEl = ref<HTMLInputElement | null>(null)
@@ -269,68 +269,29 @@ async function clearAll() {
   renderFrame()
 }
 
-// ── Draw stroke onto export square using cover-crop mapping ─────────────────
-// Maps normalized coords recorded on srcW×srcH viewport to a dstS×dstS square,
-// using the same math as object-fit:cover — so strokes appear in the exact same
-// position and shape as drawn, regardless of the original viewport aspect ratio.
-function drawStrokeCover(
+// ── Draw stroke onto export square (1:1 canvas → 1:1 export) ─────────────────
+function drawStrokeExport(
   c: CanvasRenderingContext2D,
   stroke: Point[],
-  srcW: number, srcH: number,
-  dstS: number,
+  size: number,
   lineWidth: number,
 ) {
-  if (stroke.length === 0) return
-  // Use maxDim to mirror object-fit:cover — the longer axis fills dstS exactly,
-  // and the shorter axis is centred within dstS (matching what the browser shows).
-  const maxDim = Math.max(srcW, srcH)
-  const scale = dstS / maxDim
-  const offX = (maxDim - srcW) / 2 * scale
-  const offY = (maxDim - srcH) / 2 * scale
-  const px = (nx: number) => nx * srcW * scale + offX
-  const py = (ny: number) => ny * srcH * scale + offY
-  c.lineCap = 'round'
-  c.lineJoin = 'round'
-  c.strokeStyle = STROKE_COLOR
-  c.lineWidth = lineWidth
-  if (stroke.length === 1) {
-    c.beginPath()
-    c.arc(px(stroke[0].x), py(stroke[0].y), lineWidth / 2, 0, Math.PI * 2)
-    c.fillStyle = STROKE_COLOR
-    c.fill()
-    return
-  }
-  c.beginPath()
-  c.moveTo(px(stroke[0].x), py(stroke[0].y))
-  for (let i = 1; i < stroke.length - 1; i++) {
-    const mx = (px(stroke[i].x) + px(stroke[i + 1].x)) / 2
-    const my = (py(stroke[i].y) + py(stroke[i + 1].y)) / 2
-    c.quadraticCurveTo(px(stroke[i].x), py(stroke[i].y), mx, my)
-  }
-  c.lineTo(px(stroke[stroke.length - 1].x), py(stroke[stroke.length - 1].y))
-  c.stroke()
+  drawStroke(c, stroke, size, size, lineWidth)
 }
 
-// Helper: cover-crop drawImage — fills dstW×dstH from the center of img
-function drawImageCover(
+// Fit image inside dstW×dstH — mirrors object-fit: contain
+function drawImageContain(
   c: CanvasRenderingContext2D,
   img: HTMLImageElement,
   dstW: number,
   dstH: number,
 ) {
-  const imgAR = img.naturalWidth / img.naturalHeight
-  const dstAR = dstW / dstH
-  let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight
-  if (imgAR > dstAR) {
-    // image wider — crop sides
-    sw = sh * dstAR
-    sx = (img.naturalWidth - sw) / 2
-  } else {
-    // image taller — crop top/bottom
-    sh = sw / dstAR
-    sy = (img.naturalHeight - sh) / 2
-  }
-  c.drawImage(img, sx, sy, sw, sh, 0, 0, dstW, dstH)
+  const scale = Math.min(dstW / img.naturalWidth, dstH / img.naturalHeight)
+  const dw = img.naturalWidth * scale
+  const dh = img.naturalHeight * scale
+  const dx = (dstW - dw) / 2
+  const dy = (dstH - dh) / 2
+  c.drawImage(img, dx, dy, dw, dh)
 }
 
 // ── FLIP pill-width animation ─────────────────────────────────────────────────
@@ -360,7 +321,6 @@ async function enterDrawMode() {
 
   initCanvas()
   // Preload any existing saved drawing as the base layer on the committed canvas.
-  // Use cover-crop drawImage so the preview matches what object-fit:cover shows.
   const savedUrl = book.value?.drawing_url
   if (savedUrl && committedCtx && committedCanvas) {
     const dpr = window.devicePixelRatio || 1
@@ -369,7 +329,7 @@ async function enterDrawMode() {
     await new Promise<void>((resolve) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'
-      img.onload = () => { drawImageCover(committedCtx!, img, w, h); resolve() }
+      img.onload = () => { drawImageContain(committedCtx!, img, w, h); resolve() }
       img.onerror = () => resolve()
       img.src = savedUrl
     })
@@ -400,10 +360,7 @@ async function saveAndExit() {
   drawSaving.value = true
   drawError.value = ''
 
-  // Always export at a fixed square resolution.
-  // Both the drawing PNG and the banner photo are 1:1 squares displayed via
-  // object-fit:cover / background-size:cover — so they always crop identically
-  // from center regardless of viewport shape.
+  // Always export at a fixed square resolution — matches the 1:1 contain display.
   const EXPORT = 1400
 
   try {
@@ -412,22 +369,19 @@ async function saveAndExit() {
     finalCanvas.height = EXPORT
     const fctx = finalCanvas.getContext('2d')!
 
-    // Composite any existing saved drawing first (cover-crop to EXPORT square)
     const savedUrl = book.value.drawing_url
     if (savedUrl) {
       await new Promise<void>((resolve) => {
         const img = new Image()
         img.crossOrigin = 'anonymous'
-        img.onload = () => { drawImageCover(fctx, img, EXPORT, EXPORT); resolve() }
+        img.onload = () => { drawImageContain(fctx, img, EXPORT, EXPORT); resolve() }
         img.onerror = () => resolve()
         img.src = savedUrl
       })
     }
 
-    // Replay strokes using cover-crop mapping so they land at the same position
-    // as drawn, regardless of the viewport aspect ratio when the stroke was made.
     for (const s of strokes.value) {
-      drawStrokeCover(fctx, s.pts, s.cw || EXPORT, s.ch || EXPORT, EXPORT, s.width)
+      drawStrokeExport(fctx, s.pts, EXPORT, s.width)
     }
 
     const blob = await new Promise<Blob | null>(resolve => finalCanvas.toBlob(resolve, 'image/png'))
@@ -475,31 +429,42 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
 </script>
 
 <template>
-  <div v-if="book" ref="bannerEl" class="book-banner" :class="{ 'draw-active': drawMode }" :style="bannerStyle">
+  <div v-if="book" class="book-banner">
+    <!-- Square art area: photo + drawing only -->
+    <div
+      ref="bannerEl"
+      class="book-banner-art"
+      :class="{ 'draw-active': drawMode }"
+    >
+      <img
+        :src="bannerPhotoUrl"
+        class="book-banner-photo"
+        alt=""
+        aria-hidden="true"
+      />
 
-    <!-- Saved drawing overlay (shown when NOT in draw mode) -->
-    <img
-      v-if="book.drawing_url && !drawMode"
-      :src="book.drawing_url"
-      class="book-banner-drawing"
-      alt=""
-      aria-hidden="true"
-    />
+      <img
+        v-if="book.drawing_url && !drawMode"
+        :src="book.drawing_url"
+        class="book-banner-drawing"
+        alt=""
+        aria-hidden="true"
+      />
 
-    <!-- Live canvas (shown in draw mode) -->
-    <canvas
-      v-if="drawMode"
-      ref="canvasEl"
-      class="book-banner-canvas"
-      @pointerdown="onPointerDown"
-      @pointermove="onPointerMove"
-      @pointerup="onPointerUp"
-      @pointercancel="onPointerUp"
-    />
+      <canvas
+        v-if="drawMode"
+        ref="canvasEl"
+        class="book-banner-canvas"
+        @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerUp"
+        @pointercancel="onPointerUp"
+      />
+    </div>
 
+    <!-- Book info below the banner -->
     <div class="book-banner-inner">
       <h2 class="book-banner-title">{{ book.name }}</h2>
-      <!-- Stats + members on one line -->
       <div class="meta-row meta-row--hero banner-meta-row">
         <div class="meta-pill">
           <span class="label">Recipes</span>

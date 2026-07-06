@@ -1,5 +1,5 @@
 import { getAccessToken } from './composables/useAuth.ts'
-import type { Recipe, RecipeBook, RecipeListItem, InviteInfo, InviteResult, BookMember } from './types/index.ts'
+import type { Recipe, RecipeBook, RecipeListItem, InviteInfo, InviteResult, BookMember, ForkSource } from './types/index.ts'
 
 export const API_BASE = import.meta.env.VITE_SUPABASE_URL
   ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
@@ -11,12 +11,15 @@ function getAuthHeader(): string {
   return `Bearer ${token}`
 }
 
-export async function fetchRecipes(): Promise<RecipeListItem[]> {
-  const res = await fetch(`${API_BASE}/recipes`, {
+export async function fetchRecipes(bookId: number): Promise<RecipeListItem[]> {
+  const res = await fetch(`${API_BASE}/recipes?book_id=${bookId}`, {
     headers: { Authorization: getAuthHeader() },
-  }).catch(() => null)
-  if (!res || !res.ok) return []
-  return res.json()
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error((data as { error?: string }).error ?? `Failed to load recipes (${res.status})`)
+  }
+  return data as RecipeListItem[]
 }
 
 export async function fetchRecipe(filename: string): Promise<Recipe> {
@@ -27,6 +30,53 @@ export async function fetchRecipe(filename: string): Promise<Recipe> {
   const data = await res.json()
   if (!res.ok) throw new Error(data.error ?? 'Failed to load recipe')
   return data
+}
+
+export async function saveRecipe(filename: string, recipe: Recipe): Promise<Recipe> {
+  const res = await fetch(`${API_BASE}/recipe?file=${encodeURIComponent(filename)}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: getAuthHeader(),
+    },
+    body: JSON.stringify(recipe),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Failed to save recipe')
+  return data as Recipe
+}
+
+export async function forkRecipe(
+  filename: string,
+  sourceBookId: number,
+): Promise<Recipe & { hash: string; alreadyForked?: boolean; ownedBookId?: number }> {
+  const res = await fetch(
+    `${API_BASE}/recipe?fork=1&file=${encodeURIComponent(filename)}&book_id=${sourceBookId}`,
+    {
+      method: 'POST',
+      headers: { Authorization: getAuthHeader() },
+    },
+  )
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Failed to fork recipe')
+  return data
+}
+
+export async function updateBookVisibility(
+  bookId: number,
+  visibility: 'public' | 'private',
+): Promise<RecipeBook> {
+  const res = await fetch(`${API_BASE}/book/visibility?book_id=${bookId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: getAuthHeader(),
+    },
+    body: JSON.stringify({ visibility }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? 'Failed to update visibility')
+  return data as RecipeBook
 }
 
 export async function scrapeRecipe({

@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { getUserFromRequest } from "../_shared/auth.ts";
+import { canReadBook, loadForkSourceMeta } from "../_shared/bookAccess.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -12,39 +13,70 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
+  const url = new URL(req.url);
+  const bookIdParam = url.searchParams.get("book_id");
+  if (!bookIdParam) {
+    return jsonResponse({ error: "book_id required" }, 400);
+  }
+
+  const bookId = Number(bookIdParam);
+  if (!Number.isFinite(bookId)) {
+    return jsonResponse({ error: "Invalid book_id" }, 400);
+  }
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Get all book IDs the user belongs to
-  const { data: memberships } = await supabase
+  const allowed = await canReadBook(supabase, user.id, bookId);
+  if (!allowed) {
+    return jsonResponse({ error: "Not allowed to view this book" }, 403);
+  }
+
+  const { data: bookRecipes } = await supabase
+    .from("book_recipes")
+    .select("recipe_id")
+    .eq("book_id", bookId);
+
+  let recipeIds = (bookRecipes ?? []).map((r: { recipe_id: number }) => r.recipe_id);
+
+  const { data: membership } = await supabase
     .from("recipe_book_members")
     .select("book_id")
-    .eq("user_id", user.id);
+    .eq("book_id", bookId)
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-  const bookIds = (memberships ?? []).map((m: { book_id: number }) => m.book_id);
+  if (membership) {
+    const { data: userBooks } = await supabase
+      .from("recipe_book_members")
+      .select("book_id, recipe_books(created_at)")
+      .eq("user_id", user.id);
 
-  let recipeIds: number[] = [];
+    type BookRow = { book_id: number; recipe_books: { created_at: string } | null };
+    const primaryBookId = (userBooks as BookRow[] | null ?? [])
+      .slice()
+      .sort(
+        (a, b) =>
+          (a.recipe_books?.created_at ?? "").localeCompare(b.recipe_books?.created_at ?? ""),
+      )[0]?.book_id;
 
-  if (bookIds.length > 0) {
-    // Get recipe IDs from the junction table for all user's books
-    const { data: bookRecipes } = await supabase
-      .from("book_recipes")
-      .select("recipe_id")
-      .in("book_id", bookIds);
+    if (bookId === primaryBookId) {
+      const { data: allLinked } = await supabase.from("book_recipes").select("recipe_id");
+      const linkedIds = new Set((allLinked ?? []).map((r: { recipe_id: number }) => r.recipe_id));
 
-    recipeIds = (bookRecipes ?? []).map((r: { recipe_id: number }) => r.recipe_id);
+      const { data: legacyRecipes } = await supabase
+        .from("recipes")
+        .select("id")
+        .eq("user_id", user.id);
 
-    // Also include legacy recipes uploaded by this user (before junction table)
-    const { data: legacyRecipes } = await supabase
-      .from("recipes")
-      .select("id")
-      .eq("user_id", user.id)
-      .not("id", "in", recipeIds.length > 0 ? `(${recipeIds.join(",")})` : "(0)");
+      const legacyIds = (legacyRecipes ?? [])
+        .map((r: { id: number }) => r.id)
+        .filter((id: number) => !linkedIds.has(id));
 
-    const legacyIds = (legacyRecipes ?? []).map((r: { id: number }) => r.id);
-    recipeIds = [...new Set([...recipeIds, ...legacyIds])];
+      recipeIds = [...new Set([...recipeIds, ...legacyIds])];
+    }
   }
 
   if (recipeIds.length === 0) {
@@ -53,7 +85,7 @@ Deno.serve(async (req: Request) => {
 
   const { data, error } = await supabase
     .from("recipes")
-    .select("url_hash, title, source_url, saved_at, data")
+    .select("url_hash, title, source_url, saved_at, data, forked_from_recipe_id, forked_from_book_id")
     .in("id", recipeIds)
     .order("saved_at", { ascending: false });
 
@@ -66,11 +98,15 @@ Deno.serve(async (req: Request) => {
     ingredientGroups?: Array<{ items: Array<{ name: string }> }>;
   };
 
-  const files = (data ?? []).map((r) => {
+  const files = await Promise.all((data ?? []).map(async (r) => {
     const d = r.data as RecipeData;
     const ingredientNames = (d.ingredientGroups ?? [])
       .flatMap((g) => g.items.map((i) => i.name.toLowerCase()))
       .join(" ");
+    const forkedFrom = await loadForkSourceMeta(supabase, {
+      forked_from_recipe_id: r.forked_from_recipe_id,
+      forked_from_book_id: r.forked_from_book_id,
+    });
     return {
       filename: `${r.url_hash}.json`,
       title: r.title,
@@ -78,8 +114,9 @@ Deno.serve(async (req: Request) => {
       savedAt: r.saved_at,
       tags: d.tags ?? null,
       ingredientNames,
+      forkedFrom,
     };
-  });
+  }));
 
   return jsonResponse(files);
 });

@@ -38,6 +38,7 @@ export const RecipeTagsSchema = z.object({
   mealType: z.string().optional().describe("e.g. 'salad', 'soup', 'pasta', 'roast', 'dessert', 'breakfast', 'snack', 'side dish'"),
   dietary: z.array(z.string()).optional().describe("e.g. ['vegetarian', 'vegan', 'gluten-free', 'dairy-free']"),
   season: z.array(z.string()).optional().describe("e.g. ['spring', 'summer', 'autumn', 'winter'] or ['all year']"),
+  timeOfDay: z.array(z.enum(['morning', 'noon', 'evening'])).optional().describe("When this dish is typically eaten: morning (breakfast), noon (lunch), evening (dinner). Include all that apply."),
 });
 
 export type RecipeTags = z.infer<typeof RecipeTagsSchema>;
