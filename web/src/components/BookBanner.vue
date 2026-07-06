@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { state } from '../state.ts'
-import { createInvite, saveDrawing, clearDrawing, saveBannerImage, clearBannerImage } from '../api.ts'
+import { createInvite, saveDrawing, clearDrawing, saveBannerImage } from '../api.ts'
 import { auth } from '../composables/useAuth.ts'
 import { resizeImage } from '../utils/imageUpload.ts'
 
@@ -11,8 +11,6 @@ const members = computed(() => state.bookMembers)
 const isOwner = computed(() => book.value?.owner_id === auth.user?.id)
 const router = useRouter()
 
-// Dynamic background — uses uploaded banner_url if present, else fallback Pexels photo
-const FALLBACK_BANNER = `url('https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg')`
 const bannerStyle = computed(() => {
   const u = book.value?.banner_url
   return u ? `--banner-img: url('${u}')` : ''
@@ -35,20 +33,6 @@ async function onBannerFileChange(e: Event) {
     if (state.currentBook) state.currentBook.banner_url = url
   } catch (err: unknown) {
     bannerError.value = err instanceof Error ? err.message : 'Upload failed'
-  } finally {
-    bannerUploading.value = false
-  }
-}
-
-async function resetBannerPhoto() {
-  if (!book.value) return
-  bannerUploading.value = true
-  bannerError.value = ''
-  try {
-    await clearBannerImage(book.value.id)
-    if (state.currentBook) state.currentBook.banner_url = null
-  } catch (err: unknown) {
-    bannerError.value = err instanceof Error ? err.message : 'Remove failed'
   } finally {
     bannerUploading.value = false
   }
