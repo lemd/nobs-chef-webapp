@@ -163,7 +163,7 @@ function toggleTimeOfDay(value) {
   draft.value.tags.timeOfDay = toggleTagInArray(
     draft.value.tags.timeOfDay ?? [],
     value,
-  ) as typeof draft.value.tags.timeOfDay
+  )
 }
 </script>
 
