@@ -1,9 +1,10 @@
 import { createClient, type Session, type User } from '@supabase/supabase-js'
 import { reactive } from 'vue'
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjc3V5bmZieWt2bmNlbm1oamZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODQyMDEsImV4cCI6MjA5Njc2MDIwMX0.6DXkVvNHxFdHXd2sTQINMUjQCi3ILkP3a_jb0bKMJFk'
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+  || 'https://vcsuynfbykvncenmhjfh.supabase.co'
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjc3V5bmZieWt2bmNlbm1oamZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExODQyMDEsImV4cCI6MjA5Njc2MDIwMX0.6DXkVvNHxFdHXd2sTQINMUjQCi3ILkP3a_jb0bKMJFk'
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 

@@ -871,7 +871,11 @@ body {
 /* Draw mode — width animated via JS FLIP (height stays constant) */
 .fab-pill--draw {
   max-width: calc(100vw - 2rem);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.fab-pill--draw::-webkit-scrollbar { display: none; }
 /* Slightly smaller buttons in draw mode to keep pill compact on mobile */
 .fab-pill--draw .fab-btn {
   width: 38px; height: 38px; font-size: 0.88rem;

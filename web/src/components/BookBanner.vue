@@ -297,11 +297,14 @@ function drawStrokeCover(
   lineWidth: number,
 ) {
   if (stroke.length === 0) return
-  const scale = dstS / Math.min(srcW, srcH)
-  const offX = (srcW * scale - dstS) / 2
-  const offY = (srcH * scale - dstS) / 2
-  const px = (nx: number) => nx * srcW * scale - offX
-  const py = (ny: number) => ny * srcH * scale - offY
+  // Use maxDim to mirror object-fit:cover — the longer axis fills dstS exactly,
+  // and the shorter axis is centred within dstS (matching what the browser shows).
+  const maxDim = Math.max(srcW, srcH)
+  const scale = dstS / maxDim
+  const offX = (maxDim - srcW) / 2 * scale
+  const offY = (maxDim - srcH) / 2 * scale
+  const px = (nx: number) => nx * srcW * scale + offX
+  const py = (ny: number) => ny * srcH * scale + offY
   c.lineCap = 'round'
   c.lineJoin = 'round'
   c.strokeStyle = STROKE_COLOR
@@ -605,25 +608,6 @@ watch(() => book.value?.id, () => { if (drawMode.value) exitDrawMode() })
               <span class="draw-size-dot" :data-size="sz"></span>
             </button>
           </div>
-          <span class="fab-divider"></span>
-          <button
-            class="fab-btn"
-            :title="book.banner_url ? 'Change photo' : 'Upload photo'"
-            :disabled="bannerUploading"
-            @click="bannerInputEl?.click()"
-          >
-            <i v-if="bannerUploading" class="fa-solid fa-spinner fa-spin"></i>
-            <i v-else class="fa-solid fa-camera"></i>
-          </button>
-          <button
-            v-if="book.banner_url"
-            class="fab-btn fab-btn--danger"
-            title="Remove custom photo"
-            :disabled="bannerUploading"
-            @click="resetBannerPhoto"
-          >
-            <i class="fa-solid fa-image"></i>
-          </button>
           <span class="fab-divider"></span>
           <button
             v-if="book.drawing_url || strokes.length > 0"
